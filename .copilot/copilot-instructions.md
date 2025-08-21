@@ -120,10 +120,11 @@ These constraints shape all design and implementation choices. Treat them as non
   - Use async/await, cancellation tokens, and clear contracts.
 
 - Frontend policy
-  - No JavaScript libraries and no CSS libraries. No NPM toolchain.
+  - No external JavaScript or CSS libraries/frameworks. No NPM toolchain, no CDN assets.
+  - Custom code is fine: vanilla JS (ES modules) and hand-written CSS are allowed.
   - Prefer server-rendered HTML (Razor Pages) with semantic markup.
-  - Minimal hand-written CSS only when necessary; system fonts; no frameworks (no Bootstrap/Tailwind).
-  - Aim for zero client-side JS; allow only tiny, framework-free enhancements if strictly needed and accessible without JS.
+  - Progressive enhancement: core flows work without JS; JS can enhance UX.
+  - System fonts only; use inline SVG for icons; keep assets small and local.
 
 - Data and storage
   - Local-first: use a single SQLite database file by default for easy backups.
@@ -140,6 +141,6 @@ These constraints shape all design and implementation choices. Treat them as non
 
 - Definition of Done (feature level)
   - Runs with a single command after publish; no Node/NPM steps.
-  - Works without any client-side JavaScript; no external CSS/JS libraries added.
+  - Core flows work without client-side JavaScript; any JS is custom, vanilla, and optional. No external CSS/JS libraries added.
   - Stores data in the designated local database path; no surprise global state.
   - Includes a tiny happy-path test for core logic and 1 edge case where applicable.
