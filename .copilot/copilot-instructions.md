@@ -116,7 +116,9 @@ These constraints shape all design and implementation choices. Treat them as non
   - Configuration via appsettings + environment variables; sensible defaults.
 
 - Backend stack
-  - C# (.NET 8+) only. Use ASP.NET Core (Minimal API or Razor Pages) and keep endpoints simple.
+  - C# (.NET 8+) only.
+  - API app: ASP.NET Core Minimal API (or Controllers) exposes all data operations.
+  - Frontend app: Razor Pages handles UI only and calls the API; no direct DB access.
   - Use async/await, cancellation tokens, and clear contracts.
 
 - Frontend policy
@@ -124,7 +126,7 @@ These constraints shape all design and implementation choices. Treat them as non
   - Custom code is fine: vanilla JS (ES modules) and hand-written CSS are allowed.
   - Prefer server-rendered HTML (Razor Pages) with semantic markup.
   - Progressive enhancement: core flows work without JS; JS can enhance UX.
-  - System fonts only; use inline SVG for icons; keep assets small and local.
+  - System fonts only; inline <svg> allowed for icons (avoid style attributes); keep assets small and local.
 
 - Application architecture
   - Two apps:
@@ -137,17 +139,20 @@ These constraints shape all design and implementation choices. Treat them as non
   - Default behavior: server postbacks from forms; code-behind calls the API and renders the result.
   - When JavaScript is available: perform the same requests from vanilla JS directly to the API (fetch), avoid full page postbacks.
   - Maintain feature parity between both paths; ensure URLs and forms still work without JS.
+  - Core flows: search, filter, add/edit recipe, mark tried.
   - Keep responses cache-friendly and idempotent where possible.
 
 - Frontend file organization
   - No inline <script> or <style> in markup.
   - Place JS and CSS in separate files; split into small ES modules and import where needed.
+  - JS modules use path-based ESM imports (no bare specifiers); import maps optional and local.
   - Prefer one small module per page or component; shared utilities live in a /scripts/modules or similar folder.
-  - Use CSS modules by folder or naming convention; keep styles scoped and avoid global leaks.
+  - Modular CSS by folder/naming conventions (not the bundler “CSS Modules” feature); keep styles scoped and avoid global leaks.
   - Markup is pure: semantic HTML + Razor bindings only (no embedded business logic).
 
 - Data and storage
   - Local-first: use a single SQLite database file by default for easy backups.
+  - The database lives in the API app; the frontend never accesses the DB directly.
   - Import/export: support CSV to seed or share data.
 
 - Dependency policy
@@ -160,7 +165,7 @@ These constraints shape all design and implementation choices. Treat them as non
   - Internationalization ready (English/Swedish copy kept simple and centralized).
 
 - Definition of Done (feature level)
-  - Runs with a single command after publish; no Node/NPM steps.
+  - Runs with a single command per app, or one orchestration script/task that starts both; no Node/NPM steps.
   - Core flows work without client-side JavaScript; any JS is custom, vanilla, and optional. No external CSS/JS libraries added.
   - Stores data in the designated local database path; no surprise global state.
   - Includes a tiny happy-path test for core logic and 1 edge case where applicable.
