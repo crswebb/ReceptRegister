@@ -126,6 +126,26 @@ These constraints shape all design and implementation choices. Treat them as non
   - Progressive enhancement: core flows work without JS; JS can enhance UX.
   - System fonts only; use inline SVG for icons; keep assets small and local.
 
+- Application architecture
+  - Two apps:
+    - Frontend app (server-rendered UI, e.g., Razor Pages) responsible for markup and simple interactions.
+    - API app (separate ASP.NET Core endpoints) as the single source of truth for data.
+  - Code-behind lives in separate .cs files (no inline C# in markup). Markup remains pure HTML/Razor without logic.
+  - All data operations go through the API. The frontend should not contain duplicate business logic.
+
+- Progressive enhancement rules
+  - Default behavior: server postbacks from forms; code-behind calls the API and renders the result.
+  - When JavaScript is available: perform the same requests from vanilla JS directly to the API (fetch), avoid full page postbacks.
+  - Maintain feature parity between both paths; ensure URLs and forms still work without JS.
+  - Keep responses cache-friendly and idempotent where possible.
+
+- Frontend file organization
+  - No inline <script> or <style> in markup.
+  - Place JS and CSS in separate files; split into small ES modules and import where needed.
+  - Prefer one small module per page or component; shared utilities live in a /scripts/modules or similar folder.
+  - Use CSS modules by folder or naming convention; keep styles scoped and avoid global leaks.
+  - Markup is pure: semantic HTML + Razor bindings only (no embedded business logic).
+
 - Data and storage
   - Local-first: use a single SQLite database file by default for easy backups.
   - Import/export: support CSV to seed or share data.
