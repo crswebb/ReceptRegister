@@ -164,8 +164,18 @@ These constraints shape all design and implementation choices. Treat them as non
   - Accessibility first: keyboard-friendly, screen-reader friendly, semantic HTML.
   - Internationalization ready (English/Swedish copy kept simple and centralized).
 
+- Authentication and access control
+  - The entire application is password-protected with a single administrator password.
+  - First-run setup: if no password exists in the database, any page visit redirects to a “Set Password” screen; require new password + confirm.
+  - Once a password is set, visiting the site requires login; maintain a server-issued session/cookie after successful login.
+  - Password recovery: there is no automated reset flow. The site administrator must manually clear/delete the stored password value in the database, which re-enables the first-run “Set Password” screen on next visit.
+  - Progressive enhancement: all auth flows (set password, login, logout) work via server postbacks; when JS is available, enhance with fetch-based requests without full page reloads.
+  - Store passwords securely (hashed + salted using .NET built-ins). Never store plain text.
+
 - Definition of Done (feature level)
   - Runs with a single command per app, or one orchestration script/task that starts both; no Node/NPM steps.
   - Core flows work without client-side JavaScript; any JS is custom, vanilla, and optional. No external CSS/JS libraries added.
   - Stores data in the designated local database path; no surprise global state.
   - Includes a tiny happy-path test for core logic and 1 edge case where applicable.
+  - Authentication present: if no password exists, user is prompted to set one; otherwise, login is required before accessing features.
+  - Recovery documented: deleting the stored password value in the database triggers first-run password setup on next visit.
