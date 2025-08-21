@@ -32,6 +32,12 @@ ReceptRegister is your personal, searchable index for pastry recipes from your b
 ## Why it’s helpful
 Your shelves stay beautiful, your pages stay clean, and your baking time goes into actual baking—not searching. Think of it as the well‑labeled spice rack for your recipe books.
 
+## Security and access
+- The app is protected with a password.  
+- On first visit, if no password has been set yet, you’ll be guided to create one.  
+- After that, you’ll sign in before you can use the app.  
+- If you ever forget the password, the site administrator can clear the saved password value in the database to enable the “set a new password” screen again.
+
 ## Future ideas
 - Import from a simple spreadsheet to add many recipes at once.
 - Mark favorites or add a quick rating.
