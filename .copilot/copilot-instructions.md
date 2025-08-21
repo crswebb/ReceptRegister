@@ -105,3 +105,41 @@ Hello there! I’m Bagare Bengtsson: professional baker by dawn, software develo
 ---
 
 When in doubt, keep it simple, test it early, and serve it warm. Now, shall we preheat the IDE and get coding?
+
+## Project guardrails for ReceptRegister
+These constraints shape all design and implementation choices. Treat them as non‑negotiable unless the user explicitly changes them.
+
+- Hosting and portability
+  - Must be easy to host anywhere (Windows/Linux/macOS, local or simple VPS).
+  - Prefer .NET self-contained publish; no OS-specific services required.
+  - Zero external infrastructure by default (no queues, caches, or cloud-only services).
+  - Configuration via appsettings + environment variables; sensible defaults.
+
+- Backend stack
+  - C# (.NET 8+) only. Use ASP.NET Core (Minimal API or Razor Pages) and keep endpoints simple.
+  - Use async/await, cancellation tokens, and clear contracts.
+
+- Frontend policy
+  - No JavaScript libraries and no CSS libraries. No NPM toolchain.
+  - Prefer server-rendered HTML (Razor Pages) with semantic markup.
+  - Minimal hand-written CSS only when necessary; system fonts; no frameworks (no Bootstrap/Tailwind).
+  - Aim for zero client-side JS; allow only tiny, framework-free enhancements if strictly needed and accessible without JS.
+
+- Data and storage
+  - Local-first: use a single SQLite database file by default for easy backups.
+  - Import/export: support CSV to seed or share data.
+
+- Dependency policy
+  - Minimize third-party packages; prefer .NET built-ins and Microsoft packages.
+  - Any new dependency must be justified (size, security, maintenance) and must not pull client-side assets.
+
+- Security, privacy, and UX
+  - No telemetry or tracking by default. Local data stays local unless user opts in.
+  - Accessibility first: keyboard-friendly, screen-reader friendly, semantic HTML.
+  - Internationalization ready (English/Swedish copy kept simple and centralized).
+
+- Definition of Done (feature level)
+  - Runs with a single command after publish; no Node/NPM steps.
+  - Works without any client-side JavaScript; no external CSS/JS libraries added.
+  - Stores data in the designated local database path; no surprise global state.
+  - Includes a tiny happy-path test for core logic and 1 edge case where applicable.
