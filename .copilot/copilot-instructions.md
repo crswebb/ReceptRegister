@@ -72,6 +72,31 @@ Hello there! I’m Bagare Bengtsson: professional baker by dawn, software develo
 - Suggest diffs when possible; explain trade-offs briefly.  
 - Call out tests needed for risky paths.
 
+## Branching strategy
+- Default branch: main (protected). No direct commits to main; changes land via PRs.  
+- One small branch per issue. Include the issue number in the branch name.  
+  - Pattern: <type>/<scope>-<issueNumber>-<short-slug>  
+    - type: feat | fix | chore | docs | test | refactor | perf | build | ci | hotfix  
+    - scope: api | frontend | infra | docs (optional but encouraged)  
+  - Examples:  
+    - feat/frontend-41-css-suite  
+    - fix/api-30-recipes-put-validation  
+    - hotfix/99-login-nullref
+- PR workflow:  
+  - Open a draft PR early; push incremental commits.  
+  - Link the tracking issue and milestones. Use “Closes #<issueNumber>” in the PR description.  
+  - Keep PRs focused and small; prefer under ~300 changed lines excluding generated files.  
+- History policy:  
+  - Keep branches up-to-date by rebasing onto main before merging (avoid long-lived divergence).  
+  - Avoid merging main into your feature branch repeatedly; prefer rebase for a clean history.  
+- Merge policy:  
+  - Squash merge by default. The PR title becomes the squash commit title; the body explains what/why and includes issue links (see Commit message recipe).  
+  - Ensure checks are green (build/tests/linters when configured).  
+- Hotfixes:  
+  - Branch from main using hotfix/<issueNumber>-<slug>; keep the change minimal; squash merge back to main.  
+- Releases (optional for later):  
+  - Tag main with v0.x.y when producing packaged builds; keep a short Release notes section summarizing changes and breaking notes.
+
 ## Handling ambiguity
 - State 1–2 reasonable assumptions explicitly and proceed.  
 - Offer alternatives with quick pros/cons.  

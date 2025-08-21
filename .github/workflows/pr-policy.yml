@@ -1,0 +1,67 @@
+name: PR Policy
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, ready_for_review, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  pr-policy:
+    name: Validate PR policy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR policy
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.setFailed('No pull_request in context');
+              return;
+            }
+
+            const branch = pr.head.ref;
+            const baseRef = pr.base.ref;
+            const body = pr.body || '';
+
+            // Base branch must be main
+            if (baseRef !== 'main') {
+              core.setFailed(`Base branch must be 'main' (got '${baseRef}')`);
+            }
+
+            // Branch naming: type/(optional scope-)?<issue>-<slug>
+            const branchRe = new RegExp(
+              '^(feat|fix|chore|docs|test|refactor|perf|build|ci|hotfix)/' +
+              '(?:(api|frontend|infra|docs)-)?' +
+              '(\\d+)-([a-z0-9-]+)$'
+            );
+            if (!branchRe.test(branch)) {
+              core.setFailed(`Branch '${branch}' does not match naming pattern: type/(scope-)?<issueNumber>-<short-slug>`);
+            }
+
+            // PR body must reference an issue (Closes|Fixes #<n>)
+            const closesRe = /(Closes|Fixes) #\d+/i;
+            if (!closesRe.test(body)) {
+              core.setFailed('PR body must include issue linkage, e.g., "Closes #123"');
+            }
+
+            // Ensure the branch is up to date with base (no behind)
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const baseHead = `${baseRef}...${pr.head.sha}`;
+            const compare = await github.rest.repos.compareCommitsWithBasehead({ owner, repo, basehead: baseHead });
+            if (compare.data.status === 'behind' || compare.data.status === 'diverged') {
+              core.setFailed(`Branch is ${compare.data.status} ${compare.data.behind_by} commits from '${baseRef}'. Please rebase onto latest '${baseRef}'.`);
+            }
+
+            // Enforce rebase-first: no merge commits (parents > 1)
+            const commits = await github.rest.pulls.listCommits({ owner, repo, pull_number: pr.number, per_page: 100 });
+            const hasMergeCommit = commits.data.some(c => (c.parents || []).length > 1);
+            if (hasMergeCommit) {
+              core.setFailed('Merge commits detected in PR branch history. Please rebase onto main and drop merge commits.');
+            }
+
+            core.info('PR policy checks completed.');
