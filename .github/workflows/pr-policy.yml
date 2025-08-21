@@ -3,6 +3,8 @@ name: PR Policy
 on:
   pull_request:
     types: [opened, edited, synchronize, ready_for_review, reopened]
+  # Allow manual run so the status check appears before first PR if needed
+  workflow_dispatch:
 
 permissions:
   contents: read
