@@ -25,7 +25,7 @@ Pattern: `type/scope-<issueNumber>-<short-slug>`
 Examples:
 - `feat/frontend-41-css-suite`
 - `fix/api-30-recipes-put-validation`
-- `hotfix/99-login-nullref`
+- `hotfix/99-login-null-ref`
 
 ## Why open a Draft PR early?
 - Visibility: teammates can see intent and progress; avoids duplicated work.  
