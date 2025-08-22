@@ -16,6 +16,9 @@ public static class HealthExtensions
 
 	public static IEndpointRouteBuilder MapAppHealth(this IEndpointRouteBuilder endpoints)
 	{
+		// Liveness probe: cheap, does not depend on downstream resources
+		endpoints.MapGet("/health/live", () => Results.Ok(new { status = "ok" }));
+		// Basic health (can be expanded later to include readiness details)
 		endpoints.MapGet("/health", () => Results.Ok(new { status = "ok", app = "api" }));
 		return endpoints;
 	}
