@@ -1,5 +1,7 @@
 # ReceptRegister
 
+![CI](https://github.com/crswebb/ReceptRegister/actions/workflows/ci.yml/badge.svg)
+
 ReceptRegister is your personal, searchable index for pastry recipes from your book collection. Instead of flipping through sticky notes and indexes, you can find the right recipe in seconds and jump straight to the page.
 
 ## What you can store

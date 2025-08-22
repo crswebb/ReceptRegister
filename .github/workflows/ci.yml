@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   build-test:
@@ -60,3 +61,27 @@ jobs:
         with:
           name: frontend-publish
           path: out/frontend
+
+      - name: Generate Coverage Summary
+        id: coverage
+        run: |
+          echo "Searching for cobertura file";
+          FILE=$(git ls-files -z | tr '\0' '\n' | grep -E 'coverage.cobertura.xml$' || true)
+          if [ -z "$FILE" ]; then
+            echo "No coverage file found"; echo "found=false" >> $GITHUB_OUTPUT; exit 0; fi
+          echo "found=true" >> $GITHUB_OUTPUT
+          # Extract line-rate attribute
+          RATE=$(grep -o 'line-rate="[0-9.]*"' "$FILE" | head -1 | sed -E 's/line-rate="([0-9.]+)"/\1/')
+          PCT=$(python -c "rate='$RATE';\nimport sys;\ntry:\n print(f'{float(rate)*100:.2f}')\nexcept Exception:\n print('0.00')")
+          echo "percentage=$PCT" >> $GITHUB_OUTPUT
+          echo "file=$FILE" >> $GITHUB_OUTPUT
+
+      - name: Comment Coverage on PR
+        if: github.event_name == 'pull_request' && steps.coverage.outputs.found == 'true'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          message: |
+            ## Code Coverage
+            Coverage: **${{ steps.coverage.outputs.percentage }}%** (source: `${{ steps.coverage.outputs.file }}`)
+            _Updated on push._
