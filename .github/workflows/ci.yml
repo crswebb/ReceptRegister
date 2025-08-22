@@ -1,0 +1,62 @@
+name: CI Build & Test
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: Build & Test (.NET)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+            dotnet-version: '10.0.x'
+            cache: true
+
+      - name: Restore
+        run: dotnet restore ReceptRegister.sln
+
+      - name: Build
+        run: dotnet build ReceptRegister.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test ReceptRegister.sln --configuration Release --no-build --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage"
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            **/TestResults/*.trx
+            **/coverage.cobertura.xml
+            **/coverage.info
+
+      - name: Publish API (for inspection)
+        run: dotnet publish ReceptRegister.Api/ReceptRegister.Api.csproj -c Release -o out/api
+
+      - name: Upload API artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-publish
+          path: out/api
+
+      - name: Publish Frontend (for inspection)
+        run: dotnet publish ReceptRegister.Frontend/ReceptRegister.Frontend.csproj -c Release -o out/frontend
+
+      - name: Upload Frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-publish
+          path: out/frontend
