@@ -45,4 +45,14 @@ Your shelves stay beautiful, your pages stay clean, and your baking time goes in
 - Attach photos of results for inspiration.
 - Print or share a shortlist when planning a baking day.
 
+## Data storage (early alpha)
+The API persists data to a local SQLite file at `App_Data/receptregister.db` (created on first run). Schema is simple:
+- Recipes (Name, Book, Page, Notes, Tried)
+- Categories & Keywords (unique name each, stored lowercase)
+- Join tables (`RecipeCategories`, `RecipeKeywords`) for many-to-many links
+
+Foreign keys are enforced, and removing a recipe cascades its join rows. Category / keyword master rows remain (so taxonomy grows as you add terms). Back up is as easy as copying the single `.db` file while the app is stopped.
+
+In future milestones this may evolve (migrations, encryption, cloud backup), but for now the priority is a small, dependency-light foundation you can understand at a glance.
+
 — “Let’s sift the chaos and find the perfect recipe to bake today.” — Bagare Bengtsson

@@ -1,0 +1,29 @@
+# Build artifacts
+**/bin/
+**/obj/
+
+# User secrets / local data
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+App_Data/
+!ReceptRegister.Api/App_Data/   # keep directory reference if needed (will still ignore contents)
+
+# VS / tooling
+.vs/
+*.user
+*.suo
+*.userprefs
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Coverage
+coverage/
+*.lcov
+
