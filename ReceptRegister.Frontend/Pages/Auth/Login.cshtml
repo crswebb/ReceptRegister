@@ -1,0 +1,25 @@
+@page
+@model ReceptRegister.Frontend.Pages.Auth.LoginModel
+@{
+    ViewData["Title"] = "Login";
+}
+<h1 class="mb-3">Login</h1>
+@if (Model.Success)
+{
+    <div class="alert alert-success" role="alert">Logged in. <a href="/auth/status" class="alert-link">Auth status</a>.</div>
+}
+else if (Model.ErrorMessage is not null)
+{
+    <div class="alert alert-danger" role="alert">@Model.ErrorMessage</div>
+}
+<form method="post" novalidate>
+    <div class="mb-3">
+        <label for="Password" class="form-label">Password</label>
+        <input type="password" class="form-control" id="Password" name="Password" autocomplete="current-password" />
+    </div>
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" value="true" id="RememberMe" name="RememberMe" />
+        <label class="form-check-label" for="RememberMe">Remember me</label>
+    </div>
+    <button type="submit" class="btn btn-primary">Login</button>
+</form>
