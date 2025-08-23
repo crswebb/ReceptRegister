@@ -43,8 +43,9 @@ public class Pbkdf2PasswordHasher : IPasswordHasher
 	private static byte[] Derive(string password, string? pepper, byte[] salt, int iterations, int keySize)
 	{
 		var material = pepper is null ? password : password + pepper;
-		using var pbkdf2 = new Rfc2898DeriveBytes(material, salt, iterations, HashAlgorithmName.SHA256);
-		return pbkdf2.GetBytes(keySize);
+		// Use modern static API to avoid SYSLIB0060 warning
+		// Fallback to positional parameters due to target framework preview API signature
+		return Rfc2898DeriveBytes.Pbkdf2(material, salt, iterations, HashAlgorithmName.SHA256, keySize);
 	}
 }
 
