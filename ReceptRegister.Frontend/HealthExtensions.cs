@@ -13,7 +13,8 @@ public static class HealthExtensions
 
 	public static IEndpointRouteBuilder MapAppHealth(this IEndpointRouteBuilder endpoints)
 	{
-		endpoints.MapGet("/health", () => Results.Ok(new { status = "ok", app = "frontend" }));
+		// Milestone 1 requirement: plain text health response (Issue #8)
+		endpoints.MapGet("/health", () => Results.Text("ok", "text/plain"));
 		return endpoints;
 	}
 }

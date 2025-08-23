@@ -1,0 +1,9 @@
+/* Minimal base stylesheet to establish custom properties and neutral reset.
+   Added for Milestone 1 Issue #8 folder convention. */
+:root {
+	--font-stack: system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+	--spacing: 0.75rem;
+}
+
+html { font-family: var(--font-stack); -webkit-font-smoothing: antialiased; }
+body { margin: 0; padding: var(--spacing); }
