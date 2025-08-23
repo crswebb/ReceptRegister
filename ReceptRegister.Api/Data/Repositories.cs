@@ -19,6 +19,80 @@ public interface ITaxonomyRepository
     Task<IReadOnlyList<Keyword>> ListKeywordsAsync(CancellationToken ct = default);
 }
 
+public interface IAuthRepository
+{
+    Task<bool> HasPasswordAsync(CancellationToken ct = default);
+    Task<AuthConfig?> GetAsync(CancellationToken ct = default);
+    Task SetPasswordAsync(byte[] hash, byte[] salt, int iterations, DateTimeOffset now, CancellationToken ct = default);
+}
+
+public sealed record AuthConfig(byte[] PasswordHash, byte[] Salt, int Iterations, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt);
+
+public class AuthRepository : IAuthRepository
+{
+    private readonly ISqliteConnectionFactory _factory;
+    public AuthRepository(ISqliteConnectionFactory factory) => _factory = factory;
+
+    public async Task<bool> HasPasswordAsync(CancellationToken ct = default)
+    {
+        await using var conn = _factory.Create();
+        await conn.OpenAsync(ct);
+        var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT 1 FROM AuthConfig WHERE Id=1";
+        var result = await cmd.ExecuteScalarAsync(ct);
+        return result is not null;
+    }
+
+    public async Task<AuthConfig?> GetAsync(CancellationToken ct = default)
+    {
+        await using var conn = _factory.Create();
+        await conn.OpenAsync(ct);
+        var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT PasswordHash, Salt, Iterations, CreatedAt, UpdatedAt FROM AuthConfig WHERE Id=1";
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        if (!await reader.ReadAsync(ct)) return null;
+        return new AuthConfig(
+            (byte[])reader[0],
+            (byte[])reader[1],
+            reader.GetInt32(2),
+            DateTimeOffset.Parse(reader.GetString(3)),
+            DateTimeOffset.Parse(reader.GetString(4))
+        );
+    }
+
+    public async Task SetPasswordAsync(byte[] hash, byte[] salt, int iterations, DateTimeOffset now, CancellationToken ct = default)
+    {
+        await using var conn = _factory.Create();
+        await conn.OpenAsync(ct);
+        await using var tx = await conn.BeginTransactionAsync(ct);
+        var existsCmd = conn.CreateCommand();
+        existsCmd.CommandText = "SELECT 1 FROM AuthConfig WHERE Id=1";
+        var exists = await existsCmd.ExecuteScalarAsync(ct) is not null;
+        if (!exists)
+        {
+            var insert = conn.CreateCommand();
+            insert.CommandText = "INSERT INTO AuthConfig (Id, PasswordHash, Salt, Iterations, CreatedAt, UpdatedAt) VALUES (1,$h,$s,$it,$c,$u)";
+            insert.Parameters.AddWithValue("$h", hash);
+            insert.Parameters.AddWithValue("$s", salt);
+            insert.Parameters.AddWithValue("$it", iterations);
+            insert.Parameters.AddWithValue("$c", now.ToString("O"));
+            insert.Parameters.AddWithValue("$u", now.ToString("O"));
+            await insert.ExecuteNonQueryAsync(ct);
+        }
+        else
+        {
+            var update = conn.CreateCommand();
+            update.CommandText = "UPDATE AuthConfig SET PasswordHash=$h, Salt=$s, Iterations=$it, UpdatedAt=$u WHERE Id=1";
+            update.Parameters.AddWithValue("$h", hash);
+            update.Parameters.AddWithValue("$s", salt);
+            update.Parameters.AddWithValue("$it", iterations);
+            update.Parameters.AddWithValue("$u", now.ToString("O"));
+            await update.ExecuteNonQueryAsync(ct);
+        }
+        await tx.CommitAsync(ct);
+    }
+}
+
 public class RecipesRepository : IRecipesRepository
 {
     private readonly ISqliteConnectionFactory _factory;

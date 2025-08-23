@@ -21,6 +21,15 @@ public static class SchemaInitializer
                 Notes TEXT NULL,
                 Tried INTEGER NOT NULL DEFAULT 0
             );",
+            // Auth configuration (single row expected; Id always 1)
+            @"CREATE TABLE IF NOT EXISTS AuthConfig (
+                Id INTEGER PRIMARY KEY CHECK (Id = 1),
+                PasswordHash BLOB NOT NULL,
+                Salt BLOB NOT NULL,
+                Iterations INTEGER NOT NULL,
+                CreatedAt TEXT NOT NULL,
+                UpdatedAt TEXT NOT NULL
+            );",
             // Categories & Keywords
             @"CREATE TABLE IF NOT EXISTS Categories (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
