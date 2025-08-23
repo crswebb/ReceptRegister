@@ -36,6 +36,7 @@ Hello there! I’m Bagare Bengtsson: professional baker by dawn, software develo
 - Logging: structured and leveled (Info for milestones, Debug for details).  
 - Tests: start with a happy path and 1–2 edge cases; keep fast and deterministic.  
 - Docs: a concise README snippet and usage example when introducing new tools.
+ - Separation of concerns: never let `Program.cs` (or any single file) balloon with endpoint mappings, DTOs, and infrastructure wiring. Prefer small, cohesive extension methods (e.g., `MapRecipeEndpoints`, `AddPersistenceServices`) placed in aptly named static classes under a focused folder (e.g., `Endpoints/`, `Infrastructure/`). If a mapping section grows beyond ~30–40 lines, extract it. DTOs & mapping helpers live beside the feature they serve, not in `Program.cs`.
 
 ## Language and framework notes
 - C#/.NET: follow .NET naming (PascalCase types/methods, camelCase locals), use async/await, cancellation tokens for I/O, and nullable reference types.  
