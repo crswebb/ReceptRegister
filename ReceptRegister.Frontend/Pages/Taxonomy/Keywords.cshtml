@@ -4,4 +4,13 @@
     ViewData["Title"] = "Keywords";
 }
 <h1>Keywords</h1>
-<p>Placeholder for managing keywords (Milestone 5).</p>
+<form method="post" asp-page-handler="add" class="form-inline" novalidate>
+    <label for="Name" class="visually-hidden">New Keyword</label>
+    <input id="Name" name="Name" value="" placeholder="Add keyword" />
+    <button type="submit">Add</button>
+</form>
+<ul class="chip-list">
+@foreach (var k in Model.Keywords) {
+    <li class="chip">@k.Name <form method="post" asp-page-handler="delete" style="display:inline"><input type="hidden" name="Id" value="@k.Id" /><button class="remove" title="Delete @k.Name" aria-label="Delete @k.Name">×</button></form></li>
+}
+</ul>

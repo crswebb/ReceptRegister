@@ -21,6 +21,10 @@ body {
   margin-bottom: 60px;
 }
 
+.link-button { background:none; border:0; padding:0; cursor:pointer; font:inherit; color:#1d74d8; }
+.link-button:hover, .link-button:focus { text-decoration:underline; }
+.text-danger { color:#b00020; font-size:.75rem; display:block; }
+
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
   color: var(--bs-secondary-color);
   text-align: end;

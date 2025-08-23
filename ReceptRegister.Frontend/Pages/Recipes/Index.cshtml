@@ -40,7 +40,7 @@
                     <ul class="inline-list">@foreach (var k in r.Keywords) { <li>@k.Name</li> }</ul>
                 }
             </td>
-            <td>@(r.Tried ? "✔" : "")</td>
+            <td><button type="button" class="link-button" data-toggle-tried data-id="@r.Id" data-tried="@r.Tried">@(r.Tried?"✔":"")</button></td>
         </tr>
     }
     </tbody>

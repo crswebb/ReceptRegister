@@ -4,24 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@(ViewData["Title"] is null ? "ReceptRegister" : ViewData["Title"] + " · ReceptRegister")</title>
+    <meta name="api-base" content="https://localhost:5001" /> @* Adjust api-base if needed *@
     <link rel="stylesheet" href="/css/base.css" asp-append-version="true" />
+    <link rel="stylesheet" href="/css/layout.css" asp-append-version="true" />
     <link rel="stylesheet" href="/css/forms.css" asp-append-version="true" />
     <link rel="stylesheet" href="/css/table.css" asp-append-version="true" />
+    <link rel="stylesheet" href="/css/chips.css" asp-append-version="true" />
     <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
-    <style>
-        /* Lightweight structural layout (Milestone 5 foundation) */
-        .skip-link { position:absolute; left:-1000px; top:-1000px; background:#000; color:#fff; padding:.5rem .75rem; }
-        .skip-link:focus { left:0; top:0; z-index:1000; }
-        header { display:flex; align-items:center; gap:1rem; padding:.5rem 0; }
-        nav ul { list-style:none; padding:0; margin:0; display:flex; gap:1rem; }
-        nav a { text-decoration:none; color:inherit; }
-        nav a[aria-current="page"] { font-weight:600; text-decoration:underline; }
-        body { max-width:1000px; margin:0 auto; }
-        main { min-height:60vh; }
-        footer { margin-top:3rem; font-size:.875rem; color:#555; border-top:1px solid #ddd; padding:1rem 0; }
-        .app-title { font-size:1.15rem; font-weight:600; margin:0; }
-        .grow { flex:1; }
-    </style>
 </head>
 <body>
     <a href="#main" class="skip-link">Skip to content</a>
@@ -43,6 +32,9 @@
     <footer>
         <p>&copy; @DateTime.UtcNow.Year ReceptRegister · <a asp-page="/Privacy">Privacy</a></p>
     </footer>
+    <script type="module" src="/js/modules/search-enhance.js" defer></script>
+    <script type="module" src="/js/modules/toggle-tried.js" defer></script>
+    <script type="module" src="/js/modules/chips.js" defer></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
