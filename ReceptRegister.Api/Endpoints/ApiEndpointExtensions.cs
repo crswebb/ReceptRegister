@@ -8,6 +8,7 @@ public static class ApiEndpointExtensions
 		app.MapAppHealth();
 		app.MapRecipeEndpoints();
 		app.MapTaxonomyEndpoints();
+		app.MapAuthEndpoints();
 		return app;
 	}
 }

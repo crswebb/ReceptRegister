@@ -41,4 +41,37 @@ public class PasswordHasherTests
         Assert.False(salt1.SequenceEqual(salt2));
         Assert.False(hash1.SequenceEqual(hash2));
     }
+
+    [Fact]
+    public void PepperInfluencesHash()
+    {
+    // Arrange two separate providers with different peppers but same iteration count
+        var servicesA = new ServiceCollection();
+        var cfgA = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string,string?>
+        {
+            {"RECEPT_PBKDF2_ITERATIONS", "50000"},
+            {"RECEPT_PEPPER", "pepperA"}
+        }).Build();
+        servicesA.AddSingleton<IConfiguration>(cfgA);
+        servicesA.AddLogging();
+        servicesA.AddAuthServices();
+        var hasherA = servicesA.BuildServiceProvider().GetRequiredService<IPasswordHasher>();
+
+        // Provider B with pepper B
+        var servicesB = new ServiceCollection();
+        var cfgB = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string,string?>
+        {
+            {"RECEPT_PBKDF2_ITERATIONS", "50000"},
+            {"RECEPT_PEPPER", "pepperB"}
+        }).Build();
+        servicesB.AddSingleton<IConfiguration>(cfgB);
+        servicesB.AddLogging();
+        servicesB.AddAuthServices();
+        var hasherB = servicesB.BuildServiceProvider().GetRequiredService<IPasswordHasher>();
+
+    // Act: hash using pepperA, then attempt verification using pepperB which should fail
+    var (iterA, saltA, hashA) = hasherA.Hash("secret");
+    Assert.True(hasherA.Verify("secret", null, saltA, iterA, hashA)); // own pepper succeeds
+    Assert.False(hasherB.Verify("secret", null, saltA, iterA, hashA)); // different pepper should fail
+    }
 }

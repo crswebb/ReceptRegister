@@ -11,6 +11,7 @@ builder.Services.AddAuthServices();
 
 var app = builder.Build();
 
+app.UseAuthSession();
 app.MapApiEndpoints();
 
 app.Run();

@@ -16,10 +16,12 @@ public class Pbkdf2PasswordHasher : IPasswordHasher
 	private readonly int _defaultIterations;
 	private readonly int _saltSize;
 	private readonly int _keySize;
+	private readonly AuthOptions _options;
 
-	public Pbkdf2PasswordHasher(ILogger<Pbkdf2PasswordHasher> logger, IConfiguration config)
+	public Pbkdf2PasswordHasher(ILogger<Pbkdf2PasswordHasher> logger, IConfiguration config, AuthOptions options)
 	{
 		_logger = logger;
+		_options = options;
 		_defaultIterations = config.GetValue("RECEPT_PBKDF2_ITERATIONS", 150_000);
 		_saltSize = 32;
 		_keySize = 32; // 256-bit
@@ -30,13 +32,13 @@ public class Pbkdf2PasswordHasher : IPasswordHasher
 	public (int iterations, byte[] salt, byte[] hash) Hash(string password, string? pepper = null)
 	{
 		var salt = RandomNumberGenerator.GetBytes(_saltSize);
-		var key = Derive(password, pepper, salt, _defaultIterations, _keySize);
+		var key = Derive(password, pepper ?? _options.Pepper, salt, _defaultIterations, _keySize);
 		return (_defaultIterations, salt, key);
 	}
 
 	public bool Verify(string password, string? pepper, byte[] salt, int iterations, byte[] expectedHash)
 	{
-		var actual = Derive(password, pepper, salt, iterations, expectedHash.Length);
+		var actual = Derive(password, pepper ?? _options.Pepper, salt, iterations, expectedHash.Length);
 		return CryptographicOperations.FixedTimeEquals(actual, expectedHash);
 	}
 
@@ -53,8 +55,13 @@ public static class AuthServiceCollectionExtensions
 {
 	public static IServiceCollection AddAuthServices(this IServiceCollection services)
 	{
+		services.AddAuthOptions();
+		services.AddSingleton<SessionSettings>(sp => SessionSettings.Load(sp.GetRequiredService<IConfiguration>()));
 		services.AddScoped<IPasswordHasher, Pbkdf2PasswordHasher>();
 		services.AddScoped<IAuthRepository, AuthRepository>();
+		services.AddScoped<IPasswordService, PasswordService>();
+		services.AddSingleton<ISessionService, InMemorySessionService>();
+		services.AddSingleton<ILoginRateLimiter, InMemoryLoginRateLimiter>();
 		return services;
 	}
 }
