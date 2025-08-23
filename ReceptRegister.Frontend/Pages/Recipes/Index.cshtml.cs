@@ -1,11 +1,22 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using ReceptRegister.Api.Data;
+using ReceptRegister.Api.Domain;
 
 namespace ReceptRegister.Frontend.Pages.Recipes;
 
 public class IndexModel : PageModel
 {
-    public void OnGet()
+    private readonly IRecipesRepository _repo;
+    public IndexModel(IRecipesRepository repo) => _repo = repo;
+
+    [BindProperty(SupportsGet = true)]
+    public string? Search { get; set; }
+
+    public IReadOnlyList<Recipe> Results { get; private set; } = Array.Empty<Recipe>();
+
+    public async Task OnGetAsync(CancellationToken ct)
     {
-        // Placeholder for initial list retrieval (Milestone 5)
+        Results = await _repo.SearchAsync(Search, ct);
     }
 }
