@@ -25,6 +25,7 @@ internal sealed class InMemorySessionService : ISessionService, IDisposable
 	private readonly ILogger<InMemorySessionService> _logger;
 	private readonly Timer _sweeper;
 	private readonly TimeSpan _rememberTtl;
+	private const int DefaultRememberMinutes = 60 * 24 * 30; // 30 days
 
 	public InMemorySessionService(IConfiguration config, TimeProvider timeProvider, ILogger<InMemorySessionService> logger)
 	{
