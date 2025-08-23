@@ -25,12 +25,12 @@ internal sealed class InMemorySessionService : ISessionService, IDisposable
 	private readonly ILogger<InMemorySessionService> _logger;
 	private readonly Timer _sweeper;
 	private readonly TimeSpan _rememberTtl;
+	private const int DefaultRememberMinutes = 60 * 24 * 30; // 30 days
 
 	public InMemorySessionService(IConfiguration config, TimeProvider timeProvider, ILogger<InMemorySessionService> logger)
 	{
 		var minutes = config.GetValue("RECEPT_SESSION_MINUTES", 120);
-		_ttl = TimeSpan.FromMinutes(minutes);
-		var rememberMinutes = config.GetValue("RECEPT_SESSION_REMEMBER_MINUTES", 60 * 24 * 30); // default 30 days
+		var rememberMinutes = config.GetValue("RECEPT_SESSION_REMEMBER_MINUTES", DefaultRememberMinutes); // default 30 days
 		_rememberTtl = TimeSpan.FromMinutes(rememberMinutes);
 		_timeProvider = timeProvider;
 		_logger = logger;
