@@ -7,11 +7,7 @@ using Microsoft.Data.Sqlite;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddAppHealth();
-
-// Persistence services
-builder.Services.AddSingleton<ISqliteConnectionFactory, SqliteConnectionFactory>();
-builder.Services.AddScoped<IRecipesRepository, RecipesRepository>();
-builder.Services.AddScoped<ITaxonomyRepository, TaxonomyRepository>();
+builder.Services.AddPersistenceServices();
 
 var app = builder.Build();
 
