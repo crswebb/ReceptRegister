@@ -18,10 +18,7 @@ await using (var scope = app.Services.CreateAsyncScope())
 	await SchemaInitializer.InitializeAsync(factory);
 }
 
-app.MapGet("/", () => Results.Redirect("/health"));
-app.MapAppHealth();
-app.MapRecipeEndpoints();
-app.MapTaxonomyEndpoints();
+app.MapApiEndpoints();
 
 app.Run();
 
