@@ -153,3 +153,59 @@ Foreign keys are enforced, and removing a recipe cascades its join rows. Categor
 In future milestones this may evolve (migrations, encryption, cloud backup), but for now the priority is a small, dependency-light foundation you can understand at a glance.
 
 — “Let’s sift the chaos and find the perfect recipe to bake today.” — Bagare Bengtsson
+
+## Running locally (Milestone 1 scaffolding)
+
+Two apps make up ReceptRegister:
+- API (Minimal API): hosts the JSON endpoints and persistence
+- Frontend (Razor Pages): serves the HTML UI and static assets
+
+### Option 1: Quick start (two terminals)
+```powershell
+dotnet watch run --project ReceptRegister.Api
+```
+```powershell
+dotnet watch run --project ReceptRegister.Frontend
+```
+Then browse the frontend (it calls into the API). Health checks:
+- API:   GET https://localhost:<api-port>/health -> JSON `{ "status": "ok" }`
+- Front: GET https://localhost:<frontend-port>/health -> plain text `ok`
+
+### Option 2: Orchestration script
+Use the helper script which launches both with file watching:
+```powershell
+./run-dev.ps1
+```
+Press Enter in the script window to stop both processes.
+
+### Ports
+Default Kestrel development ports are assigned by ASP.NET; you can pin them in each project Properties/launchSettings.json if you prefer stable values.
+
+## Publishing (self-contained example)
+
+Build a self‑contained release for Windows x64 (adjust RID as needed):
+```powershell
+dotnet publish ReceptRegister.Api -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true
+dotnet publish ReceptRegister.Frontend -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true
+```
+The output folders will be under each project's `bin/Release/<tfm>/<rid>/publish/`.
+
+Environment variables (pepper, iteration count, etc.) should be supplied via your host OS or service configuration. The SQLite database file is created alongside the API (see `App_Data`). Back it up by copying the single `.db` file while the API is stopped.
+
+## Folder conventions
+
+Frontend static asset layout:
+- `wwwroot/css/` : Base styles (`base.css`, site-wide styles in `site.css`)
+- `wwwroot/js/` : General scripts; `modules/` contains ES modules (progressive enhancement)
+- `wwwroot/js/modules/placeholder.js` : Intentional no-op scaffold so import patterns are established early
+
+## Dependency policy (early milestones)
+
+To keep the code understandable and portable:
+- No external CSS/JS frameworks (no Bootstrap, Tailwind, etc.)
+- No client-side bundler; ES modules loaded directly
+- Minimal NuGet dependencies; prefer platform features first
+
+This constraint can be revisited in later milestones if/when complexity warrants it.
+
+— “Let’s sift the chaos and find the perfect recipe to bake today.” — Bagare Bengtsson
