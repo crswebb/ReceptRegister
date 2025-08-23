@@ -12,12 +12,13 @@ internal sealed class AuthSessionMiddleware
 {
 	private readonly RequestDelegate _next;
 	private readonly ISessionService _sessions;
-	private const string SessionCookie = "rr_session";
+	private readonly SessionSettings _sessionSettings;
 
-	public AuthSessionMiddleware(RequestDelegate next, ISessionService sessions)
+	public AuthSessionMiddleware(RequestDelegate next, ISessionService sessions, SessionSettings sessionSettings)
 	{
 		_next = next;
 		_sessions = sessions;
+		_sessionSettings = sessionSettings;
 	}
 
 	public async Task InvokeAsync(HttpContext context)
