@@ -25,7 +25,13 @@ internal sealed class AuthSessionMiddleware
 	public async Task InvokeAsync(HttpContext context)
 	{
 		var path = context.Request.Path.Value ?? string.Empty;
-		// Always allow basic health & auth endpoints to pass through (case-insensitive)
+		// Always allow static assets & basic health/auth endpoints to pass through (case-insensitive)
+		if (IsStaticAsset(path))
+		{
+			await _next(context);
+			return;
+		}
+		// Health + auth
 		if (path.StartsWith("/health", StringComparison.OrdinalIgnoreCase) ||
 			path.StartsWith("/api/health", StringComparison.OrdinalIgnoreCase) ||
 			path.StartsWith("/auth", StringComparison.OrdinalIgnoreCase))
