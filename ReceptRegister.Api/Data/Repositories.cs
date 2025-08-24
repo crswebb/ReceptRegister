@@ -347,8 +347,8 @@ LIMIT $ps OFFSET $off";
         if (!await Exists(conn, "Recipes", recipeId, ct) || !await Exists(conn, "Categories", categoryId, ct)) return false;
         var cmd = conn.CreateCommand();
         cmd.CommandText = "DELETE FROM RecipeCategories WHERE RecipeId=$r AND CategoryId=$c";
-    AddParam(cmd, "$r", recipeId);
-    AddParam(cmd, "$c", categoryId);
+        AddParam(cmd, "$r", recipeId);
+        AddParam(cmd, "$c", categoryId);
         await cmd.ExecuteNonQueryAsync(ct);
         return true;
     }
