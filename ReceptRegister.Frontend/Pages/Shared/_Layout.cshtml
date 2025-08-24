@@ -21,7 +21,29 @@
                 <li><a asp-page="/Recipes/Index" aria-current="@(Context.Request.Path.Value?.StartsWith("/Recipes", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">Recipes</a></li>
                 <li><a asp-page="/Taxonomy/Categories" aria-current="@(Context.Request.Path.Value?.Contains("/Taxonomy/Categories", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">Categories</a></li>
                 <li><a asp-page="/Taxonomy/Keywords" aria-current="@(Context.Request.Path.Value?.Contains("/Taxonomy/Keywords", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">Keywords</a></li>
-                <li><a asp-page="/Auth/Login" aria-current="@(Context.Request.Path.Value?.Contains("/Auth/Login", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">Login</a></li>
+@{
+    // Determine authenticated state server-side (best effort) using session cookie + ISessionService
+    var isAuthed = false;
+    var sessionSvc = Context.RequestServices.GetService(typeof(ReceptRegister.Api.Auth.ISessionService)) as ReceptRegister.Api.Auth.ISessionService;
+    var settings = Context.RequestServices.GetService(typeof(ReceptRegister.Api.Auth.SessionSettings)) as ReceptRegister.Api.Auth.SessionSettings;
+    var cookieName = settings?.CookieName ?? "rr_session";
+    if (Context.Request.Cookies.TryGetValue(cookieName, out var tok) && sessionSvc != null)
+    {
+        isAuthed = sessionSvc.Validate(tok);
+    }
+}
+                @if (!isAuthed)
+                {
+                    <li><a asp-page="/Auth/Login" aria-current="@(Context.Request.Path.Value?.Contains("/Auth/Login", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">Login</a></li>
+                }
+                else
+                {
+                    <li>
+                        <form method="post" action="/auth/logout" class="inline" id="logout-form">
+                            <button type="submit" class="link-button">Logout</button>
+                        </form>
+                    </li>
+                }
             </ul>
         </nav>
     </header>
@@ -34,6 +56,26 @@
     <script type="module" src="/js/modules/search-enhance.js" defer></script>
     <script type="module" src="/js/modules/toggle-tried.js" defer></script>
     <script type="module" src="/js/modules/chips.js" defer></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const frm = document.getElementById('logout-form');
+        if (frm) {
+            frm.addEventListener('submit', async (e) => {
+                // Add CSRF header if we have stored value (after login we could expose via meta or fetch /auth/status)
+                const csrf = window.localStorage.getItem('rr_csrf');
+                if (csrf) {
+                    e.preventDefault();
+                    const res = await fetch('/auth/logout', { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf } });
+                    if (res.ok) {
+                        window.location.href = '/Auth/Login';
+                    } else {
+                        alert('Logout failed');
+                    }
+                }
+            });
+        }
+    });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
