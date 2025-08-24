@@ -25,8 +25,10 @@ internal sealed class AuthSessionMiddleware
 	public async Task InvokeAsync(HttpContext context)
 	{
 		var path = context.Request.Path.Value ?? string.Empty;
-		// Always allow basic health & auth endpoints to pass through
-		if (path.StartsWith("/health") || path.StartsWith("/api/health") || path.StartsWith("/auth"))
+		// Always allow basic health & auth endpoints to pass through (case-insensitive)
+		if (path.StartsWith("/health", StringComparison.OrdinalIgnoreCase) ||
+			path.StartsWith("/api/health", StringComparison.OrdinalIgnoreCase) ||
+			path.StartsWith("/auth", StringComparison.OrdinalIgnoreCase))
 		{
 			await _next(context);
 			return;
@@ -86,7 +88,13 @@ internal sealed class AuthSessionMiddleware
 		var acceptHeader = context.Request.Headers["Accept"].ToString();
 		if (acceptHeader.Contains("text/html", StringComparison.OrdinalIgnoreCase))
 		{
-			context.Response.Redirect("/Auth/Login");
+			// Avoid redirect loop: if already on login page just return 401 (will show page if routed) or let pipeline handle if route exists
+			if (!path.StartsWith("/Auth/Login", StringComparison.OrdinalIgnoreCase))
+			{
+				context.Response.Redirect("/Auth/Login");
+				return;
+			}
+			context.Response.StatusCode = StatusCodes.Status401Unauthorized;
 			return;
 		}
 		context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -94,8 +102,12 @@ internal sealed class AuthSessionMiddleware
 
 	private static bool IsStaticAsset(string path)
 	{
-		// crude allowlist; adjust as needed
-		return path.StartsWith("/css/") || path.StartsWith("/js/") || path.StartsWith("/favicon") || path.StartsWith("/images/") || path.StartsWith("/lib/");
+		// crude allowlist; adjust as needed (case-insensitive)
+		return path.StartsWith("/css/", StringComparison.OrdinalIgnoreCase) ||
+			path.StartsWith("/js/", StringComparison.OrdinalIgnoreCase) ||
+			path.StartsWith("/favicon", StringComparison.OrdinalIgnoreCase) ||
+			path.StartsWith("/images/", StringComparison.OrdinalIgnoreCase) ||
+			path.StartsWith("/lib/", StringComparison.OrdinalIgnoreCase);
 	}
 
 	private static bool IsUnsafe(string method) =>
