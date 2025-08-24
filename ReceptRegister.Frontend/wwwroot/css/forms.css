@@ -21,6 +21,12 @@ label { font-weight: var(--fw-medium); }
 .field-group .text-danger { margin-top: var(--spacing-2); }
 .checkbox-inline { display:flex; align-items:center; gap: var(--spacing-3); }
 .checkbox-inline input[type=checkbox] { margin:0; }
+
+/* Recipe form grid (Add/Edit) */
+.recipe-form .form-grid { display:grid; gap:var(--spacing-6) var(--spacing-7); grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); align-items:start; }
+.recipe-form .form-grid .span-2 { grid-column: span 2; }
+@media (max-width:720px){ .recipe-form .form-grid .span-2 { grid-column: span 1; } }
+.recipe-form .actions { margin-top: var(--spacing-7); display:flex; gap:var(--spacing-5); }
 input:focus, textarea:focus { outline: var(--focus-ring); outline-offset: 1px; }
 /* Button system (#88) */
 button { font: inherit; cursor:pointer; }
