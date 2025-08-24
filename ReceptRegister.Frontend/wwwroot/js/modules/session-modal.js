@@ -7,6 +7,9 @@ let expiry = null; // epoch ms
 let modalShownFor = null; // expiry timestamp we already warned for
 let countdownTimer = null;
 let preloadTimer = null;
+let pollInterval = null;
+let lastActive = false; // track previous authenticated state
+let focusBeforeModal = null;
 
 function ensureModal() {
   let modal = document.getElementById('session-expiry-modal');
@@ -33,10 +36,27 @@ function ensureModal() {
   return modal;
 }
 
+function trapFocus(e){
+  const modal = document.getElementById('session-expiry-modal');
+  if (!modal || modal.classList.contains('hidden')) return;
+  const focusables = modal.querySelectorAll('button, [href], [tabindex]:not([tabindex="-1"])');
+  if (!focusables.length) return;
+  const first = focusables[0];
+  const last = focusables[focusables.length-1];
+  if (e.key === 'Tab') {
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  } else if (e.key === 'Escape') {
+    hideModal();
+  }
+}
+
 function showModal() {
   const modal = ensureModal();
   if (!modal.classList.contains('hidden')) return;
   modal.classList.remove('hidden');
+  focusBeforeModal = document.activeElement;
+  document.addEventListener('keydown', trapFocus, true);
   const btn = modal.querySelector('#stay-signed-in');
   if (btn) btn.focus();
   startCountdown();
@@ -47,6 +67,10 @@ function hideModal() {
   if (!modal) return;
   modal.classList.add('hidden');
   stopCountdown();
+  document.removeEventListener('keydown', trapFocus, true);
+  if (focusBeforeModal && typeof focusBeforeModal.focus === 'function') {
+    try { focusBeforeModal.focus(); } catch {}
+  }
 }
 
 function startCountdown() {
@@ -99,7 +123,19 @@ async function pollStatus() {
     const r = await fetch('/auth/status');
     if (!r.ok) return;
     const d = await r.json();
-    if (d?.authenticated && d?.expiresAt) {
+    const authed = !!d?.authenticated;
+    if (!authed) {
+      // user logged out or unauthenticated; clear timers & modal
+      expiry = null; modalShownFor = null; hideModal();
+      if (pollInterval) { /* keep interval but no-op until auth returns */ }
+      lastActive = false;
+      return;
+    }
+    if (!lastActive) {
+      // transition to authed; schedule future polling/refresh if not already started
+      lastActive = true;
+    }
+    if (d?.expiresAt) {
       const exp = Date.parse(d.expiresAt);
       if (!Number.isNaN(exp)) {
         expiry = exp;
@@ -109,8 +145,8 @@ async function pollStatus() {
   } catch {}
 }
 
-// Periodic polling for adaptive nav + expiry updates
-setInterval(() => { pollStatus(); refreshSessionIfNeeded(); }, SESSION_CHECK_INTERVAL);
+// Periodic polling for adaptive nav + expiry updates (lazy start)
+pollInterval = setInterval(() => { pollStatus(); refreshSessionIfNeeded(); }, SESSION_CHECK_INTERVAL);
 
 // Initial kick
 pollStatus();
