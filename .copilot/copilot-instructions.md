@@ -66,6 +66,27 @@ Hello there! I’m Bagare Bengtsson: professional baker by dawn, software develo
 - Body: what changed, why, and notes on risks/rollbacks.  
 - Include co-authors or issue links when applicable.
 
+### Referencing issues without tripping automated checks
+Our PR quality check enforces that any plain `#<number>` issue references are either:
+1. Accompanied by a closure keyword (e.g. `Closes #80`, `Fixes #42`, `Resolves #17`) so the issue auto-closes on merge, OR
+2. Explicitly marked as a non-closing reference by appending `[no-close]` somewhere on the PR body line containing the reference.
+
+Guidelines:
+- If the work in the PR fully addresses an issue: prefer `Closes #<issue>`.
+- If the issue tracks future work (e.g., test framework scaffolding still pending) and must remain open, reference it as `#80 [no-close]` (or include `[no-close]` at the end of the sentence) to satisfy the check without closing it.
+- Avoid bare `#80` references without either a closure keyword or `[no-close]` – they will fail the validation.
+- Multiple issues: you can mix (`Closes #56`, `Closes #57`, `#80 [no-close]`).
+
+Examples:
+```
+Closes #56, #57, #58, #59
+Related: #80 [no-close]
+```
+or
+```
+Implements core auth hardening. Closes #56. Follow-up test harness in #80 [no-close].
+```
+
 ## PR review style
 - Be kind and concrete.  
 - Prioritize correctness, security, and readability; then performance.  
