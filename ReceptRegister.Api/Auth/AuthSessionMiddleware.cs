@@ -25,21 +25,41 @@ internal sealed class AuthSessionMiddleware
 	public async Task InvokeAsync(HttpContext context)
 	{
 		var path = context.Request.Path.Value ?? string.Empty;
-		// Public / unauthenticated paths (root, simple health, api health, auth endpoints)
+		// Always allow basic health & auth endpoints to pass through
 		if (path.StartsWith("/health") || path.StartsWith("/api/health") || path.StartsWith("/auth"))
 		{
 			await _next(context);
 			return;
 		}
-		// Root ("/") is only public until an initial password is set. After that it is protected like other pages.
-		if (path == "/")
+
+		// Setup mode handling (no password yet configured)
+		await using (var scope = _scopeFactory.CreateAsyncScope())
 		{
-			// Resolve scoped password service only when needed
-			await using var scope = _scopeFactory.CreateAsyncScope();
 			var passwordSvc = scope.ServiceProvider.GetRequiredService<IPasswordService>();
 			if (!await passwordSvc.HasPasswordAsync())
 			{
-				await _next(context);
+				// Allow static asset requests so SetPassword page renders correctly
+				if (IsStaticAsset(path))
+				{
+					await _next(context);
+					return;
+				}
+				// If not already requesting set password page, redirect browsers there. For API calls return 503.
+				if (!path.StartsWith("/Auth/SetPassword", StringComparison.OrdinalIgnoreCase))
+				{
+					var accept = context.Request.Headers["Accept"].ToString();
+					if (accept.Contains("text/html", StringComparison.OrdinalIgnoreCase) || !path.StartsWith("/api", StringComparison.OrdinalIgnoreCase))
+					{
+						context.Response.Redirect("/Auth/SetPassword");
+					}
+					else
+					{
+						context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+						await context.Response.WriteAsync("Setup required (password not set).", System.Text.Encoding.UTF8);
+					}
+					return;
+				}
+				await _next(context); // already on SetPassword page
 				return;
 			}
 		}
@@ -63,6 +83,12 @@ internal sealed class AuthSessionMiddleware
 		}
 
 		context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+	}
+
+	private static bool IsStaticAsset(string path)
+	{
+		// crude allowlist; adjust as needed
+		return path.StartsWith("/css/") || path.StartsWith("/js/") || path.StartsWith("/favicon") || path.StartsWith("/images/") || path.StartsWith("/lib/");
 	}
 
 	private static bool IsUnsafe(string method) =>
