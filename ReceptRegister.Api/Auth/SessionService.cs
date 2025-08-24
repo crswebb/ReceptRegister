@@ -30,8 +30,8 @@ public sealed class InMemorySessionService : ISessionService, IDisposable
 	public InMemorySessionService(IConfiguration config, TimeProvider timeProvider, ILogger<InMemorySessionService> logger)
 	{
 		var minutes = config.GetValue("RECEPT_SESSION_MINUTES", 120);
+		_ttl = TimeSpan.FromMinutes(minutes); // assign immediately after reading
 		var rememberMinutes = config.GetValue("RECEPT_SESSION_REMEMBER_MINUTES", DefaultRememberMinutes); // default 30 days
-		_ttl = TimeSpan.FromMinutes(minutes);
 		_rememberTtl = TimeSpan.FromMinutes(rememberMinutes);
 		_timeProvider = timeProvider;
 		_logger = logger;
