@@ -41,7 +41,7 @@
                     <ul class="inline-list" role="list">@foreach (var k in r.Keywords) { <li role="listitem">@k.Name</li> }</ul>
                 }
             </td>
-            <td><button type="button" class="link-button" data-toggle-tried data-id="@r.Id" data-tried="@r.Tried">@(r.Tried?"✔":"")</button></td>
+            <td><button type="button" class="link-button" data-toggle-tried data-id="@r.Id" data-tried="@r.Tried" aria-pressed="@r.Tried.ToString().ToLower()" aria-label="Toggle tried">@(r.Tried?"✔":"")</button></td>
         </tr>
     }
     </tbody>
@@ -59,7 +59,7 @@
                     <a href="?Search=@Model.Search&PageNumber=@(Model.Result.Page-1)&PageSize=@Model.Result.PageSize" rel="prev">Prev</a>
                 } else { <span class="muted">Prev</span> }
             </li>
-            <li role="listitem">Page @Model.Result.Page of @Model.Result.TotalPages</li>
+            <li role="listitem"><span aria-current="page">Page @Model.Result.Page of @Model.Result.TotalPages</span></li>
             <li role="listitem">
                 @if (Model.Result.Page < Model.Result.TotalPages) {
                     <a href="?Search=@Model.Search&PageNumber=@(Model.Result.Page+1)&PageSize=@Model.Result.PageSize" rel="next">Next</a>

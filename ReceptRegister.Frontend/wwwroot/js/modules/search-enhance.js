@@ -6,6 +6,9 @@ if (form) {
   const countEl = document.querySelector('.result-count');
   let timer;
   const apiBase = document.querySelector('meta[name="api-base"]')?.content || '';
+  // Debounced live region announcement state (#74)
+  let announceTimer = null;
+  let pendingAnnouncement = '';
   // Create (or reuse) a lightweight status region for errors (aria-live polite)
   let statusRegion = document.querySelector('#search-status');
   if (!statusRegion) {
@@ -69,8 +72,17 @@ if (form) {
       }
       if (countEl) {
         countEl.textContent = `${items.length} of ${data.totalItems ?? items.length} recipe${(data.totalItems ?? items.length)===1?'':'s'} shown.`;
+        const announcement = (countEl.textContent || '').replace(' shown.', ' listed.');
         const live = document.getElementById('search-results-count');
-        if (live) live.textContent = (countEl.textContent || '').replace(' shown.', ' listed.');
+        if (live) {
+          // Debounce announcements to reduce SR chatter during rapid typing
+          pendingAnnouncement = announcement;
+          if (announceTimer) clearTimeout(announceTimer);
+          announceTimer = setTimeout(() => {
+            live.textContent = pendingAnnouncement;
+            announceTimer = null;
+          }, 500);
+        }
       }
       // Clear prior error status if any
       if (statusRegion) {
