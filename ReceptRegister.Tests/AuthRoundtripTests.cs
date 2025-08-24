@@ -19,8 +19,7 @@ public class AuthRoundtripTests
     {
     var builder = WebApplication.CreateBuilder(Array.Empty<string>());
     builder.WebHost.UseUrls("http://127.0.0.1:0");
-    var tempRoot = Path.Combine(Path.GetTempPath(), "rr_apitests_" + Guid.NewGuid().ToString("N"));
-    Directory.CreateDirectory(tempRoot);
+    var tempRoot = TestPathHelpers.NewApiTempRoot();
     builder.Environment.ContentRootPath = tempRoot;
     // Environment forced via Host.UseEnvironment above
         // No special debug configuration required now

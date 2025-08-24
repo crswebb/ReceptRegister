@@ -1,6 +1,6 @@
 using System.Net;
 using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection; // duplicate intentionally removed below
 using Microsoft.Extensions.Configuration;
 using ReceptRegister.Api.Auth;
 using ReceptRegister.Api.Data;
@@ -17,8 +17,7 @@ public class LoginPageTests
         var builder = Microsoft.AspNetCore.Builder.WebApplication.CreateBuilder(Array.Empty<string>());
         builder.WebHost.UseTestServer();
         var frontendPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "ReceptRegister.Frontend"));
-    var tempRoot = Path.Combine(Path.GetTempPath(), "rr_frontendtests_" + Guid.NewGuid().ToString("N"));
-    Directory.CreateDirectory(tempRoot);
+    var tempRoot = TestPathHelpers.NewFrontendTempRoot();
     builder.Environment.ContentRootPath = tempRoot;
         builder.Services.AddRazorPages(o => {
             o.Conventions.ConfigureFilter(new Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryTokenAttribute());
