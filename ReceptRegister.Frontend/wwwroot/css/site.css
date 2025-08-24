@@ -49,3 +49,11 @@ body {
 
 .pw-suggestions { margin:.25rem 0 0; padding-left:1.1rem; font-size:.75rem; color:#555; }
 .pw-suggestions li { list-style:disc; }
+
+/* Session expiry modal */
+.session-modal.hidden { display:none; }
+.session-modal { position:fixed; inset:0; z-index:1000; }
+.session-modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.4); }
+.session-modal-dialog { position:relative; max-width:420px; margin:10% auto; background:#fff; padding:1.25rem 1.5rem; border-radius:6px; box-shadow:0 4px 16px rgba(0,0,0,.25); }
+.session-modal-dialog h2 { margin-top:0; font-size:1.25rem; }
+.session-modal .actions { margin-top:1rem; display:flex; gap:.75rem; justify-content:flex-end; }
