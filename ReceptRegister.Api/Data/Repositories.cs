@@ -128,11 +128,11 @@ public class RecipesRepository : IRecipesRepository
 
         var insertCmd = conn.CreateCommand();
         insertCmd.CommandText = @"INSERT INTO Recipes (Name, Book, Page, Notes, Tried) VALUES ($n,$b,$p,$no,$t); SELECT last_insert_rowid();";
-    AddParam(insertCmd, "$n", recipe.Name);
-    AddParam(insertCmd, "$b", recipe.Book);
-    AddParam(insertCmd, "$p", recipe.Page);
-    AddParam(insertCmd, "$no", (object?)recipe.Notes ?? DBNull.Value);
-    AddParam(insertCmd, "$t", recipe.Tried ? 1 : 0);
+        AddParam(insertCmd, "$n", recipe.Name);
+        AddParam(insertCmd, "$b", recipe.Book);
+        AddParam(insertCmd, "$p", recipe.Page);
+        AddParam(insertCmd, "$no", (object?)recipe.Notes ?? DBNull.Value);
+        AddParam(insertCmd, "$t", recipe.Tried ? 1 : 0);
         var idObj = await insertCmd.ExecuteScalarAsync(ct);
         if (idObj is null)
             throw new InvalidOperationException("Failed to retrieve new recipe id");
@@ -164,12 +164,12 @@ public class RecipesRepository : IRecipesRepository
 
         var cmd = conn.CreateCommand();
         cmd.CommandText = @"UPDATE Recipes SET Name=$n, Book=$b, Page=$p, Notes=$no, Tried=$t WHERE Id=$id";
-    AddParam(cmd, "$n", recipe.Name);
-    AddParam(cmd, "$b", recipe.Book);
-    AddParam(cmd, "$p", recipe.Page);
-    AddParam(cmd, "$no", (object?)recipe.Notes ?? DBNull.Value);
-    AddParam(cmd, "$t", recipe.Tried ? 1 : 0);
-    AddParam(cmd, "$id", recipe.Id);
+        AddParam(cmd, "$n", recipe.Name);
+        AddParam(cmd, "$b", recipe.Book);
+        AddParam(cmd, "$p", recipe.Page);
+        AddParam(cmd, "$no", (object?)recipe.Notes ?? DBNull.Value);
+        AddParam(cmd, "$t", recipe.Tried ? 1 : 0);
+        AddParam(cmd, "$id", recipe.Id);
         await cmd.ExecuteNonQueryAsync(ct);
 
         await ReplaceLinks(conn, recipe.Id, "RecipeCategories", categories, "Categories", "CategoryId", ct);
@@ -194,8 +194,8 @@ public class RecipesRepository : IRecipesRepository
         await conn.OpenAsync(ct);
         var cmd = conn.CreateCommand();
         cmd.CommandText = "UPDATE Recipes SET Tried=$t WHERE Id=$id";
-    AddParam(cmd, "$t", tried ? 1 : 0);
-    AddParam(cmd, "$id", id);
+        AddParam(cmd, "$t", tried ? 1 : 0);
+        AddParam(cmd, "$id", id);
         await cmd.ExecuteNonQueryAsync(ct);
     }
 
@@ -334,8 +334,8 @@ LIMIT $ps OFFSET $off";
         if (!await Exists(conn, "Recipes", recipeId, ct) || !await Exists(conn, "Categories", categoryId, ct)) return false;
         var cmd = conn.CreateCommand();
         cmd.CommandText = "INSERT OR IGNORE INTO RecipeCategories (RecipeId, CategoryId) VALUES ($r,$c)";
-    AddParam(cmd, "$r", recipeId);
-    AddParam(cmd, "$c", categoryId);
+        AddParam(cmd, "$r", recipeId);
+        AddParam(cmd, "$c", categoryId);
         await cmd.ExecuteNonQueryAsync(ct);
         return true;
     }
@@ -347,8 +347,8 @@ LIMIT $ps OFFSET $off";
         if (!await Exists(conn, "Recipes", recipeId, ct) || !await Exists(conn, "Categories", categoryId, ct)) return false;
         var cmd = conn.CreateCommand();
         cmd.CommandText = "DELETE FROM RecipeCategories WHERE RecipeId=$r AND CategoryId=$c";
-    AddParam(cmd, "$r", recipeId);
-    AddParam(cmd, "$c", categoryId);
+        AddParam(cmd, "$r", recipeId);
+        AddParam(cmd, "$c", categoryId);
         await cmd.ExecuteNonQueryAsync(ct);
         return true;
     }
@@ -360,8 +360,8 @@ LIMIT $ps OFFSET $off";
         if (!await Exists(conn, "Recipes", recipeId, ct) || !await Exists(conn, "Keywords", keywordId, ct)) return false;
         var cmd = conn.CreateCommand();
         cmd.CommandText = "INSERT OR IGNORE INTO RecipeKeywords (RecipeId, KeywordId) VALUES ($r,$k)";
-    AddParam(cmd, "$r", recipeId);
-    AddParam(cmd, "$k", keywordId);
+        AddParam(cmd, "$r", recipeId);
+        AddParam(cmd, "$k", keywordId);
         await cmd.ExecuteNonQueryAsync(ct);
         return true;
     }
@@ -373,8 +373,8 @@ LIMIT $ps OFFSET $off";
         if (!await Exists(conn, "Recipes", recipeId, ct) || !await Exists(conn, "Keywords", keywordId, ct)) return false;
         var cmd = conn.CreateCommand();
         cmd.CommandText = "DELETE FROM RecipeKeywords WHERE RecipeId=$r AND KeywordId=$k";
-    AddParam(cmd, "$r", recipeId);
-    AddParam(cmd, "$k", keywordId);
+        AddParam(cmd, "$r", recipeId);
+        AddParam(cmd, "$k", keywordId);
         await cmd.ExecuteNonQueryAsync(ct);
         return true;
     }
