@@ -1,0 +1,59 @@
+name: PR Issue Linkage Check
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, ready_for_review]
+
+permissions:
+  issues: read
+  pull-requests: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate issue linkage closure keywords
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr) { core.info('No pull_request in context'); return; }
+            const body = pr.body || '';
+            // Collect all referenced issue numbers (#123) in body
+            const referenced = [...new Set([...body.matchAll(/#(\d+)/g)].map(m => m[1]))];
+            if (referenced.length === 0) {
+              core.info('No issue references found in PR body.');
+              return;
+            }
+            // Closure keyword regex (case-insensitive)
+            const closureRegex = /\b(closes|closed|close|fixes|fixed|fix|resolves|resolved|resolve)\s+#(\d+)\b/ig;
+            const closers = new Set();
+            for (const m of body.matchAll(closureRegex)) {
+              closers.add(m[2]);
+            }
+            // Allow opt-out with [no-close] on same line as issue reference
+            const noClose = new Set();
+            for (const line of body.split(/\r?\n/)) {
+              const m = line.match(/#(\d+)/);
+              if (m && /\[no-close\]/i.test(line)) {
+                noClose.add(m[1]);
+              }
+            }
+            const { owner, repo } = context.repo;
+            const openMissing = [];
+            for (const num of referenced) {
+              if (closers.has(num) || noClose.has(num)) continue;
+              try {
+                const issue = await github.rest.issues.get({ owner, repo, issue_number: Number(num) });
+                if (issue.data.state === 'open') {
+                  openMissing.push(num);
+                }
+              } catch (err) {
+                core.warning(`Could not fetch issue #${num}: ${err.message}`);
+              }
+            }
+            if (openMissing.length) {
+              core.setFailed(`Open issues referenced without closure keyword: ${openMissing.map(n => '#' + n).join(', ')}. Add lines like 'Closes #${openMissing[0]}' or append [no-close] to deliberately reference without closing.`);
+            } else {
+              core.info('All referenced issues are either closed, have closure keywords, or are explicitly marked [no-close].');
+            }

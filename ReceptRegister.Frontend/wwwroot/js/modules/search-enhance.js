@@ -29,15 +29,34 @@ if (form) {
 
   const doSearch = async () => {
   const q = input.value.trim();
-  const url = apiBase + '/recipes/?query=' + encodeURIComponent(q);
+  // Validate apiBase presence & construct URL safely
+  if (!apiBase) {
+    renderError('Search unavailable: API base URL not defined.');
+    return;
+  }
+  let url;
+  try {
+    url = new URL('/api/recipes/?query=' + encodeURIComponent(q), apiBase);
+  } catch (e) {
+    renderError('Search unavailable: Invalid API base URL.');
+    return;
+  }
     try {
-      const res = await fetch(url);
+      const res = await fetch(url.toString());
       if (!res.ok) {
         renderError('Search unavailable. Please try again later.');
         return;
       }
   const data = await res.json();
-  const items = Array.isArray(data.items) ? data.items : data; // fallback if backend still legacy
+  // Support either new paged { items, totalItems } or legacy array
+  let items = [];
+  if (Array.isArray(data)) {
+    items = data;
+  } else if (Array.isArray(data.items)) {
+    items = data.items;
+  } else if (Array.isArray(data.Items)) { // defensive in case of PascalCase
+    items = data.Items;
+  }
   tableBody.innerHTML = '';
   for (const r of items) {
         const tr = document.createElement('tr');
