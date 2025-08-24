@@ -48,8 +48,23 @@ foreach ($b in $branches) {
   $tag = "archive/" + ($b -replace '/','-') + "-" + $tipSha.Substring(0,8)
   Write-Host "[prune] Archiving $b as $tag" -ForegroundColor Yellow
   & git tag -a $tag $tipSha -m "Archive snapshot before pruning $b" 2>$null
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "[prune] ERROR: Failed to create tag $tag for $b" -ForegroundColor Red
+    $skipped += "$b (tag create failed)"
+    continue
+  }
   & git push origin $tag | Out-Null
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "[prune] ERROR: Failed to push tag $tag for $b" -ForegroundColor Red
+    $skipped += "$b (tag push failed)"
+    continue
+  }
   & git push origin --delete $b | Out-Null
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "[prune] ERROR: Failed to delete remote branch $b" -ForegroundColor Red
+    $skipped += "$b (remote delete failed)"
+    continue
+  }
   & git show-ref --verify --quiet refs/heads/$b; if ($LASTEXITCODE -eq 0) { & git branch -D $b | Out-Null }
   $pruned += $b
 }
