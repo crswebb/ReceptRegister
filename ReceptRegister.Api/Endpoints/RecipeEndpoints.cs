@@ -1,5 +1,6 @@
 using ReceptRegister.Api.Domain;
 using ReceptRegister.Api.Data;
+using ReceptRegister.Api.Infrastructure;
 
 namespace ReceptRegister.Api.Endpoints;
 
@@ -35,8 +36,6 @@ public static class RecipeEndpoints
 
 		group.MapPost("/", async (RecipeRequest req, IRecipesRepository repo, CancellationToken ct) =>
 		{
-			if (string.IsNullOrWhiteSpace(req.Name) || string.IsNullOrWhiteSpace(req.Book))
-				return Results.ValidationProblem(new Dictionary<string, string[]>{{"Name/Book", new[]{"Name and Book are required"}}});
 			var recipe = new Recipe
 			{
 				Name = req.Name.Trim(),
@@ -47,12 +46,12 @@ public static class RecipeEndpoints
 			};
 			var id = await repo.AddAsync(recipe, req.Categories, req.Keywords, ct);
 			return Results.Created($"/recipes/{id}", Mapping.ToDetail(recipe));
-		});
+		}).AddEndpointFilter<ValidationFilter>();
 
 		group.MapPut("/{id:int}", async (int id, RecipeRequest req, IRecipesRepository repo, CancellationToken ct) =>
 		{
 			var existing = await repo.GetByIdAsync(id, ct);
-			if (existing is null) return Results.NotFound();
+			if (existing is null) return ProblemDetailsExtensions.NotFoundProblem($"Recipe {id} not found");
 			existing.Name = req.Name.Trim();
 			existing.Book = req.Book.Trim();
 			existing.Page = req.Page;
@@ -61,12 +60,12 @@ public static class RecipeEndpoints
 			await repo.UpdateAsync(existing, req.Categories, req.Keywords, ct);
 			var updated = await repo.GetByIdAsync(id, ct);
 			return Results.Ok(Mapping.ToDetail(updated!));
-		});
+		}).AddEndpointFilter<ValidationFilter>();
 
 		group.MapPost("/{id:int}/tried", async (int id, RecipeTriedDto body, IRecipesRepository repo, CancellationToken ct) =>
 		{
 			var existing = await repo.GetByIdAsync(id, ct);
-			if (existing is null) return Results.NotFound();
+			if (existing is null) return ProblemDetailsExtensions.NotFoundProblem($"Recipe {id} not found");
 			await repo.ToggleTriedAsync(id, body.Tried, ct);
 			var updated = await repo.GetByIdAsync(id, ct);
 			return Results.Ok(new RecipeTriedDto(updated!.Id, updated.Tried));
@@ -76,22 +75,22 @@ public static class RecipeEndpoints
 		group.MapPost("/{id:int}/categories/{categoryId:int}", async (int id, int categoryId, IRecipesRepository repo, CancellationToken ct) =>
 		{
 			var ok = await repo.AttachCategoryAsync(id, categoryId, ct);
-			return ok ? Results.NoContent() : Results.NotFound();
+			return ok ? Results.NoContent() : ProblemDetailsExtensions.NotFoundProblem($"Recipe {id} or category {categoryId} not found");
 		});
 		group.MapDelete("/{id:int}/categories/{categoryId:int}", async (int id, int categoryId, IRecipesRepository repo, CancellationToken ct) =>
 		{
 			var ok = await repo.DetachCategoryAsync(id, categoryId, ct);
-			return ok ? Results.NoContent() : Results.NotFound();
+			return ok ? Results.NoContent() : ProblemDetailsExtensions.NotFoundProblem($"Recipe {id} or category {categoryId} not found");
 		});
 		group.MapPost("/{id:int}/keywords/{keywordId:int}", async (int id, int keywordId, IRecipesRepository repo, CancellationToken ct) =>
 		{
 			var ok = await repo.AttachKeywordAsync(id, keywordId, ct);
-			return ok ? Results.NoContent() : Results.NotFound();
+			return ok ? Results.NoContent() : ProblemDetailsExtensions.NotFoundProblem($"Recipe {id} or keyword {keywordId} not found");
 		});
 		group.MapDelete("/{id:int}/keywords/{keywordId:int}", async (int id, int keywordId, IRecipesRepository repo, CancellationToken ct) =>
 		{
 			var ok = await repo.DetachKeywordAsync(id, keywordId, ct);
-			return ok ? Results.NoContent() : Results.NotFound();
+			return ok ? Results.NoContent() : ProblemDetailsExtensions.NotFoundProblem($"Recipe {id} or keyword {keywordId} not found");
 		});
 
 		group.MapDelete("/{id:int}", async (int id, IRecipesRepository repo, CancellationToken ct) =>
