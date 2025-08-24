@@ -10,7 +10,7 @@
 }
 else
 {
-    <h1>@Model.Recipe.Name</h1>
+    <h1><span class="icon" aria-hidden="true">📖</span> @Model.Recipe.Name</h1>
     <p><strong>Book:</strong> @Model.Recipe.Book<br />
        <strong>Page:</strong> @Model.Recipe.Page<br />
        <strong>Tried:</strong> @(Model.Recipe.Tried ? "Yes" : "No")</p>
@@ -18,12 +18,12 @@ else
         <h2 class="visually-hidden">Taxonomy</h2>
         <p><strong>Categories:</strong>
             @if (Model.Recipe.Categories.Count==0) { <span class="muted">None</span>; } else {
-                <ul class="chip-list" role="list">@foreach(var c in Model.Recipe.Categories){<li class="chip" role="listitem">@c.Name</li>}</ul>
+                <ul class="chip-list" role="list">@{ var ci=0; }@foreach(var c in Model.Recipe.Categories){ var cls=$"cat-{(ci%5)+1}"; <li class="chip @cls" role="listitem">@c.Name</li>; ci++; }</ul>
             }
         </p>
         <p><strong>Keywords:</strong>
             @if (Model.Recipe.Keywords.Count==0) { <span class="muted">None</span>; } else {
-                <ul class="chip-list" role="list">@foreach(var k in Model.Recipe.Keywords){<li class="chip" role="listitem">@k.Name</li>}</ul>
+                <ul class="chip-list" role="list">@{ var ki=0; }@foreach(var k in Model.Recipe.Keywords){ var cls=$"key-{(ki%5)+1}"; <li class="chip @cls" role="listitem">@k.Name</li>; ki++; }</ul>
             }
         </p>
     </section>

@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = "Recipes";
 }
-<h1>Recipes</h1>
+<h1><span class="icon" aria-hidden="true">🍽️</span> Recipes</h1>
 <div class="card-grid-toggle">
     <button type="button" class="btn btn--subtle btn--sm" id="toggle-layout" aria-pressed="false">Cards</button>
 </div>
@@ -38,12 +38,12 @@
             <td data-label="Page">@r.Page</td>
             <td data-label="Categories">
                 @if (r.Categories.Count == 0) { <span class="muted">—</span>; } else {
-                    <ul class="inline-list" role="list">@foreach (var c in r.Categories) { <li role="listitem">@c.Name</li> }</ul>
+                    <ul class="inline-list" role="list">@{ var ci=0; }@foreach (var c in r.Categories) { var cls=$"cat-{(ci%5)+1}"; <li role="listitem" class="@cls">@c.Name</li>; ci++; }</ul>
                 }
             </td>
             <td data-label="Keywords">
                 @if (r.Keywords.Count == 0) { <span class="muted">—</span>; } else {
-                    <ul class="inline-list" role="list">@foreach (var k in r.Keywords) { <li role="listitem">@k.Name</li> }</ul>
+                    <ul class="inline-list" role="list">@{ var ki=0; }@foreach (var k in r.Keywords) { var cls=$"key-{(ki%5)+1}"; <li role="listitem" class="@cls">@k.Name</li>; ki++; }</ul>
                 }
             </td>
             <td data-label="Tried"><button type="button" class="link-button" data-toggle-tried data-id="@r.Id" data-tried="@r.Tried" aria-pressed="@r.Tried.ToString().ToLower()" aria-label="Toggle tried">@(r.Tried?"✔":"")</button></td>
@@ -59,12 +59,12 @@
         <h3><a href="/Recipes/Detail/@r.Id">@r.Name</a></h3>
         <div class="meta">@r.Book @if(r.Page>0){<span>· p.@r.Page</span>} @if(r.Tried){<span class="tried-indicator" aria-label="Tried">✔</span>}</div>
         <div class="taxonomy">
-            @if (r.Categories.Count == 0) { <span class="muted">—</span>; } else { foreach (var c in r.Categories) { <span class="chip">@c.Name</span>; } }
-            @if (r.Keywords.Count != 0) { foreach (var k in r.Keywords) { <span class="chip">@k.Name</span>; } }
+            @if (r.Categories.Count == 0) { <span class="muted">—</span>; } else { var ci=0; foreach (var c in r.Categories) { var cls=$"cat-{(ci%5)+1}"; <span class="chip @cls">@c.Name</span>; ci++; } }
+            @if (r.Keywords.Count != 0) { var ki=0; foreach (var k in r.Keywords) { var cls=$"key-{(ki%5)+1}"; <span class="chip @cls">@k.Name</span>; ki++; } }
         </div>
         <div class="actions">
             <button type="button" class="link-button" data-toggle-tried data-id="@r.Id" data-tried="@r.Tried" aria-pressed="@r.Tried.ToString().ToLower()" aria-label="Toggle tried">@(r.Tried?"Mark Untried":"Mark Tried")</button>
-            <a href="/Recipes/Edit/@r.Id" class="btn btn--outline btn--sm">Edit</a>
+            <a href="/Recipes/Edit/@r.Id" class="btn btn--outline btn--sm" aria-label="Edit recipe"><span aria-hidden="true">✏️</span> Edit</a>
         </div>
     </article>
 }

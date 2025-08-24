@@ -13,6 +13,16 @@
   --color-border-strong: #a8b0ba;
   --color-text: #1b2733;
   --color-text-muted: #5d6b7a;
+  --color-secondary: #7b1fa2;
+  --color-secondary-hover: #6a1b9a;
+  --color-secondary-active: #4a148c;
+  --color-info: #0288d1;
+  --color-info-hover: #0277bd;
+  --color-info-active: #01579b;
+  --color-success-hover: #256628;
+  --color-success-active: #1b4d1f;
+  --color-warning-hover: #d57200;
+  --color-warning-active: #b25f00;
   /* Pink primary theme */
   --color-primary: #d81b60; /* base pink */
   --color-primary-hover: #c2185b; /* darker hover */
@@ -25,6 +35,18 @@
   --color-focus-outline: #258cfb;
   --color-shadow: rgba(0,0,0,0.12);
   --color-shadow-strong: rgba(0,0,0,0.24);
+
+  /* Accent chip palettes (light) */
+  --color-accent-cat1: #ffe0ec;
+  --color-accent-cat2: #ffe9d1;
+  --color-accent-cat3: #e1f5fe;
+  --color-accent-cat4: #e8f5e9;
+  --color-accent-cat5: #ede7f6;
+  --color-accent-key1: #ffebf2;
+  --color-accent-key2: #fff3e0;
+  --color-accent-key3: #e3f2fd;
+  --color-accent-key4: #f1f8e9;
+  --color-accent-key5: #f3e5f5;
 
   /* Password strength meter palette */
   --color-strength-1: #ffb347; /* weak */
@@ -95,6 +117,16 @@
     --color-border-strong: #445461;
     --color-text: #f2f4f7;
     --color-text-muted: #9ba7b4;
+  --color-secondary: #ba68c8;
+  --color-secondary-hover: #ab47bc;
+  --color-secondary-active: #8e24aa;
+  --color-info: #4fc3f7;
+  --color-info-hover: #29b6f6;
+  --color-info-active: #0288d1;
+  --color-success-hover: #4b9e50;
+  --color-success-active: #35733a;
+  --color-warning-hover: #ffb74d;
+  --color-warning-active: #ff9800;
   /* Pink variant for dark mode */
   --color-primary: #ff5c8d; /* brighter pink for dark bg */
   --color-primary-hover: #ff3f7a;
@@ -107,6 +139,17 @@
     --color-focus-outline: #5aa9ff;
     --color-shadow: rgba(0,0,0,0.7);
     --color-shadow-strong: rgba(0,0,0,0.85);
+  /* Accent chip palettes (dark) */
+  --color-accent-cat1: #4a1f2b;
+  --color-accent-cat2: #4a2e1f;
+  --color-accent-cat3: #12313f;
+  --color-accent-cat4: #1f3a21;
+  --color-accent-cat5: #2e2540;
+  --color-accent-key1: #552a38;
+  --color-accent-key2: #553a28;
+  --color-accent-key3: #1e4a60;
+  --color-accent-key4: #2c4d23;
+  --color-accent-key5: #3d3052;
   }
 }
 
@@ -121,6 +164,16 @@
   --color-border-strong: #445461;
   --color-text: #f2f4f7;
   --color-text-muted: #9ba7b4;
+  --color-secondary: #ba68c8;
+  --color-secondary-hover: #ab47bc;
+  --color-secondary-active: #8e24aa;
+  --color-info: #4fc3f7;
+  --color-info-hover: #29b6f6;
+  --color-info-active: #0288d1;
+  --color-success-hover: #4b9e50;
+  --color-success-active: #35733a;
+  --color-warning-hover: #ffb74d;
+  --color-warning-active: #ff9800;
   --color-primary: #ff5c8d;
   --color-primary-hover: #ff3f7a;
   --color-primary-active: #e91e63;
@@ -132,4 +185,14 @@
   --color-focus-outline: #5aa9ff;
   --color-shadow: rgba(0,0,0,0.7);
   --color-shadow-strong: rgba(0,0,0,0.85);
+  --color-accent-cat1: #4a1f2b;
+  --color-accent-cat2: #4a2e1f;
+  --color-accent-cat3: #12313f;
+  --color-accent-cat4: #1f3a21;
+  --color-accent-cat5: #2e2540;
+  --color-accent-key1: #552a38;
+  --color-accent-key2: #553a28;
+  --color-accent-key3: #1e4a60;
+  --color-accent-key4: #2c4d23;
+  --color-accent-key5: #3d3052;
 }

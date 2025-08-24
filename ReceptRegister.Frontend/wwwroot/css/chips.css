@@ -6,3 +6,19 @@
 .chip[data-selected="true"] { background:var(--color-primary); color:#fff; }
 .chip button.remove { background:none; border:0; padding:0; cursor:pointer; font-size:.75rem; line-height:1; }
 .chip button.remove:focus { outline:2px solid var(--color-focus-outline); outline-offset:2px; }
+
+/* Chip color variants (will map categories / keywords) */
+.chip.cat-1 { background:var(--color-accent-cat1); }
+.chip.cat-2 { background:var(--color-accent-cat2); }
+.chip.cat-3 { background:var(--color-accent-cat3); }
+.chip.cat-4 { background:var(--color-accent-cat4); }
+.chip.cat-5 { background:var(--color-accent-cat5); }
+.chip.key-1 { background:var(--color-accent-key1); }
+.chip.key-2 { background:var(--color-accent-key2); }
+.chip.key-3 { background:var(--color-accent-key3); }
+.chip.key-4 { background:var(--color-accent-key4); }
+.chip.key-5 { background:var(--color-accent-key5); }
+
+/* Basic inline icon utility */
+.icon { width:1em; height:1em; display:inline-block; line-height:1; vertical-align:-0.125em; }
+.icon svg { width:100%; height:100%; fill:currentColor; }
