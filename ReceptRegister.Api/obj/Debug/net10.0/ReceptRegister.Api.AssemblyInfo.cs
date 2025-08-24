@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ReceptRegister.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bc683d0824c480d706bb793c28b5322b2a9d4ad4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a3fd87c14eee83d08fa87a154c9312f7252e4844")]
 [assembly: System.Reflection.AssemblyProductAttribute("ReceptRegister.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ReceptRegister.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -48,10 +48,9 @@ if (form) {
         tableBody.appendChild(tr);
       }
       if (countEl) {
-        const countText = `${data.length} recipe${data.length===1?'':'s'} found.`;
-        countEl.textContent = countText;
+        countEl.textContent = `${data.length} recipe${data.length===1?'':'s'} found.`;
         const live = document.getElementById('search-results-count');
-        if (live) live.textContent = `${data.length} recipe${data.length===1?'':'s'} listed.`;
+        if (live) live.textContent = (countEl.textContent || '').replace(' found.', ' listed.');
       }
       // Clear prior error status if any
       if (statusRegion) {
