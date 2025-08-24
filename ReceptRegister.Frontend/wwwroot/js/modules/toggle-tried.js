@@ -19,7 +19,6 @@ document.addEventListener('click', async e => {
     statusRegion.className = 'visually-hidden toggle-tried-status';
     document.body.appendChild(statusRegion);
   }
-
   const showStatus = (msg, isError = false) => {
     statusRegion.textContent = msg;
     statusRegion.classList.toggle('error', !!isError);
@@ -34,7 +33,7 @@ document.addEventListener('click', async e => {
 
   try {
     const newValue = !tried;
-    const res = await fetch(`${apiBase}/recipes/${id}/tried`, {
+    const res = await fetch(`${apiBase}/api/recipes/${id}/tried`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: Number(id), tried: newValue })

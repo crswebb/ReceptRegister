@@ -29,7 +29,7 @@ if (form) {
 
   const doSearch = async () => {
   const q = input.value.trim();
-  const url = apiBase + '/recipes/?query=' + encodeURIComponent(q);
+  const url = apiBase + '/api/recipes/?query=' + encodeURIComponent(q);
     try {
       const res = await fetch(url);
       if (!res.ok) {
@@ -37,7 +37,15 @@ if (form) {
         return;
       }
   const data = await res.json();
-  const items = Array.isArray(data.items) ? data.items : data; // fallback if backend still legacy
+  // Support either new paged { items, totalItems } or legacy array
+  let items = [];
+  if (Array.isArray(data)) {
+    items = data;
+  } else if (Array.isArray(data.items)) {
+    items = data.items;
+  } else if (Array.isArray(data.Items)) { // defensive in case of PascalCase
+    items = data.Items;
+  }
   tableBody.innerHTML = '';
   for (const r of items) {
         const tr = document.createElement('tr');

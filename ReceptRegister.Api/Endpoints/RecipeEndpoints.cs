@@ -8,7 +8,8 @@ public static class RecipeEndpoints
 {
 	public static IEndpointRouteBuilder MapRecipeEndpoints(this IEndpointRouteBuilder app)
 	{
-		var group = app.MapGroup("/recipes");
+		// Mount recipes API under /api/recipes to avoid clashing with Razor Pages user-facing routes
+		var group = app.MapGroup("/api/recipes");
 
 		// Enhanced search with paging & filters
 		group.MapGet("/", async (
@@ -45,7 +46,7 @@ public static class RecipeEndpoints
 				Tried = req.Tried
 			};
 			var id = await repo.AddAsync(recipe, req.Categories, req.Keywords, ct);
-			return Results.Created($"/recipes/{id}", Mapping.ToDetail(recipe));
+			return Results.Created($"/api/recipes/{id}", Mapping.ToDetail(recipe));
 		}).AddEndpointFilter<ValidationFilter>();
 
 		group.MapPut("/{id:int}", async (int id, RecipeRequest req, IRecipesRepository repo, CancellationToken ct) =>
