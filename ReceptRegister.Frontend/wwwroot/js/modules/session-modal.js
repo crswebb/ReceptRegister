@@ -93,8 +93,7 @@ async function doLogout() {
   try {
     const csrf = getCsrf();
     await fetch('/auth/logout', { method:'POST', headers: csrf ? { 'X-CSRF-TOKEN': csrf } : {} });
-  } catch {}
-  try { localStorage.removeItem('rr_csrf'); } catch {}
+  try { localStorage.removeItem('rr_csrf'); } catch (e) { console.error('Failed to remove rr_csrf from localStorage:', e); }
   location.href = '/Auth/Login';
 }
 
