@@ -18,6 +18,7 @@
             }
         }
     }
+    <link rel="stylesheet" href="/css/variables.css" asp-append-version="true" />
     <link rel="stylesheet" href="/css/base.css" asp-append-version="true" />
     <link rel="stylesheet" href="/css/layout.css" asp-append-version="true" />
     <link rel="stylesheet" href="/css/forms.css" asp-append-version="true" />
@@ -57,11 +58,28 @@
     <footer>
         <p>&copy; @DateTime.UtcNow.Year ReceptRegister · <a asp-page="/Privacy">Privacy</a></p>
     </footer>
+    <button type="button" id="theme-toggle" class="link-button" style="position:fixed;bottom:var(--spacing-6,16px);right:var(--spacing-6,16px);">Toggle theme</button>
     <script type="module" src="/js/modules/search-enhance.js" defer></script>
     <script type="module" src="/js/modules/toggle-tried.js" defer></script>
     <script type="module" src="/js/modules/chips.js" defer></script>
     <script type="module" src="/js/modules/auth-ui.js" defer></script>
     <script type="module" src="/js/modules/session-modal.js" defer></script>
+        <script>(function(){
+            const root = document.documentElement;
+            const key = 'rr_theme';
+            function apply(theme){ if(!theme){ root.removeAttribute('data-theme'); return;} root.setAttribute('data-theme', theme); }
+            let current = null;
+            try { current = localStorage.getItem(key); } catch {}
+            if (current) apply(current);
+            const btn = document.getElementById('theme-toggle');
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    current = (current === 'dark') ? 'light' : 'dark';
+                    apply(current);
+                    try { localStorage.setItem(key, current); } catch {}
+                });
+            }
+        })();</script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

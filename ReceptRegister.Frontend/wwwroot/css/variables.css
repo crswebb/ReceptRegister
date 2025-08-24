@@ -1,0 +1,121 @@
+/* variables.css - design tokens foundation (#85, part of #84)
+   Token naming: --color-*, --spacing-*, --fs-*, --fw-*, --radius-*, --elevation-*, --transition-*, --z-*
+   Light theme defaults; dark theme overrides via prefers-color-scheme and data-theme attribute support.
+*/
+:root {
+  /* Color palette */
+  --color-background: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f7fa;
+  --color-border: #d7dce2;
+  --color-border-strong: #a8b0ba;
+  --color-text: #1b2733;
+  --color-text-muted: #5d6b7a;
+  --color-primary: #1d74d8;
+  --color-primary-hover: #1662b8;
+  --color-primary-active: #114f94;
+  --color-link: #1d74d8;
+  --color-link-hover: #155aab;
+  --color-danger: #c62828;
+  --color-warning: #ed8500;
+  --color-success: #2e7d32;
+  --color-focus-outline: #258cfb;
+  --color-shadow: rgba(0,0,0,0.12);
+  --color-shadow-strong: rgba(0,0,0,0.24);
+
+  /* Spacing scale (t-shirt sizes) */
+  --spacing-0: 0;
+  --spacing-1: 2px;
+  --spacing-2: 4px;
+  --spacing-3: 6px;
+  --spacing-4: 8px;
+  --spacing-5: 12px;
+  --spacing-6: 16px;
+  --spacing-7: 24px;
+  --spacing-8: 32px;
+
+  /* Typography */
+  --fs-100: .75rem;
+  --fs-200: .875rem;
+  --fs-300: 1rem;
+  --fs-400: 1.125rem;
+  --fs-500: 1.25rem;
+  --fs-600: 1.5rem;
+  --fs-700: 1.875rem;
+  --lh-tight: 1.2;
+  --lh-normal: 1.45;
+  --lh-relaxed: 1.6;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* Radii */
+  --radius-sm: 2px;
+  --radius: 4px;
+  --radius-lg: 8px;
+  --radius-pill: 999px;
+
+  /* Elevation (shadows) */
+  --elevation-1: 0 1px 2px var(--color-shadow);
+  --elevation-2: 0 2px 4px var(--color-shadow), 0 1px 3px var(--color-shadow);
+  --elevation-3: 0 4px 8px var(--color-shadow), 0 2px 4px var(--color-shadow);
+  --elevation-4: 0 8px 16px var(--color-shadow-strong), 0 4px 8px var(--color-shadow);
+
+  /* Transitions */
+  --transition-fast: 120ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 320ms ease;
+
+  /* Z-index layers */
+  --z-header: 100;
+  --z-overlay: 900;
+  --z-modal: 1000;
+  --z-dropdown: 1100;
+}
+
+/* Dark theme (system preference) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-background: #0f1419;
+    --color-surface: #1a222b;
+    --color-surface-alt: #222c36;
+    --color-border: #2e3a46;
+    --color-border-strong: #445461;
+    --color-text: #f2f4f7;
+    --color-text-muted: #9ba7b4;
+    --color-primary: #4da3ff;
+    --color-primary-hover: #398fe8;
+    --color-primary-active: #2f78c2;
+    --color-link: #4da3ff;
+    --color-link-hover: #87c4ff;
+    --color-danger: #ef5350;
+    --color-warning: #ffa733;
+    --color-success: #66bb6a;
+    --color-focus-outline: #5aa9ff;
+    --color-shadow: rgba(0,0,0,0.7);
+    --color-shadow-strong: rgba(0,0,0,0.85);
+  }
+}
+
+/* Explicit data-theme overrides */
+:root[data-theme="dark"] {
+  --color-background: #0f1419;
+  --color-surface: #1a222b;
+  --color-surface-alt: #222c36;
+  --color-border: #2e3a46;
+  --color-border-strong: #445461;
+  --color-text: #f2f4f7;
+  --color-text-muted: #9ba7b4;
+  --color-primary: #4da3ff;
+  --color-primary-hover: #398fe8;
+  --color-primary-active: #2f78c2;
+  --color-link: #4da3ff;
+  --color-link-hover: #87c4ff;
+  --color-danger: #ef5350;
+  --color-warning: #ffa733;
+  --color-success: #66bb6a;
+  --color-focus-outline: #5aa9ff;
+  --color-shadow: rgba(0,0,0,0.7);
+  --color-shadow-strong: rgba(0,0,0,0.85);
+}
