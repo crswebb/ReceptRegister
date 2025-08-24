@@ -312,9 +312,8 @@ At startup localization middleware sets the thread cultures to the configured de
 
 Change the global culture (example Swedish):
 1. Edit `ReceptRegister.Api/appsettings.json` and/or `ReceptRegister.Frontend/appsettings.json`:
-	 ```jsonc
-	 "Localization": { "DefaultCulture": "sv-SE", "SupportedCultures": [ "sv-SE" ] }
-	 ```
+   ```jsonc
+   "Localization": { "DefaultCulture": "sv-SE", "SupportedCultures": [ "sv-SE" ] }
 2. Restart the application.
 
 > Adding multiple codes to `SupportedCultures` today has no visible effect because user selection is not exposed yet; the default still applies.
