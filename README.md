@@ -39,7 +39,7 @@ Your shelves stay beautiful, your pages stay clean, and your baking time goes in
 - After that, you’ll sign in before you can use the app.
 - If you ever forget the password, the site administrator can clear the saved password value in the database to enable the “set a new password” screen again (see [Manual recovery](#manual-recovery-quick-steps)).
 
-### Password hashing details (early auth milestone)
+### Password hashing & password strength
 Passwords are hashed with PBKDF2 (SHA‑256) using:
 
 - A per‑user random 32‑byte salt
@@ -54,6 +54,8 @@ Environment variables:
 | `RECEPT_PEPPER` | Global secret pepper to add defense if DB is leaked | Set to a long random string in production; leave unset locally |
 
 If no pepper is configured a warning is logged at startup (safe for local dev). Changing the pepper after setting a password will invalidate verification (you would need to reset the password). Keep it stable and rotate only with a coordinated password reset.
+
+Password strength is evaluated server‑side (source of truth) with a 0–6 score (length >=8, length >=12, lowercase, uppercase, digit, symbol). A score of 3+ is required. The client progressively enhances the Set Password UI with a small meter and top suggestions; validation still occurs on the server.
 
 ### Sessions & authentication endpoints
 After setting a password via `POST /auth/set-password`, obtain a session with `POST /auth/login`.
@@ -154,6 +156,10 @@ Foreign keys are enforced, and removing a recipe cascades its join rows. Categor
 In future milestones this may evolve (migrations, encryption, cloud backup), but for now the priority is a small, dependency-light foundation you can understand at a glance.
 
 — “Let’s sift the chaos and find the perfect recipe to bake today.” — Bagare Bengtsson
+
+## Documentation & maintenance scripts
+
+Additional security notes live in `SECURITY.md` (session/CSRF design, environment variables, threat model). A helper script `tools/prune-merged.ps1` can archive (tag) and delete fully merged feature branches; read its synopsis (`Get-Content tools/prune-merged.ps1 | more`) before use. Always review tags pushed to ensure no unreviewed work is lost.
 
 ## Running locally (Milestone 1 scaffolding)
 ## API (Milestone 4)

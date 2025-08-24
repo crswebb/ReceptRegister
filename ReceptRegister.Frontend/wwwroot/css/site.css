@@ -33,3 +33,19 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+/* Password strength meter */
+.pw-meter { display:flex; gap:4px; margin:.25rem 0 .5rem; }
+.pw-meter-bar { flex:1; height:4px; background:#ddd; border-radius:2px; transition:background .3s; }
+.pw-meter-bar.filled { background:#ffb347; }
+.pw-meter-bar.filled.score-4 { background:#ffd166; }
+.pw-meter-bar.filled.score-5 { background:#a0d468; }
+.pw-meter-bar.filled.score-6 { background:#4caf50; }
+
+.pw-strength-weak { color:#b00020; }
+.pw-strength-fair { color:#b97900; }
+.pw-strength-good { color:#3367d6; }
+.pw-strength-strong { color:#2e7d32; }
+
+.pw-suggestions { margin:.25rem 0 0; padding-left:1.1rem; font-size:.75rem; color:#555; }
+.pw-suggestions li { list-style:disc; }

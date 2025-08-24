@@ -57,36 +57,21 @@ public class SetPasswordModel : PageModel
             return Page();
         }
 
-        // Additional server strength check (basic)
-        if (!IsStrongEnough(Password, out var strengthError))
+        // Server authoritative password strength evaluation (unified with client + tests)
+        var strength = PasswordStrength.Evaluate(Password);
+        if (!strength.IsAcceptable)
         {
-            ModelState.AddModelError(nameof(Password), strengthError);
+            // Provide concise guidance; suggestions already ordered by unmet criteria
+            ModelState.AddModelError(nameof(Password), "Password too weak: " + string.Join("; ", strength.Suggestions));
             return Page();
         }
 
         await _passwordService.SetPasswordAsync(Password);
         // Auto-login new admin
-    var (token, csrf) = _sessions.CreateSession(false);
-    SessionCookieWriter.Write(HttpContext, _settings, _env, _sessions, token, csrf);
+        var (token, csrf) = _sessions.CreateSession(false);
+        SessionCookieWriter.Write(HttpContext, _settings, _env, _sessions, token, csrf);
         Success = true;
         ModelState.Clear();
         return Page();
-    }
-
-    private static bool IsStrongEnough(string pwd, out string error)
-    {
-        int score = 0;
-        if (pwd.Length >= 12) score++;
-        if (pwd.Any(char.IsLower)) score++;
-        if (pwd.Any(char.IsUpper)) score++;
-        if (pwd.Any(char.IsDigit)) score++;
-        if (pwd.Any(ch => !char.IsLetterOrDigit(ch))) score++;
-        if (score < 3)
-        {
-            error = "Password too weak (add length, mix of upper/lower/digit/symbol).";
-            return false;
-        }
-        error = string.Empty;
-        return true;
     }
 }

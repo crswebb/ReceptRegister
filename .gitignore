@@ -37,3 +37,7 @@ TestResults/
 *.trx
 fulltest.txt
 
+# Local patch / diff scratch files
+*.patch
+*.diff
+
