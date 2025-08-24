@@ -194,8 +194,8 @@ public class RecipesRepository : IRecipesRepository
         await conn.OpenAsync(ct);
         var cmd = conn.CreateCommand();
         cmd.CommandText = "UPDATE Recipes SET Tried=$t WHERE Id=$id";
-    AddParam(cmd, "$t", tried ? 1 : 0);
-    AddParam(cmd, "$id", id);
+        AddParam(cmd, "$t", tried ? 1 : 0);
+        AddParam(cmd, "$id", id);
         await cmd.ExecuteNonQueryAsync(ct);
     }
 
