@@ -8,8 +8,8 @@ namespace ReceptRegister.Frontend.Pages.Taxonomy;
 public class CategoriesModel : PageModel
 {
     private readonly ITaxonomyRepository _taxonomy;
-    private readonly ISqliteConnectionFactory _factory;
-    public CategoriesModel(ITaxonomyRepository taxonomy, ISqliteConnectionFactory factory)
+    private readonly IDbConnectionFactory _factory;
+    public CategoriesModel(ITaxonomyRepository taxonomy, IDbConnectionFactory factory)
     { _taxonomy = taxonomy; _factory = factory; }
 
     public IReadOnlyList<Category> Categories { get; private set; } = Array.Empty<Category>();
@@ -27,8 +27,11 @@ public class CategoriesModel : PageModel
             await using var conn = _factory.Create();
             await conn.OpenAsync(ct);
             var cmd = conn.CreateCommand();
-            cmd.CommandText = "INSERT INTO Categories (Name) VALUES ($n) ON CONFLICT(Name) DO NOTHING";
-            cmd.Parameters.AddWithValue("$n", norm);
+            cmd.CommandText = "INSERT INTO Categories (Name) VALUES (@n) ON CONFLICT(Name) DO NOTHING"; // TODO provider-specific upsert strategy for SQL Server
+            var p = cmd.CreateParameter();
+            p.ParameterName = "@n";
+            p.Value = norm;
+            cmd.Parameters.Add(p);
             await cmd.ExecuteNonQueryAsync(ct);
         }
         return RedirectToPage();
@@ -38,10 +41,13 @@ public class CategoriesModel : PageModel
     {
         await using var conn = _factory.Create();
         await conn.OpenAsync(ct);
-        var cmd = conn.CreateCommand();
-        cmd.CommandText = "DELETE FROM Categories WHERE Id=$id";
-        cmd.Parameters.AddWithValue("$id", id);
-        await cmd.ExecuteNonQueryAsync(ct);
+    var cmd = conn.CreateCommand();
+    cmd.CommandText = "DELETE FROM Categories WHERE Id=@id";
+    var p = cmd.CreateParameter();
+    p.ParameterName = "@id";
+    p.Value = id;
+    cmd.Parameters.Add(p);
+    await cmd.ExecuteNonQueryAsync(ct);
         return RedirectToPage();
     }
 }

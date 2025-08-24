@@ -33,7 +33,7 @@ public class FrontendPagesTests : IDisposable
     var app = builder.Build();
     // Fresh database will be created under the unique content root
         app.MapRazorPages();
-        await SchemaInitializer.InitializeAsync(app.Services.GetRequiredService<ISqliteConnectionFactory>());
+    await app.Services.GetRequiredService<ISchemaInitializer>().InitializeAsync();
         await app.StartAsync();
         return app.GetTestClient();
     }
