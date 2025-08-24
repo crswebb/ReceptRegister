@@ -26,7 +26,7 @@ else
             <div id="Book_help" class="hint">Exact title.</div>
             <span class="text-danger">@Model.ModelState[nameof(Model.Input.Book)]?.Errors.FirstOrDefault()?.ErrorMessage</span>
         </div>
-        <div class="field-group">
+    <div class="field-group inline-small">
             <label for="Page">Page <span aria-hidden="true">*</span></label>
             <input id="Page" name="Page" type="number" value="@Model.Input.Page" aria-required="true" aria-describedby="Page_help" />
             <div id="Page_help" class="hint">Page number.</div>

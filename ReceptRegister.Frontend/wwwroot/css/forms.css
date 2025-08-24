@@ -30,6 +30,14 @@ label { font-weight: var(--fw-medium); display:block; margin-bottom: var(--spaci
 .recipe-form .form-grid { display:block; }
 .recipe-form .form-grid .span-2 { max-width:40rem; }
 .recipe-form .actions { margin-top: var(--spacing-7); display:flex; gap:var(--spacing-5); }
+/* Full width fields inside recipe form */
+.recipe-form .field-group input[type=text],
+.recipe-form .field-group input[type=search],
+.recipe-form .field-group input[type=password],
+.recipe-form .field-group input[type=number],
+.recipe-form .field-group textarea { width:100%; }
+/* Narrow inline small variant (e.g., Page) */
+.field-group.inline-small input[type=number] { width:10rem; }
 input:focus, textarea:focus { outline: var(--focus-ring); outline-offset: 1px; }
 /* Button system (#88) */
 button { font: inherit; cursor:pointer; }

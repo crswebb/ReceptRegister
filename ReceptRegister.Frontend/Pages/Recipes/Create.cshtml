@@ -7,19 +7,19 @@
 <form method="post" novalidate class="recipe-form" aria-describedby="formHelp">
     <p id="formHelp" class="hint">Fields marked * are required. Use commas to separate multiple categories or keywords.</p>
     <div class="form-grid">
-        <div class="field-group">
+    <div class="field-group">
             <label for="Name">Name <span aria-hidden="true">*</span></label>
             <input id="Name" name="Name" value="@Model.Input.Name" aria-required="true" aria-describedby="Name_help" />
             <div id="Name_help" class="hint">Primary display name of the recipe.</div>
             <span class="text-danger">@Model.ModelState[nameof(Model.Input.Name)]?.Errors.FirstOrDefault()?.ErrorMessage</span>
         </div>
-        <div class="field-group">
+    <div class="field-group">
             <label for="Book">Book <span aria-hidden="true">*</span></label>
             <input id="Book" name="Book" value="@Model.Input.Book" aria-required="true" aria-describedby="Book_help" />
             <div id="Book_help" class="hint">Exact book title to locate it later.</div>
             <span class="text-danger">@Model.ModelState[nameof(Model.Input.Book)]?.Errors.FirstOrDefault()?.ErrorMessage</span>
         </div>
-        <div class="field-group">
+    <div class="field-group inline-small">
             <label for="Page">Page <span aria-hidden="true">*</span></label>
             <input id="Page" name="Page" type="number" value="@Model.Input.Page" aria-required="true" aria-describedby="Page_help" />
             <div id="Page_help" class="hint">Page number in the book.</div>
