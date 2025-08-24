@@ -293,6 +293,80 @@ Adding a new component: use existing variables; if a new semantic color is neede
 
 Accessibility & contrast: color selections meet WCAG AA for text (normal 4.5:1, large 3:1). Focus indicators use `--color-focus-outline` with a 2px outline for visibility across themes.
 
+### Localization (fixed culture groundwork)
+
+Localization groundwork is in place so UI strings can be translated. Currently the application uses a fixed culture configured in `appsettings.json` (no end‑user language switcher yet). See Issues: #97 (overall), #99 (extraction), #100 (Swedish), #98 (this documentation).
+
+#### Configuration
+
+Each project can specify a `Localization` section:
+
+```jsonc
+"Localization": {
+	"DefaultCulture": "en-US",
+	"SupportedCultures": [ "en-US" ]
+}
+```
+
+At startup localization middleware sets the thread cultures to the configured default. Only a fixed provider is registered (no query string, cookie, or Accept-Language negotiation) for deterministic behavior.
+
+Change the global culture (example Swedish):
+1. Edit `ReceptRegister.Api/appsettings.json` and/or `ReceptRegister.Frontend/appsettings.json`:
+   ```jsonc
+   "Localization": { "DefaultCulture": "sv-SE", "SupportedCultures": [ "sv-SE" ] }
+2. Restart the application.
+
+> Adding multiple codes to `SupportedCultures` today has no visible effect because user selection is not exposed yet; the default still applies.
+
+#### Resource files
+
+UI strings reside in `ReceptRegister.Frontend/Resources/`:
+- `SharedResources.resx` (neutral/default English)
+- `SharedResources.sv.resx` (placeholder Swedish values – translation tracked in #100)
+
+Marker class: `SharedResources` (for `IStringLocalizer<SharedResources>` injection).
+
+Key prefixes:
+- `Nav.*` navigation
+- `Button.*` buttons/actions
+- `Table.*` column headers
+- `Page.*` titles / empty states
+- `Form.*` labels & hints
+- `A11y.*` accessibility & live region text
+
+#### Adding a new UI string
+1. Choose prefix, add key to `SharedResources.resx`.
+2. Add the same key to every other culture file (even if untranslated initially) to avoid silent fallback.
+3. In Razor: `@inject IStringLocalizer<SharedResources> L` then `@L["Button.Search"]`.
+
+#### Dynamic strings
+Live region announcements use format placeholders (`{0}`, `{1}`) to allow language-specific grammar. Preserve placeholders exactly when translating.
+
+Example:
+```csharp
+@string.Format(L["A11y.Recipes.ResultsCount"], total, pluralSuffix, page, totalPages)
+```
+
+#### Translation workflow (planned)
+1. Extract strings (done, #99).
+2. Provide Swedish translations (#100).
+3. Add optional user switcher & negotiation enhancements (#97 future phase).
+
+#### Troubleshooting
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| English still displays after culture change | App not restarted / only one project changed | Restart; update both configs |
+| Placeholder `{0}` shows literally | Missing `string.Format` | Wrap the resource usage with formatting |
+| Some items revert to English | Key missing in target culture file | Add key to that culture file |
+
+#### Adding another language now
+1. Copy `SharedResources.resx` to `SharedResources.<culture>.resx` (e.g. `fr-FR`).
+2. Translate values (keep placeholders).
+3. Add culture code to `SupportedCultures` (and optionally set as `DefaultCulture`).
+4. Restart.
+
+Future enhancement: user-selectable language + persisted preference (tracked in #97).
+
 ## Dependency policy (early milestones)
 
 To keep the code understandable and portable:
