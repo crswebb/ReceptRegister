@@ -143,6 +143,52 @@ Thank you for keeping the dough smooth and the history clean! 🍞
 
 ---
 
+## Branch cleanup / pruning policy
+To keep the repository tidy and reduce accidental work off stale code, we prune merged feature branches promptly.
+
+Policy:
+- Delete a feature / chore / fix branch (local + remote) within 24h after its PR is squash‑merged.
+- Keep only long‑lived protected branches (currently just `main`).
+- Large multi‑PR efforts should still use one branch per issue; do NOT create an umbrella long‑lived branch unless explicitly agreed.
+- Temporary linearization / backup branches (e.g. `*-linear`, `backup/*`) must be deleted immediately after the target branch is updated or the PR is merged.
+- If you need a historical snapshot, create an annotated tag (`git tag -a archive/<slug> <sha> -m "Pre‑cleanup snapshot"`) before deleting the branch.
+
+Automatic safety checks before deletion:
+1. Ensure the branch tip is reachable from `origin/main`:
+	 ```powershell
+	 git fetch origin
+	 git merge-base --is-ancestor origin/<branch> origin/main
+	 ```
+	 Exit code `0` = merged (safe to delete).
+2. Confirm no open PR still references the branch.
+3. Tag if you genuinely need an archive.
+
+Quick prune helper (PowerShell):
+```powershell
+git fetch origin
+$protected = @('main')
+$excludeActive = @('feat/frontend-5-ui-foundation')  # update if there are active PR branches
+$merged = git for-each-ref --format='%(refname:short)' refs/remotes/origin | Where-Object { $_ -notmatch 'origin/(HEAD|main)$' } | ForEach-Object {
+	$b = ($_ -replace '^origin/')
+	if ($protected -contains $b) { return }
+	if ($excludeActive -contains $b) { return }
+	git merge-base --is-ancestor origin/$b origin/main; if ($LASTEXITCODE -eq 0) { $b }
+}
+if ($merged) {
+	Write-Host "Deleting merged branches: $merged" -ForegroundColor Yellow
+	foreach ($b in $merged) { git push origin --delete $b; if (git show-ref --verify --quiet refs/heads/$b) { git branch -D $b } }
+} else { Write-Host 'No merged branches to prune.' }
+```
+
+Rationale:
+- Minimizes noise in branch pickers and CI
+- Prevents accidental branching from stale tips
+- Keeps security surface (protected ref rules) simple
+
+If in doubt about deleting a branch, open an issue or convert it into a tag first.
+
+---
+
 ## Copilot / AI Assistant Guidance (meta)
 When asking Copilot (the PR reviewer or chat assistant) for help:
 - Always specify the issue number(s) up front so it can include `Closes #…` lines early.

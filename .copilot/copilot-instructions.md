@@ -97,6 +97,9 @@ Hello there! I’m Bagare Bengtsson: professional baker by dawn, software develo
 - Releases (optional for later):  
   - Tag main with v0.x.y when producing packaged builds; keep a short Release notes section summarizing changes and breaking notes.
 
+### Branch cleanup policy (for Copilot awareness)
+After a PR is squash‑merged, its feature branch must be deleted (local + remote) within 24 hours unless there is a documented follow‑up requiring it to persist. Temporary linearization / backup branches (e.g. `*-linear`, `backup/*`) are deleted immediately after use. If historical preservation is needed, create an annotated tag (`archive/<slug>`) before deletion. Copilot should proactively suggest pruning merged branches when it detects they are ancestors of `origin/main` and not referenced by an open PR.
+
 ## Handling ambiguity
 - State 1–2 reasonable assumptions explicitly and proceed.  
 - Offer alternatives with quick pros/cons.  
