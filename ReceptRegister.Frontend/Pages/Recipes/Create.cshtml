@@ -1,9 +1,12 @@
 @page
+@using Microsoft.Extensions.Localization
+@using ReceptRegister.Frontend.Resources
+@inject IStringLocalizer<SharedResources> L
 @model ReceptRegister.Frontend.Pages.Recipes.CreateModel
 @{
-    ViewData["Title"] = "Add Recipe";
+    ViewData["Title"] = L["Page.CreateRecipe.Title"];
 }
-<h1>Add Recipe</h1>
+<h1>@L["Page.CreateRecipe.Title"]</h1>
 <form method="post" novalidate class="recipe-form" aria-describedby="formHelp">
 @{
     var sessSettings = HttpContext.RequestServices.GetService(typeof(ReceptRegister.Api.Auth.SessionSettings)) as ReceptRegister.Api.Auth.SessionSettings;
@@ -22,48 +25,48 @@
         <input type="hidden" name="X-CSRF-TOKEN" value="@csrfValue" />
     }
 }
-    <p id="formHelp" class="hint">Fields marked * are required. Use commas to separate multiple categories or keywords.</p>
+    <p id="formHelp" class="hint">@L["Form.RequiredLegend"]</p>
     <div class="form-grid">
     <div class="field-group">
-            <label for="Name">Name <span aria-hidden="true">*</span></label>
+            <label for="Name">@L["Form.Name"] <span aria-hidden="true">*</span></label>
             <input id="Name" name="Name" type="text" value="@Model.Input.Name" aria-required="true" aria-describedby="Name_help" />
-            <div id="Name_help" class="hint">Primary display name of the recipe.</div>
+            <div id="Name_help" class="hint">@L["Form.Name.Help"]</div>
             <span class="text-danger">@Model.ModelState[nameof(Model.Input.Name)]?.Errors.FirstOrDefault()?.ErrorMessage</span>
         </div>
     <div class="field-group">
-            <label for="Book">Book <span aria-hidden="true">*</span></label>
+            <label for="Book">@L["Form.Book"] <span aria-hidden="true">*</span></label>
             <input id="Book" name="Book" type="text" value="@Model.Input.Book" aria-required="true" aria-describedby="Book_help" />
-            <div id="Book_help" class="hint">Exact book title to locate it later.</div>
+            <div id="Book_help" class="hint">@L["Form.Book.Help"]</div>
             <span class="text-danger">@Model.ModelState[nameof(Model.Input.Book)]?.Errors.FirstOrDefault()?.ErrorMessage</span>
         </div>
     <div class="field-group inline-small">
-            <label for="Page">Page <span aria-hidden="true">*</span></label>
+            <label for="Page">@L["Form.Page"] <span aria-hidden="true">*</span></label>
             <input id="Page" name="Page" type="number" value="@Model.Input.Page" aria-required="true" aria-describedby="Page_help" />
-            <div id="Page_help" class="hint">Page number in the book.</div>
+            <div id="Page_help" class="hint">@L["Form.Page.Help"]</div>
             <span class="text-danger">@Model.ModelState[nameof(Model.Input.Page)]?.Errors.FirstOrDefault()?.ErrorMessage</span>
         </div>
         <div class="field-group">
-            <label for="Categories">Categories</label>
+            <label for="Categories">@L["Form.Categories"]</label>
             <input id="Categories" name="Categories" type="text" value="@Model.Input.Categories" aria-describedby="Categories_help" />
-            <div id="Categories_help" class="hint">Comma separated (e.g. Buns, Swedish).</div>
+            <div id="Categories_help" class="hint">@L["Form.Categories.Help"]</div>
         </div>
         <div class="field-group">
-            <label for="Keywords">Keywords</label>
+            <label for="Keywords">@L["Form.Keywords"]</label>
             <input id="Keywords" name="Keywords" type="text" value="@Model.Input.Keywords" aria-describedby="Keywords_help" />
-            <div id="Keywords_help" class="hint">Ingredients / attributes (e.g. cardamom, gluten-free).</div>
+            <div id="Keywords_help" class="hint">@L["Form.Keywords.Help"]</div>
         </div>
         <div class="field-group span-2">
-            <label for="Notes">Notes</label>
+            <label for="Notes">@L["Form.Notes"]</label>
             <textarea id="Notes" name="Notes" rows="4" aria-describedby="Notes_help">@Model.Input.Notes</textarea>
-            <div id="Notes_help" class="hint">Optional personal notes.</div>
+            <div id="Notes_help" class="hint">@L["Form.Notes.Help"]</div>
         </div>
         <div class="field-group checkbox-inline span-2">
             <input type="checkbox" id="Tried" name="Tried" value="true" @(Model.Input.Tried?"checked":null) />
-            <label for="Tried">Tried</label>
+            <label for="Tried">@L["Form.Tried"]</label>
         </div>
     </div>
     <div class="actions">
-        <button type="submit" class="btn">Create</button>
-        <a href="/Recipes/Index" class="btn btn--subtle btn--sm">Cancel</a>
+    <button type="submit" class="btn">@L["Button.Create"]</button>
+    <a href="/Recipes/Index" class="btn btn--subtle btn--sm">@L["Button.Cancel"]</a>
     </div>
 </form>

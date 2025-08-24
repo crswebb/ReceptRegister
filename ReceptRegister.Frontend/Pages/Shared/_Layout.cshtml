@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.Extensions.Localization
+@using ReceptRegister.Frontend.Resources
+@inject IStringLocalizer<SharedResources> L
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -30,11 +33,11 @@
     <a href="#main" class="skip-link">Skip to content</a>
     <header>
         <p class="app-title"><a asp-page="/Index">ReceptRegister</a></p>
-        <nav class="grow" aria-label="Main navigation">
+    <nav class="grow" aria-label="Main navigation">
             <ul>
-                <li><a asp-page="/Recipes/Index" aria-current="@(Context.Request.Path.Value?.StartsWith("/Recipes", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">Recipes</a></li>
-                <li><a asp-page="/Taxonomy/Categories" aria-current="@(Context.Request.Path.Value?.Contains("/Taxonomy/Categories", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">Categories</a></li>
-                <li><a asp-page="/Taxonomy/Keywords" aria-current="@(Context.Request.Path.Value?.Contains("/Taxonomy/Keywords", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">Keywords</a></li>
+        <li><a asp-page="/Recipes/Index" aria-current="@(Context.Request.Path.Value?.StartsWith("/Recipes", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">@L["Nav.Recipes"]</a></li>
+        <li><a asp-page="/Taxonomy/Categories" aria-current="@(Context.Request.Path.Value?.Contains("/Taxonomy/Categories", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">@L["Nav.Categories"]</a></li>
+        <li><a asp-page="/Taxonomy/Keywords" aria-current="@(Context.Request.Path.Value?.Contains("/Taxonomy/Keywords", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">@L["Nav.Keywords"]</a></li>
 @{
     // Initial server-side detection; client JS (auth-ui.js) will refine
     var authed = false;
@@ -43,10 +46,10 @@
     var navCookie = navSettings?.CookieName ?? "rr_session";
     if (Context.Request.Cookies.TryGetValue(navCookie, out var navTok) && navSvc?.Validate(navTok) == true) { authed = true; }
 }
-                <li data-auth-visible="anon" style="display:@(authed?"none":"block")"><a asp-page="/Auth/Login">Login</a></li>
+                <li data-auth-visible="anon" style="display:@(authed?"none":"block")"><a asp-page="/Auth/Login">@L["Nav.Login"]</a></li>
                 <li data-auth-visible="authed" style="display:@(!authed?"none":"block")">
                     <form method="post" action="/Auth/Logout" class="inline" id="logout-form">
-                        <button type="submit" class="link-button" data-logout>Logout</button>
+                        <button type="submit" class="link-button" data-logout>@L["Nav.Logout"]</button>
                     </form>
                 </li>
             </ul>
@@ -58,7 +61,7 @@
     <footer>
         <p>&copy; @DateTime.UtcNow.Year ReceptRegister · <a asp-page="/Privacy">Privacy</a></p>
     </footer>
-    <button type="button" id="theme-toggle" class="link-button" style="position:fixed;bottom:var(--spacing-6,16px);right:var(--spacing-6,16px);">Toggle theme</button>
+    <button type="button" id="theme-toggle" class="link-button" style="position:fixed;bottom:var(--spacing-6,16px);right:var(--spacing-6,16px);">@L["Button.ToggleTheme"]</button>
     <script type="module" src="/js/modules/search-enhance.js" defer></script>
     <script type="module" src="/js/modules/toggle-tried.js" defer></script>
     <script type="module" src="/js/modules/chips.js" defer></script>
