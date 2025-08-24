@@ -164,12 +164,12 @@ public class RecipesRepository : IRecipesRepository
 
         var cmd = conn.CreateCommand();
         cmd.CommandText = @"UPDATE Recipes SET Name=$n, Book=$b, Page=$p, Notes=$no, Tried=$t WHERE Id=$id";
-    AddParam(cmd, "$n", recipe.Name);
-    AddParam(cmd, "$b", recipe.Book);
-    AddParam(cmd, "$p", recipe.Page);
-    AddParam(cmd, "$no", (object?)recipe.Notes ?? DBNull.Value);
-    AddParam(cmd, "$t", recipe.Tried ? 1 : 0);
-    AddParam(cmd, "$id", recipe.Id);
+        AddParam(cmd, "$n", recipe.Name);
+        AddParam(cmd, "$b", recipe.Book);
+        AddParam(cmd, "$p", recipe.Page);
+        AddParam(cmd, "$no", (object?)recipe.Notes ?? DBNull.Value);
+        AddParam(cmd, "$t", recipe.Tried ? 1 : 0);
+        AddParam(cmd, "$id", recipe.Id);
         await cmd.ExecuteNonQueryAsync(ct);
 
         await ReplaceLinks(conn, recipe.Id, "RecipeCategories", categories, "Categories", "CategoryId", ct);
