@@ -4,6 +4,9 @@
     ViewData["Title"] = "Recipes";
 }
 <h1>Recipes</h1>
+<div class="card-grid-toggle">
+    <button type="button" class="btn btn--subtle btn--sm" id="toggle-layout" aria-pressed="false">Cards</button>
+</div>
 <p id="search-results-count" class="visually-hidden" aria-live="polite" aria-atomic="true">Listing @Model.Result.TotalItems recipe@(Model.Result.TotalItems == 1 ? "" : "s") (page @Model.Result.Page of @Model.Result.TotalPages).</p>
 <form method="get" class="form-inline" role="search" aria-label="Recipe search">
     <label for="search" class="visually-hidden">Search</label>
@@ -14,7 +17,9 @@
     }
 </form>
 <p class="result-count">@Model.Result.TotalItems recipe@(Model.Result.TotalItems == 1 ? "" : "s") found. Showing page @Model.Result.Page of @Model.Result.TotalPages.</p>
-<table class="recipes-table">
+<div class="table-scroll" id="recipes-table-wrapper">
+<table class="recipes-table stackable" id="recipes-table" data-view="table">
+    <caption class="visually-hidden">Recipes list with columns for name, book, page, categories, keywords, and tried status.</caption>
     <thead>
     <tr>
         <th scope="col">Name</th>
@@ -28,43 +33,95 @@
     <tbody>
     @foreach (var r in Model.Result.Items) {
         <tr>
-            <td><a href="/Recipes/Detail/@r.Id">@r.Name</a></td>
-            <td>@r.Book</td>
-            <td>@r.Page</td>
-            <td>
+            <td data-label="Name"><a href="/Recipes/Detail/@r.Id">@r.Name</a></td>
+            <td data-label="Book">@r.Book</td>
+            <td data-label="Page">@r.Page</td>
+            <td data-label="Categories">
                 @if (r.Categories.Count == 0) { <span class="muted">—</span>; } else {
                     <ul class="inline-list" role="list">@foreach (var c in r.Categories) { <li role="listitem">@c.Name</li> }</ul>
                 }
             </td>
-            <td>
+            <td data-label="Keywords">
                 @if (r.Keywords.Count == 0) { <span class="muted">—</span>; } else {
                     <ul class="inline-list" role="list">@foreach (var k in r.Keywords) { <li role="listitem">@k.Name</li> }</ul>
                 }
             </td>
-            <td><button type="button" class="link-button" data-toggle-tried data-id="@r.Id" data-tried="@r.Tried" aria-pressed="@r.Tried.ToString().ToLower()" aria-label="Toggle tried">@(r.Tried?"✔":"")</button></td>
+            <td data-label="Tried"><button type="button" class="link-button" data-toggle-tried data-id="@r.Id" data-tried="@r.Tried" aria-pressed="@r.Tried.ToString().ToLower()" aria-label="Toggle tried">@(r.Tried?"✔":"")</button></td>
         </tr>
     }
     </tbody>
 </table>
+</div>
+
+<div class="recipe-cards visually-hidden" id="recipe-cards" aria-hidden="true">
+@foreach (var r in Model.Result.Items) {
+    <article class="recipe-card" data-tried="@r.Tried" data-id="@r.Id">
+        <h3><a href="/Recipes/Detail/@r.Id">@r.Name</a></h3>
+        <div class="meta">@r.Book @if(r.Page>0){<span>· p.@r.Page</span>} @if(r.Tried){<span class="tried-indicator" aria-label="Tried">✔</span>}</div>
+        <div class="taxonomy">
+            @if (r.Categories.Count == 0) { <span class="muted">—</span>; } else { foreach (var c in r.Categories) { <span class="chip">@c.Name</span>; } }
+            @if (r.Keywords.Count != 0) { foreach (var k in r.Keywords) { <span class="chip">@k.Name</span>; } }
+        </div>
+        <div class="actions">
+            <button type="button" class="link-button" data-toggle-tried data-id="@r.Id" data-tried="@r.Tried" aria-pressed="@r.Tried.ToString().ToLower()" aria-label="Toggle tried">@(r.Tried?"Mark Untried":"Mark Tried")</button>
+            <a href="/Recipes/Edit/@r.Id" class="btn btn--outline btn--sm">Edit</a>
+        </div>
+    </article>
+}
+</div>
 @if (Model.Result.TotalItems == 0)
 {
     <p class="empty">No recipes yet. <a href="/Recipes/Create">Add one</a>.</p>
 }
 
+@section Scripts {
+<script>
+// Layout toggle (cards/table) with persistence (#92)
+(function(){
+    const key='rr_recipe_layout';
+    const btn=document.getElementById('toggle-layout');
+    const tableWrap=document.getElementById('recipes-table-wrapper');
+    const table=document.getElementById('recipes-table');
+    const cards=document.getElementById('recipe-cards');
+    if(!btn||!tableWrap||!cards) return;
+    function apply(view){
+        const cardMode = view==='cards';
+        btn.setAttribute('aria-pressed', cardMode? 'true':'false');
+        btn.textContent = cardMode? 'List' : 'Cards';
+        if(cardMode){
+            tableWrap.classList.add('visually-hidden');
+            tableWrap.setAttribute('aria-hidden','true');
+            cards.classList.remove('visually-hidden');
+            cards.removeAttribute('aria-hidden');
+        } else {
+            cards.classList.add('visually-hidden');
+            cards.setAttribute('aria-hidden','true');
+            tableWrap.classList.remove('visually-hidden');
+            tableWrap.removeAttribute('aria-hidden');
+        }
+        try{ localStorage.setItem(key, view); }catch{}
+    }
+    let pref=null; try{ pref=localStorage.getItem(key);}catch{}
+    if(pref==='cards') apply('cards');
+    btn.addEventListener('click', ()=> apply(btn.getAttribute('aria-pressed')==='true' ? 'table':'cards'));
+})();
+</script>
+}
+
 @if (Model.Result.TotalPages > 1) {
     <nav class="pager" aria-label="Pagination">
-        <ul class="inline-list" role="list">
-            <li role="listitem">
+        <div class="pager-buttons" style="display:flex;align-items:center;gap:var(--spacing-4);flex-wrap:wrap;">
+            <div>
                 @if (Model.Result.Page > 1) {
-                    <a href="?Search=@Model.Search&PageNumber=@(Model.Result.Page-1)&PageSize=@Model.Result.PageSize" rel="prev">Prev</a>
-                } else { <span class="muted">Prev</span> }
-            </li>
-            <li role="listitem"><span aria-current="page">Page @Model.Result.Page of @Model.Result.TotalPages</span></li>
-            <li role="listitem">
+                    <a class="btn btn--outline btn--sm" href="?Search=@Model.Search&PageNumber=@(Model.Result.Page-1)&PageSize=@Model.Result.PageSize" rel="prev">Prev</a>
+                } else { <span class="btn btn--subtle btn--sm" style="pointer-events:none;opacity:.5;">Prev</span> }
+            </div>
+            <div><span aria-current="page">Page @Model.Result.Page of @Model.Result.TotalPages</span></div>
+            <div>
                 @if (Model.Result.Page < Model.Result.TotalPages) {
-                    <a href="?Search=@Model.Search&PageNumber=@(Model.Result.Page+1)&PageSize=@Model.Result.PageSize" rel="next">Next</a>
-                } else { <span class="muted">Next</span> }
-            </li>
-        </ul>
+                    <a class="btn btn--outline btn--sm" href="?Search=@Model.Search&PageNumber=@(Model.Result.Page+1)&PageSize=@Model.Result.PageSize" rel="next">Next</a>
+                } else { <span class="btn btn--subtle btn--sm" style="pointer-events:none;opacity:.5;">Next</span> }
+            </div>
+        </div>
     </nav>
 }
