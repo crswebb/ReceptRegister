@@ -84,22 +84,22 @@ public class AuthRepository : IAuthRepository
         if (!exists)
         {
             var insert = conn.CreateCommand();
-            insert.CommandText = "INSERT INTO AuthConfig (Id, PasswordHash, Salt, Iterations, CreatedAt, UpdatedAt) VALUES (1,$h,$s,$it,$c,$u)";
-            AddParam(insert, "$h", hash);
-            AddParam(insert, "$s", salt);
-            AddParam(insert, "$it", iterations);
-            AddParam(insert, "$c", now.ToString("O"));
-            AddParam(insert, "$u", now.ToString("O"));
+            insert.CommandText = "INSERT INTO AuthConfig (Id, PasswordHash, Salt, Iterations, CreatedAt, UpdatedAt) VALUES (1,@h,@s,@it,@c,@u)";
+            AddParam(insert, "@h", hash);
+            AddParam(insert, "@s", salt);
+            AddParam(insert, "@it", iterations);
+            AddParam(insert, "@c", now.ToString("O"));
+            AddParam(insert, "@u", now.ToString("O"));
             await insert.ExecuteNonQueryAsync(ct);
         }
         else
         {
             var update = conn.CreateCommand();
-            update.CommandText = "UPDATE AuthConfig SET PasswordHash=$h, Salt=$s, Iterations=$it, UpdatedAt=$u WHERE Id=1";
-            AddParam(update, "$h", hash);
-            AddParam(update, "$s", salt);
-            AddParam(update, "$it", iterations);
-            AddParam(update, "$u", now.ToString("O"));
+            update.CommandText = "UPDATE AuthConfig SET PasswordHash=@h, Salt=@s, Iterations=@it, UpdatedAt=@u WHERE Id=1";
+            AddParam(update, "@h", hash);
+            AddParam(update, "@s", salt);
+            AddParam(update, "@it", iterations);
+            AddParam(update, "@u", now.ToString("O"));
             await update.ExecuteNonQueryAsync(ct);
         }
         await tx.CommitAsync(ct);
@@ -404,9 +404,9 @@ ORDER BY r.Name
     {
         // Categories
         var catCmd = conn.CreateCommand();
-        catCmd.CommandText = @"SELECT c.Id, c.Name FROM Categories c
-                               INNER JOIN RecipeCategories rc ON rc.CategoryId=c.Id
-                               WHERE rc.RecipeId=$id ORDER BY c.Name";
+    catCmd.CommandText = @"SELECT c.Id, c.Name FROM Categories c
+                   INNER JOIN RecipeCategories rc ON rc.CategoryId=c.Id
+                   WHERE rc.RecipeId=@id ORDER BY c.Name";
     AddParam(catCmd, "@id", recipe.Id);
         await using (var reader = await catCmd.ExecuteReaderAsync(ct))
         {
@@ -416,9 +416,9 @@ ORDER BY r.Name
 
         // Keywords
         var keyCmd = conn.CreateCommand();
-        keyCmd.CommandText = @"SELECT k.Id, k.Name FROM Keywords k
-                               INNER JOIN RecipeKeywords rk ON rk.KeywordId=k.Id
-                               WHERE rk.RecipeId=$id ORDER BY k.Name";
+    keyCmd.CommandText = @"SELECT k.Id, k.Name FROM Keywords k
+                   INNER JOIN RecipeKeywords rk ON rk.KeywordId=k.Id
+                   WHERE rk.RecipeId=@id ORDER BY k.Name";
     AddParam(keyCmd, "@id", recipe.Id);
         await using (var reader = await keyCmd.ExecuteReaderAsync(ct))
         {

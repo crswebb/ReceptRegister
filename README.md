@@ -176,17 +176,17 @@ Notes:
 
 Progress (Epic #110):
 1. Provider-specific schema initialization (#106) – DONE: a provider abstraction (`ISchemaInitializer`) now creates either the SQLite or SQL Server schema at startup.
-2. Neutral SQL for repositories / dialect adjustments (#107) – IN PROGRESS NEXT: repository queries still contain SQLite-only constructs (`ON CONFLICT`, `last_insert_rowid()`).
+2. Neutral SQL for repositories / dialect adjustments (#107) – DONE (initial pass): repositories now use a runtime `IDatabaseDialect` (SQLite or SQL Server) for inserts, identity retrieval, taxonomy upserts, link creation, and paging. Further optimization & consolidation may follow.
 3. Data migration helper (#108) – PENDING.
 4. Documentation expansion (#109) – PENDING.
 
-Implementation notes (#106):
+Implementation notes (#106 / #107):
 - A new `ISchemaInitializer` is registered based on `Database:Provider` and invoked during startup (API & Frontend host).
 - `SqliteSchemaInitializer` contains the former static DDL logic (transactional create-if-not-exists).
 - `SqlServerSchemaInitializer` currently provisions an equivalent schema (tables, PKs, FKs, indexes) using `IF NOT EXISTS` guards; still experimental.
-- Repositories & Razor Pages continue to use some SQLite-specific syntax; selecting SQL Server may hit unsupported paths until #107 refactors queries.
+- Razor Pages taxonomy add/delete handlers still embed a SQLite-oriented upsert pattern with `ON CONFLICT` (will be aligned with dialect helper in a minor follow-up). All repository operations have been ported to the dialect abstraction.
 
-Until #107 is complete, selecting `SqlServer` may fail on operations relying on SQLite-only constructs. Use SQLite unless you are actively contributing to the provider work.
+Current limitation: taxonomy add endpoints in the UI still use `ON CONFLICT` and will fail on SQL Server until adjusted; repository APIs are provider-neutral.
 
 — “Let’s sift the chaos and find the perfect recipe to bake today.” — Bagare Bengtsson
 
