@@ -18,7 +18,6 @@
         <p class="app-title"><a asp-page="/Index">ReceptRegister</a></p>
         <nav class="grow" aria-label="Main navigation">
             <ul>
-                <li><a asp-page="/Index" aria-current="@(Context.Request.Path.Value?.Equals("/Index", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">Home</a></li>
                 <li><a asp-page="/Recipes/Index" aria-current="@(Context.Request.Path.Value?.StartsWith("/Recipes", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">Recipes</a></li>
                 <li><a asp-page="/Taxonomy/Categories" aria-current="@(Context.Request.Path.Value?.Contains("/Taxonomy/Categories", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">Categories</a></li>
                 <li><a asp-page="/Taxonomy/Keywords" aria-current="@(Context.Request.Path.Value?.Contains("/Taxonomy/Keywords", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">Keywords</a></li>

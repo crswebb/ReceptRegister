@@ -82,6 +82,13 @@ internal sealed class AuthSessionMiddleware
 			return;
 		}
 
+		// Unauthenticated: redirect HTML requests to login, otherwise 401 JSON/plain
+		var acceptHeader = context.Request.Headers["Accept"].ToString();
+		if (acceptHeader.Contains("text/html", StringComparison.OrdinalIgnoreCase))
+		{
+			context.Response.Redirect("/Auth/Login");
+			return;
+		}
 		context.Response.StatusCode = StatusCodes.Status401Unauthorized;
 	}
 

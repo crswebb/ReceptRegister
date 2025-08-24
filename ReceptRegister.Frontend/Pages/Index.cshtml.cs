@@ -3,10 +3,10 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace ReceptRegister.Frontend.Pages;
 
-public class IndexModel : PageModel
+public class IndexRedirectModel : PageModel
 {
-    public void OnGet()
+    public IActionResult OnGet()
     {
-
+        return RedirectToPage("/Recipes/Index");
     }
 }
