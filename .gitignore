@@ -1,4 +1,8 @@
 # Build artifacts
+# Explicit root-level bins first (some tools generate at repo root)
+/bin/
+/obj/
+# Recursive match for any project/subproject (kept for redundancy + clarity)
 **/bin/
 **/obj/
 

@@ -20,9 +20,9 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync(CancellationToken ct)
     {
-    if (PageNumber < 1) PageNumber = 1;
-    if (PageSize < 1) PageSize = 1; else if (PageSize > 100) PageSize = 100;
-    var criteria = RecipeSearchCriteria.Create(Search, null, null, null, Tried, PageNumber, PageSize);
+        if (PageNumber < 1) PageNumber = 1;
+        if (PageSize < 1) PageSize = 1; else if (PageSize > 100) PageSize = 100;
+        var criteria = RecipeSearchCriteria.Create(Search, null, null, null, Tried, PageNumber, PageSize);
         var (items, total) = await _repo.SearchAsync(criteria, ct);
         Result = new PagedResult(items, criteria.Page, criteria.PageSize, total);
     }
@@ -30,6 +30,6 @@ public class IndexModel : PageModel
     public record PagedResult(IReadOnlyList<Recipe> Items, int Page, int PageSize, int TotalItems)
     {
         public int TotalPages => (int)Math.Ceiling((double)TotalItems / PageSize);
-        public static PagedResult Empty => new(Array.Empty<Recipe>(),1,20,0);
+        public static PagedResult Empty => new(Array.Empty<Recipe>(), 1, 20, 0);
     }
 }

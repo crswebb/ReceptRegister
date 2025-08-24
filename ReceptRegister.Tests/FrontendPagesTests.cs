@@ -20,8 +20,7 @@ public class FrontendPagesTests : IDisposable
         // Ensure Razor Pages from Frontend project are discoverable
         var frontendPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "ReceptRegister.Frontend"));
         // Use a unique temp content root to isolate database per test while still loading Razor pages via application part
-        var tempRoot = Path.Combine(Path.GetTempPath(), "rr_frontendtests_" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(tempRoot);
+    var tempRoot = TestPathHelpers.NewFrontendTempRoot();
         _tempRoots.Add(tempRoot);
         builder.Environment.ContentRootPath = tempRoot;
         builder.Services.AddRazorPages(o => {
@@ -31,8 +30,6 @@ public class FrontendPagesTests : IDisposable
         builder.Services.AddAuthServices();
         builder.Services.AddAppHealth();
         builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
-        var app = builder.Build();
-        // Fresh database will be created under the unique content root
     var app = builder.Build();
     // Fresh database will be created under the unique content root
         app.MapRazorPages();
@@ -91,9 +88,7 @@ public class FrontendPagesTests : IDisposable
 
         // Get detail
         var detail = await client.GetAsync(detailUrl);
-        var detailHtml = await detail.Content.ReadAsStringAsync();
-        Assert.Contains("Test Recipe", detailHtml);
-        Assert.Contains("dinner", detailHtml);
+    var detailHtml = await detail.Content.ReadAsStringAsync();
     Assert.Contains("Test Recipe", detailHtml);
     Assert.Contains("dinner", detailHtml);
         Assert.Contains("quick", detailHtml);
@@ -116,9 +111,6 @@ public class FrontendPagesTests : IDisposable
         Assert.Equal(HttpStatusCode.Redirect, editResp.StatusCode);
         var editDetailUrl = editResp.Headers.Location!.ToString();
         var afterEdit = await client.GetAsync(editDetailUrl);
-        var afterEditHtml = await afterEdit.Content.ReadAsStringAsync();
-        Assert.Contains("Updated notes", afterEditHtml);
-        Assert.DoesNotContain("tasty", afterEditHtml); // removed keyword
     var afterEditHtml = await afterEdit.Content.ReadAsStringAsync();
     Assert.Contains("Updated notes", afterEditHtml);
     Assert.DoesNotContain("tasty", afterEditHtml); // removed keyword
@@ -126,10 +118,6 @@ public class FrontendPagesTests : IDisposable
 
         // Delete
         var deleteForm = new Dictionary<string,string>{{"Id", id.ToString()}};
-        var deleteResp = await client.PostAsync($"/Recipes/Detail/{id}?handler=delete", new FormUrlEncodedContent(deleteForm));
-        Assert.Equal(HttpStatusCode.Redirect, deleteResp.StatusCode);
-        var redirectLocation = deleteResp.Headers.Location!.ToString();
-        Assert.True(redirectLocation == "/Recipes/Index" || redirectLocation == "/Recipes", $"Unexpected delete redirect: {redirectLocation}");
     var deleteResp = await client.PostAsync($"/Recipes/Detail/{id}?handler=delete", new FormUrlEncodedContent(deleteForm));
     Assert.Equal(HttpStatusCode.Redirect, deleteResp.StatusCode);
     var redirectLocation = deleteResp.Headers.Location!.ToString();
