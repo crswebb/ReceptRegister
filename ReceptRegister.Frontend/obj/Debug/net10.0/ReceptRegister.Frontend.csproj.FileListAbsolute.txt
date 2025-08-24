@@ -22,7 +22,6 @@ C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\obj\Debug\net
 C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\obj\Debug\net10.0\scopedcss\Pages\Shared\_Layout.cshtml.rz.scp.css
 C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\obj\Debug\net10.0\scopedcss\bundle\ReceptRegister.Frontend.styles.css
 C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\obj\Debug\net10.0\scopedcss\projectbundle\ReceptRegister.Frontend.bundle.scp.css
-C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\obj\Debug\net10.0\compressed\eu56n61o27-{0}-b9sayid5wm-b9sayid5wm.gz
 C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\obj\Debug\net10.0\compressed\y72cs2ke2e-{0}-61n19gt1b8-61n19gt1b8.gz
 C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\obj\Debug\net10.0\compressed\9ldx1qgr7f-{0}-xtxxf3hu2r-xtxxf3hu2r.gz
 C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\obj\Debug\net10.0\compressed\12q6y0pd70-{0}-c2jlpeoesf-c2jlpeoesf.gz
@@ -128,3 +127,13 @@ C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\bin\Debug\net
 C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\bin\Debug\net10.0\ReceptRegister.Api.pdb
 C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\obj\Debug\net10.0\compressed\qco3p6kj33-{0}-bg68uk3zv0-bg68uk3zv0.gz
 C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\obj\Debug\net10.0\ReceptRe.3A921407.Up2Date
+C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\obj\Debug\net10.0\compressed\j02gzlnpz3-{0}-4ygyoxsy85-4ygyoxsy85.gz
+C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\obj\Debug\net10.0\compressed\lbj9pfrw0t-{0}-s895dcll41-s895dcll41.gz
+C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\obj\Debug\net10.0\compressed\fd902isohc-{0}-2jz3zdclzx-2jz3zdclzx.gz
+C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\obj\Debug\net10.0\compressed\mqfbuwi6k8-{0}-lq00j13kfu-lq00j13kfu.gz
+C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\obj\Debug\net10.0\compressed\eu56n61o27-{0}-80mtzn3fa8-80mtzn3fa8.gz
+C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\obj\Debug\net10.0\compressed\fdlftmgs1s-{0}-9u4ffm6ptj-9u4ffm6ptj.gz
+C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\obj\Debug\net10.0\compressed\nm4b1368m1-{0}-u96uk88k0a-u96uk88k0a.gz
+C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\obj\Debug\net10.0\compressed\jfrc4bexne-{0}-hz2dm47a24-hz2dm47a24.gz
+C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\obj\Debug\net10.0\compressed\nqangkj3j4-{0}-m94op9izqw-m94op9izqw.gz
+C:\Users\stefa\source\repos\ReceptRegister\ReceptRegister.Frontend\obj\Debug\net10.0\compressed\45vlh647cu-{0}-wn7y27vw1b-wn7y27vw1b.gz

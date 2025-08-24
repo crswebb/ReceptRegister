@@ -1,5 +1,5 @@
 // toggle-tried.js (#39) - progressive enhancement for toggling tried status with accessible feedback
-// Uses PATCH /recipes/{id}/tried with JSON body: { "tried": true|false }
+// Uses POST /recipes/{id}/tried with JSON body: { "id": number, "tried": true|false }
 // Updates button state, aria-pressed, and provides a polite status message for assistive tech.
 document.addEventListener('click', async e => {
   const btn = e.target.closest('[data-toggle-tried]');
@@ -35,9 +35,9 @@ document.addEventListener('click', async e => {
   try {
     const newValue = !tried;
     const res = await fetch(`${apiBase}/recipes/${id}/tried`, {
-      method: 'PATCH',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tried: newValue })
+      body: JSON.stringify({ id: Number(id), tried: newValue })
     });
     if (!res.ok) {
       showStatus('Failed to update recipe status. Try again.', true);

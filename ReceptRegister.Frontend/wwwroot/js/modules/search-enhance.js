@@ -28,17 +28,18 @@ if (form) {
   };
 
   const doSearch = async () => {
-    const q = input.value.trim();
-    const url = apiBase + '/recipes/?search=' + encodeURIComponent(q);
+  const q = input.value.trim();
+  const url = apiBase + '/recipes/?query=' + encodeURIComponent(q);
     try {
       const res = await fetch(url);
       if (!res.ok) {
         renderError('Search unavailable. Please try again later.');
         return;
       }
-      const data = await res.json();
-      tableBody.innerHTML = '';
-      for (const r of data) {
+  const data = await res.json();
+  const items = Array.isArray(data.items) ? data.items : data; // fallback if backend still legacy
+  tableBody.innerHTML = '';
+  for (const r of items) {
         const tr = document.createElement('tr');
         tr.innerHTML = `<td><a href="/Recipes/Detail/${r.id}">${r.name}</a></td>`+
           `<td>${r.book}</td><td>${r.page}</td>`+
@@ -48,10 +49,9 @@ if (form) {
         tableBody.appendChild(tr);
       }
       if (countEl) {
-        const countText = `${data.length} recipe${data.length===1?'':'s'} found.`;
-        countEl.textContent = countText;
+        countEl.textContent = `${items.length} of ${data.totalItems ?? items.length} recipe${(data.totalItems ?? items.length)===1?'':'s'} shown.`;
         const live = document.getElementById('search-results-count');
-        if (live) live.textContent = `${data.length} recipe${data.length===1?'':'s'} listed.`;
+        if (live) live.textContent = (countEl.textContent || '').replace(' shown.', ' listed.');
       }
       // Clear prior error status if any
       if (statusRegion) {

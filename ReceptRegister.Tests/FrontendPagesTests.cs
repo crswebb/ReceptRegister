@@ -13,7 +13,6 @@ namespace ReceptRegister.Tests;
 public class FrontendPagesTests : IDisposable
 {
     private readonly List<string> _tempRoots = new();
-
     private async Task<HttpClient> CreateAsync()
     {
         var builder = Microsoft.AspNetCore.Builder.WebApplication.CreateBuilder(Array.Empty<string>());
@@ -34,6 +33,8 @@ public class FrontendPagesTests : IDisposable
         builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
         var app = builder.Build();
         // Fresh database will be created under the unique content root
+    var app = builder.Build();
+    // Fresh database will be created under the unique content root
         app.MapRazorPages();
         await SchemaInitializer.InitializeAsync(app.Services.GetRequiredService<ISqliteConnectionFactory>());
         await app.StartAsync();
@@ -54,7 +55,6 @@ public class FrontendPagesTests : IDisposable
             }
         }
     }
-
     [Fact]
     public async Task Recipes_Index_Empty_State()
     {
@@ -94,6 +94,8 @@ public class FrontendPagesTests : IDisposable
         var detailHtml = await detail.Content.ReadAsStringAsync();
         Assert.Contains("Test Recipe", detailHtml);
         Assert.Contains("dinner", detailHtml);
+    Assert.Contains("Test Recipe", detailHtml);
+    Assert.Contains("dinner", detailHtml);
         Assert.Contains("quick", detailHtml);
 
         // Extract id
@@ -117,6 +119,9 @@ public class FrontendPagesTests : IDisposable
         var afterEditHtml = await afterEdit.Content.ReadAsStringAsync();
         Assert.Contains("Updated notes", afterEditHtml);
         Assert.DoesNotContain("tasty", afterEditHtml); // removed keyword
+    var afterEditHtml = await afterEdit.Content.ReadAsStringAsync();
+    Assert.Contains("Updated notes", afterEditHtml);
+    Assert.DoesNotContain("tasty", afterEditHtml); // removed keyword
         Assert.Contains("Yes", afterEditHtml); // Tried yes
 
         // Delete
@@ -125,6 +130,10 @@ public class FrontendPagesTests : IDisposable
         Assert.Equal(HttpStatusCode.Redirect, deleteResp.StatusCode);
         var redirectLocation = deleteResp.Headers.Location!.ToString();
         Assert.True(redirectLocation == "/Recipes/Index" || redirectLocation == "/Recipes", $"Unexpected delete redirect: {redirectLocation}");
+    var deleteResp = await client.PostAsync($"/Recipes/Detail/{id}?handler=delete", new FormUrlEncodedContent(deleteForm));
+    Assert.Equal(HttpStatusCode.Redirect, deleteResp.StatusCode);
+    var redirectLocation = deleteResp.Headers.Location!.ToString();
+    Assert.True(redirectLocation == "/Recipes/Index" || redirectLocation == "/Recipes", $"Unexpected delete redirect: {redirectLocation}");
 
         // Index no longer shows recipe name
         var index = await client.GetAsync("/Recipes/Index");

@@ -57,10 +57,17 @@ public class RecipeRepositoryTests
         Assert.True(updated.Tried);
         Assert.Contains("pearl", updated.Notes!);
 
-        // Search by keyword
-        var search = await repo.SearchAsync("sweet");
-        Assert.Single(search);
-        Assert.Equal(id, search[0].Id);
+    // Legacy search by keyword (string term)
+    var legacySearch = await repo.LegacySearchAsync("sweet");
+    Assert.Single(legacySearch);
+    Assert.Equal(id, legacySearch[0].Id);
+
+    // New paged search API: query sweet
+    var criteria = RecipeSearchCriteria.Create("sweet", null, null, null, null, 1, 10);
+    var (items, total) = await repo.SearchAsync(criteria);
+    Assert.Equal(total, items.Count);
+    Assert.Single(items);
+    Assert.Equal(id, items[0].Id);
 
         // Toggle tried off
         await repo.ToggleTriedAsync(id, false);

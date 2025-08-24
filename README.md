@@ -16,6 +16,7 @@ ReceptRegister is your personal, searchable index for pastry recipes from your b
 - Filter by “tried” or “not tried” to plan your next bake.
 - Browse by book or category when you’re in the mood for a certain style.
 - Update entries as you explore your library.
+ - (API) Query with paging & combined filters (book, category ids, keyword ids, tried) for efficient large libraries.
 
 ## How it feels to use
 - A simple search bar to find recipes by words you remember.
@@ -155,6 +156,57 @@ In future milestones this may evolve (migrations, encryption, cloud backup), but
 — “Let’s sift the chaos and find the perfect recipe to bake today.” — Bagare Bengtsson
 
 ## Running locally (Milestone 1 scaffolding)
+## API (Milestone 4)
+
+### Core Endpoints
+
+Recipes:
+- GET /recipes?query=&book=&categoryId=1&categoryId=2&keywordId=3&tried=true&page=1&pageSize=20
+	Returns: `{
+		"items": [ { id, name, book, page, tried, categories[], keywords[] } ],
+		"page": 1, "pageSize": 20, "totalItems": 57, "totalPages": 3
+	}`
+- GET /recipes/{id}
+- POST /recipes (RecipeRequest)
+- PUT /recipes/{id}
+- POST /recipes/{id}/tried { id, tried }
+- DELETE /recipes/{id}
+- POST /recipes/{id}/categories/{categoryId}
+- DELETE /recipes/{id}/categories/{categoryId}
+- POST /recipes/{id}/keywords/{keywordId}
+- DELETE /recipes/{id}/keywords/{keywordId}
+
+Taxonomy:
+- GET /categories (list names)
+- GET /keywords (list names)
+
+### Query Parameters
+- query: free text across name/book/notes/categories/keywords
+- book: exact match on stored book title
+- categoryId / keywordId: repeatable; recipe must match ANY of supplied ids for each dimension
+- tried: true|false
+- page / pageSize: paging (defaults 1 / 20, max pageSize 100)
+
+### Validation & Errors
+Errors follow Problem Details (RFC 9457) with custom types:
+- Validation: type=https://receptregister/errors/validation (422)
+- Not found: type=https://receptregister/errors/not-found (404)
+- Conflict: type=https://receptregister/errors/conflict (409)
+
+Example 404:
+```json
+{
+	"type": "https://receptregister/errors/not-found",
+	"title": "Resource not found",
+	"status": 404,
+	"detail": "Recipe 42 not found"
+}
+```
+
+### Tried Endpoint Change
+Legacy PATCH /recipes/{id}/tried replaced by POST /recipes/{id}/tried with body `{ id, tried }`.
+
+---
 
 Two apps make up ReceptRegister:
 - API (Minimal API): hosts the JSON endpoints and persistence

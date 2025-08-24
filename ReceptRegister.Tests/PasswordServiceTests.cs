@@ -10,7 +10,7 @@ namespace ReceptRegister.Tests;
 
 public class PasswordServiceTests
 {
-    private async Task<IPasswordService> CreateAsync(Dictionary<string,string?>? extra = null)
+    private async Task<(IPasswordService svc, string dbPath)> CreateAsync(Dictionary<string,string?>? extra = null, string? existingPath = null)
     {
         var services = new ServiceCollection();
         var dict = new Dictionary<string,string?>
@@ -26,33 +26,32 @@ public class PasswordServiceTests
     services.AddSingleton<IWebHostEnvironment>(new FakeEnvAuth());
 
         // Persistence / auth infra
-        services.AddSingleton<ISqliteConnectionFactory>(_ => new TestSqliteFactory());
+    var factory = existingPath is null ? new TestSqliteFactory() : new TestSqliteFactory(existingPath);
+    services.AddSingleton<ISqliteConnectionFactory>(factory);
         services.AddAuthServices();
         var sp = services.BuildServiceProvider();
         await SchemaInitializer.InitializeAsync(sp.GetRequiredService<ISqliteConnectionFactory>());
-        return sp.GetRequiredService<IPasswordService>();
+    return (sp.GetRequiredService<IPasswordService>(), factory.Path);
     }
 
     [Fact]
     public async Task SetAndVerify_Works()
     {
-        var svc = await CreateAsync();
-        Assert.False(await svc.HasPasswordAsync());
-        await svc.SetPasswordAsync("Passw0rd!");
-        Assert.True(await svc.HasPasswordAsync());
-        Assert.True(await svc.VerifyAsync("Passw0rd!"));
-        Assert.False(await svc.VerifyAsync("nope"));
+    var (svc, _) = await CreateAsync();
+    Assert.False(await svc.HasPasswordAsync());
+    await svc.SetPasswordAsync("Passw0rd!");
+    Assert.True(await svc.HasPasswordAsync());
+    Assert.True(await svc.VerifyAsync("Passw0rd!"));
+    Assert.False(await svc.VerifyAsync("nope"));
     }
 
     [Fact]
     public async Task IterationUpgrade_OnLogin()
     {
-        var svc = await CreateAsync(new() { {"RECEPT_PBKDF2_ITERATIONS", "50000"} });
-        await svc.SetPasswordAsync("secret");
-        // Rebuild with higher iteration target using same underlying DB (we simulate by reusing file path) is complex here;
-        // Simpler: create new svc with higher env and verify triggers upgrade (since repo returns old iteration)
-        var upgradeSvc = await CreateAsync(new() { {"RECEPT_PBKDF2_ITERATIONS", "90000"} });
-        Assert.True(await upgradeSvc.VerifyAsync("secret")); // triggers upgrade silently
+    var (svc, path) = await CreateAsync(new() { {"RECEPT_PBKDF2_ITERATIONS", "50000"} });
+    await svc.SetPasswordAsync("secret");
+    var (upgradeSvc, _) = await CreateAsync(new() { {"RECEPT_PBKDF2_ITERATIONS", "90000"} }, path);
+    Assert.True(await upgradeSvc.VerifyAsync("secret")); // triggers upgrade silently using same DB
         // Can't easily assert new iteration without exposing repo; assume log emitted. Future: expose method to read config.
     }
 }
@@ -69,10 +68,11 @@ internal sealed class FakeEnvAuth : IWebHostEnvironment
 
 internal class TestSqliteFactory : ISqliteConnectionFactory
 {
-    private readonly string _path;
-    public TestSqliteFactory()
+    public string Path { get; }
+    public TestSqliteFactory() : this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"auth-{Guid.NewGuid():N}.db")) {}
+    public TestSqliteFactory(string existingPath)
     {
-        _path = Path.Combine(Path.GetTempPath(), $"auth-{Guid.NewGuid():N}.db");
+        Path = existingPath;
     }
-    public Microsoft.Data.Sqlite.SqliteConnection Create() => new(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder { DataSource = _path, ForeignKeys = true }.ToString());
+    public Microsoft.Data.Sqlite.SqliteConnection Create() => new(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder { DataSource = Path, ForeignKeys = true }.ToString());
 }
