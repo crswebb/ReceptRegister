@@ -17,6 +17,8 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync(CancellationToken ct)
     {
-        Results = await _repo.SearchAsync(Search, ct);
+        // Use legacy search path until Razor page gains paging/filter UI
+        if (_repo is { } repo)
+            Results = await repo.LegacySearchAsync(Search, ct);
     }
 }

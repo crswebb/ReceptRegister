@@ -42,8 +42,32 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJpdmFjeS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/stefa/source/repos/ReceptRegister/ReceptRegister.Frontend/Pages/Recipes/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmVjaXBlc1xDcmVhdGUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/stefa/source/repos/ReceptRegister/ReceptRegister.Frontend/Pages/Recipes/Detail.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmVjaXBlc1xEZXRhaWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/stefa/source/repos/ReceptRegister/ReceptRegister.Frontend/Pages/Recipes/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmVjaXBlc1xFZGl0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/stefa/source/repos/ReceptRegister/ReceptRegister.Frontend/Pages/Recipes/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmVjaXBlc1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/stefa/source/repos/ReceptRegister/ReceptRegister.Frontend/Pages/Shared/_ValidationScriptsPartial.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/stefa/source/repos/ReceptRegister/ReceptRegister.Frontend/Pages/Taxonomy/Categories.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVGF4b25vbXlcQ2F0ZWdvcmllcy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/stefa/source/repos/ReceptRegister/ReceptRegister.Frontend/Pages/Taxonomy/Keywords.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVGF4b25vbXlcS2V5d29yZHMuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/stefa/source/repos/ReceptRegister/ReceptRegister.Frontend/Pages/_ViewImports.cshtml]

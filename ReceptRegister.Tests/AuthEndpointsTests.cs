@@ -19,7 +19,6 @@ public class AuthEndpointsTests
     {
         var builder = Microsoft.AspNetCore.Builder.WebApplication.CreateBuilder(Array.Empty<string>());
         builder.WebHost.UseUrls("http://127.0.0.1:0");
-        builder.Host.UseEnvironment("Development");
         var tempRoot = Path.Combine(Path.GetTempPath(), "rr_apitests_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(tempRoot);
         builder.Environment.ContentRootPath = tempRoot;

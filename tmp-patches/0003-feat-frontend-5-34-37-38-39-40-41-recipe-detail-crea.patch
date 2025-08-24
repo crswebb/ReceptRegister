@@ -1,0 +1,689 @@
+From d49349bd7053840a255346b14edff991d037d275 Mon Sep 17 00:00:00 2001
+From: stefa <stefa@DESKTOP-JFUT92A>
+Date: Sat, 23 Aug 2025 21:05:37 +0200
+Subject: [PATCH 3/4] feat(frontend-5 #34 #37 #38 #39 #40 #41): recipe
+ detail/create/edit, taxonomy mgmt, css extraction, enhancement modules
+
+---
+ .../Pages/Recipes/Create.cshtml               | 39 ++++++++++
+ .../Pages/Recipes/Create.cshtml.cs            | 55 ++++++++++++++
+ .../Pages/Recipes/Detail.cshtml               | 44 ++++++++++++
+ .../Pages/Recipes/Detail.cshtml.cs            | 26 +++++++
+ .../Pages/Recipes/Edit.cshtml                 | 47 ++++++++++++
+ .../Pages/Recipes/Edit.cshtml.cs              | 71 +++++++++++++++++++
+ .../Pages/Recipes/Index.cshtml                |  2 +-
+ .../Pages/Shared/_Layout.cshtml               | 20 ++----
+ .../Pages/Taxonomy/Categories.cshtml          | 11 ++-
+ .../Pages/Taxonomy/Categories.cshtml.cs       | 41 ++++++++++-
+ .../Pages/Taxonomy/Keywords.cshtml            | 11 ++-
+ .../Pages/Taxonomy/Keywords.cshtml.cs         | 41 ++++++++++-
+ ReceptRegister.Frontend/wwwroot/css/chips.css |  8 +++
+ .../wwwroot/css/layout.css                    | 12 ++++
+ ReceptRegister.Frontend/wwwroot/css/site.css  |  4 ++
+ .../wwwroot/js/modules/chips.js               | 10 +++
+ .../wwwroot/js/modules/search-enhance.js      | 31 ++++++++
+ .../wwwroot/js/modules/toggle-tried.js        | 14 ++++
+ 18 files changed, 468 insertions(+), 19 deletions(-)
+ create mode 100644 ReceptRegister.Frontend/Pages/Recipes/Create.cshtml
+ create mode 100644 ReceptRegister.Frontend/Pages/Recipes/Create.cshtml.cs
+ create mode 100644 ReceptRegister.Frontend/Pages/Recipes/Detail.cshtml
+ create mode 100644 ReceptRegister.Frontend/Pages/Recipes/Detail.cshtml.cs
+ create mode 100644 ReceptRegister.Frontend/Pages/Recipes/Edit.cshtml
+ create mode 100644 ReceptRegister.Frontend/Pages/Recipes/Edit.cshtml.cs
+ create mode 100644 ReceptRegister.Frontend/wwwroot/css/chips.css
+ create mode 100644 ReceptRegister.Frontend/wwwroot/css/layout.css
+ create mode 100644 ReceptRegister.Frontend/wwwroot/js/modules/chips.js
+ create mode 100644 ReceptRegister.Frontend/wwwroot/js/modules/search-enhance.js
+ create mode 100644 ReceptRegister.Frontend/wwwroot/js/modules/toggle-tried.js
+
+diff --git a/ReceptRegister.Frontend/Pages/Recipes/Create.cshtml b/ReceptRegister.Frontend/Pages/Recipes/Create.cshtml
+new file mode 100644
+index 0000000..7daa449
+--- /dev/null
++++ b/ReceptRegister.Frontend/Pages/Recipes/Create.cshtml
+@@ -0,0 +1,39 @@
++@page
++@model ReceptRegister.Frontend.Pages.Recipes.CreateModel
++@{
++    ViewData["Title"] = "Add Recipe";
++}
++<h1>Add Recipe</h1>
++<form method="post" novalidate>
++    <div>
++        <label for="Name">Name *</label><br />
++        <input id="Name" name="Name" value="@Model.Input.Name" />
++        <span class="text-danger">@Model.ModelState[nameof(Model.Input.Name)]?.Errors.FirstOrDefault()?.ErrorMessage</span>
++    </div>
++    <div>
++        <label for="Book">Book *</label><br />
++        <input id="Book" name="Book" value="@Model.Input.Book" />
++        <span class="text-danger">@Model.ModelState[nameof(Model.Input.Book)]?.Errors.FirstOrDefault()?.ErrorMessage</span>
++    </div>
++    <div>
++        <label for="Page">Page *</label><br />
++        <input id="Page" name="Page" type="number" value="@Model.Input.Page" />
++        <span class="text-danger">@Model.ModelState[nameof(Model.Input.Page)]?.Errors.FirstOrDefault()?.ErrorMessage</span>
++    </div>
++    <div>
++        <label for="Categories">Categories (comma separated)</label><br />
++        <input id="Categories" name="Categories" value="@Model.Input.Categories" />
++    </div>
++    <div>
++        <label for="Keywords">Keywords (comma separated)</label><br />
++        <input id="Keywords" name="Keywords" value="@Model.Input.Keywords" />
++    </div>
++    <div>
++        <label for="Notes">Notes</label><br />
++        <textarea id="Notes" name="Notes" rows="4">@Model.Input.Notes</textarea>
++    </div>
++    <div>
++        <label><input type="checkbox" name="Tried" value="true" @(Model.Input.Tried?"checked":null) /> Tried</label>
++    </div>
++    <p><button type="submit">Create</button> <a href="/Recipes/Index">Cancel</a></p>
++</form>
+\ No newline at end of file
+diff --git a/ReceptRegister.Frontend/Pages/Recipes/Create.cshtml.cs b/ReceptRegister.Frontend/Pages/Recipes/Create.cshtml.cs
+new file mode 100644
+index 0000000..54b3163
+--- /dev/null
++++ b/ReceptRegister.Frontend/Pages/Recipes/Create.cshtml.cs
+@@ -0,0 +1,55 @@
++using Microsoft.AspNetCore.Mvc;
++using Microsoft.AspNetCore.Mvc.RazorPages;
++using ReceptRegister.Api.Data;
++using ReceptRegister.Api.Domain;
++
++namespace ReceptRegister.Frontend.Pages.Recipes;
++
++public class CreateModel : PageModel
++{
++    private readonly IRecipesRepository _recipes;
++    public CreateModel(IRecipesRepository recipes) => _recipes = recipes;
++
++    [BindProperty]
++    public RecipeInput Input { get; set; } = new();
++
++    public void OnGet() { }
++
++    public async Task<IActionResult> OnPostAsync(CancellationToken ct)
++    {
++        if (!Validate()) return Page();
++        var recipe = new Recipe
++        {
++            Name = Input.Name!,
++            Book = Input.Book!,
++            Page = Input.Page,
++            Notes = string.IsNullOrWhiteSpace(Input.Notes) ? null : Input.Notes,
++            Tried = Input.Tried
++        };
++        var cats = Split(Input.Categories);
++        var keys = Split(Input.Keywords);
++        var id = await _recipes.AddAsync(recipe, cats, keys, ct);
++        return RedirectToPage("/Recipes/Detail", new { id });
++    }
++
++    private static IEnumerable<string> Split(string? raw) => string.IsNullOrWhiteSpace(raw) ? Enumerable.Empty<string>() : raw.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
++
++    private bool Validate()
++    {
++        if (string.IsNullOrWhiteSpace(Input.Name)) ModelState.AddModelError(nameof(Input.Name), "Name is required");
++        if (string.IsNullOrWhiteSpace(Input.Book)) ModelState.AddModelError(nameof(Input.Book), "Book is required");
++        if (Input.Page < 1) ModelState.AddModelError(nameof(Input.Page), "Page must be >= 1");
++        return ModelState.IsValid;
++    }
++
++    public class RecipeInput
++    {
++        public string? Name { get; set; }
++        public string? Book { get; set; }
++        public int Page { get; set; } = 1;
++        public string? Notes { get; set; }
++        public bool Tried { get; set; }
++        public string? Categories { get; set; }
++        public string? Keywords { get; set; }
++    }
++}
+\ No newline at end of file
+diff --git a/ReceptRegister.Frontend/Pages/Recipes/Detail.cshtml b/ReceptRegister.Frontend/Pages/Recipes/Detail.cshtml
+new file mode 100644
+index 0000000..fe85fc8
+--- /dev/null
++++ b/ReceptRegister.Frontend/Pages/Recipes/Detail.cshtml
+@@ -0,0 +1,44 @@
++@page "/Recipes/Detail/{id:int}"
++@model ReceptRegister.Frontend.Pages.Recipes.DetailModel
++@{
++    ViewData["Title"] = Model.Recipe?.Name ?? "Recipe";
++}
++@if (Model.Recipe is null)
++{
++    <h1>Recipe not found</h1>
++    <p><a href="/Recipes/Index">Back to list</a></p>
++}
++else
++{
++    <h1>@Model.Recipe.Name</h1>
++    <p><strong>Book:</strong> @Model.Recipe.Book<br />
++       <strong>Page:</strong> @Model.Recipe.Page<br />
++       <strong>Tried:</strong> @(Model.Recipe.Tried ? "Yes" : "No")</p>
++    <section>
++        <h2 class="visually-hidden">Taxonomy</h2>
++        <p><strong>Categories:</strong>
++            @if (Model.Recipe.Categories.Count==0) { <span class="muted">None</span>; } else {
++                <ul class="chip-list">@foreach(var c in Model.Recipe.Categories){<li class="chip">@c.Name</li>}</ul>
++            }
++        </p>
++        <p><strong>Keywords:</strong>
++            @if (Model.Recipe.Keywords.Count==0) { <span class="muted">None</span>; } else {
++                <ul class="chip-list">@foreach(var k in Model.Recipe.Keywords){<li class="chip">@k.Name</li>}</ul>
++            }
++        </p>
++    </section>
++    @if (!string.IsNullOrWhiteSpace(Model.Recipe.Notes)) {
++        <section>
++            <h2>Notes</h2>
++            <p>@Model.Recipe.Notes</p>
++        </section>
++    }
++    <p>
++        <a href="/Recipes/Edit/@Model.Recipe.Id">Edit</a> ·
++        <form method="post" asp-page-handler="delete" style="display:inline" onsubmit="return confirm('Delete this recipe?');">
++            <input type="hidden" name="Id" value="@Model.Recipe.Id" />
++            <button type="submit" class="link-button">Delete</button>
++        </form> ·
++        <a href="/Recipes/Index">Back</a>
++    </p>
++}
+\ No newline at end of file
+diff --git a/ReceptRegister.Frontend/Pages/Recipes/Detail.cshtml.cs b/ReceptRegister.Frontend/Pages/Recipes/Detail.cshtml.cs
+new file mode 100644
+index 0000000..79d4044
+--- /dev/null
++++ b/ReceptRegister.Frontend/Pages/Recipes/Detail.cshtml.cs
+@@ -0,0 +1,26 @@
++using Microsoft.AspNetCore.Mvc;
++using Microsoft.AspNetCore.Mvc.RazorPages;
++using ReceptRegister.Api.Data;
++using ReceptRegister.Api.Domain;
++
++namespace ReceptRegister.Frontend.Pages.Recipes;
++
++public class DetailModel : PageModel
++{
++    private readonly IRecipesRepository _recipes;
++    public DetailModel(IRecipesRepository recipes) => _recipes = recipes;
++
++    public Recipe? Recipe { get; private set; }
++
++    public async Task<IActionResult> OnGetAsync(int id, CancellationToken ct)
++    {
++        Recipe = await _recipes.GetByIdAsync(id, ct);
++        return Page();
++    }
++
++    public async Task<IActionResult> OnPostDeleteAsync(int id, CancellationToken ct)
++    {
++        await _recipes.DeleteAsync(id, ct);
++        return RedirectToPage("/Recipes/Index");
++    }
++}
+\ No newline at end of file
+diff --git a/ReceptRegister.Frontend/Pages/Recipes/Edit.cshtml b/ReceptRegister.Frontend/Pages/Recipes/Edit.cshtml
+new file mode 100644
+index 0000000..bbd1258
+--- /dev/null
++++ b/ReceptRegister.Frontend/Pages/Recipes/Edit.cshtml
+@@ -0,0 +1,47 @@
++@page "/Recipes/Edit/{id:int}"
++@model ReceptRegister.Frontend.Pages.Recipes.EditModel
++@{
++    ViewData["Title"] = "Edit Recipe";
++}
++<h1>Edit Recipe</h1>
++@if (Model.Input is null)
++{
++    <p>Recipe not found. <a href="/Recipes/Index">Back</a></p>
++}
++else
++{
++<form method="post" novalidate>
++    <input type="hidden" name="Id" value="@Model.Id" />
++    <div>
++        <label for="Name">Name *</label><br />
++        <input id="Name" name="Name" value="@Model.Input.Name" />
++        <span class="text-danger">@Model.ModelState[nameof(Model.Input.Name)]?.Errors.FirstOrDefault()?.ErrorMessage</span>
++    </div>
++    <div>
++        <label for="Book">Book *</label><br />
++        <input id="Book" name="Book" value="@Model.Input.Book" />
++        <span class="text-danger">@Model.ModelState[nameof(Model.Input.Book)]?.Errors.FirstOrDefault()?.ErrorMessage</span>
++    </div>
++    <div>
++        <label for="Page">Page *</label><br />
++        <input id="Page" name="Page" type="number" value="@Model.Input.Page" />
++        <span class="text-danger">@Model.ModelState[nameof(Model.Input.Page)]?.Errors.FirstOrDefault()?.ErrorMessage</span>
++    </div>
++    <div>
++        <label for="Categories">Categories (comma separated)</label><br />
++        <input id="Categories" name="Categories" value="@Model.Input.Categories" />
++    </div>
++    <div>
++        <label for="Keywords">Keywords (comma separated)</label><br />
++        <input id="Keywords" name="Keywords" value="@Model.Input.Keywords" />
++    </div>
++    <div>
++        <label for="Notes">Notes</label><br />
++        <textarea id="Notes" name="Notes" rows="4">@Model.Input.Notes</textarea>
++    </div>
++    <div>
++        <label><input type="checkbox" name="Tried" value="true" @(Model.Input.Tried?"checked":null) /> Tried</label>
++    </div>
++    <p><button type="submit">Save</button> <a href="/Recipes/Detail/@Model.Id">Cancel</a></p>
++</form>
++}
+\ No newline at end of file
+diff --git a/ReceptRegister.Frontend/Pages/Recipes/Edit.cshtml.cs b/ReceptRegister.Frontend/Pages/Recipes/Edit.cshtml.cs
+new file mode 100644
+index 0000000..2dec9d2
+--- /dev/null
++++ b/ReceptRegister.Frontend/Pages/Recipes/Edit.cshtml.cs
+@@ -0,0 +1,71 @@
++using Microsoft.AspNetCore.Mvc;
++using Microsoft.AspNetCore.Mvc.RazorPages;
++using ReceptRegister.Api.Data;
++using ReceptRegister.Api.Domain;
++
++namespace ReceptRegister.Frontend.Pages.Recipes;
++
++public class EditModel : PageModel
++{
++    private readonly IRecipesRepository _recipes;
++    public EditModel(IRecipesRepository recipes) => _recipes = recipes;
++
++    [BindProperty]
++    public RecipeInput? Input { get; set; }
++    [BindProperty(SupportsGet = true)]
++    public int Id { get; set; }
++
++    public async Task<IActionResult> OnGetAsync(CancellationToken ct)
++    {
++        var recipe = await _recipes.GetByIdAsync(Id, ct);
++        if (recipe is null) return Page();
++        Input = new RecipeInput
++        {
++            Name = recipe.Name,
++            Book = recipe.Book,
++            Page = recipe.Page,
++            Notes = recipe.Notes,
++            Tried = recipe.Tried,
++            Categories = string.Join(", ", recipe.Categories.Select(c => c.Name)),
++            Keywords = string.Join(", ", recipe.Keywords.Select(k => k.Name))
++        };
++        return Page();
++    }
++
++    public async Task<IActionResult> OnPostAsync(CancellationToken ct)
++    {
++        if (Input is null) return Page();
++        if (!Validate()) return Page();
++        var existing = await _recipes.GetByIdAsync(Id, ct);
++        if (existing is null) return Page();
++        existing.Name = Input.Name!;
++        existing.Book = Input.Book!;
++        existing.Page = Input.Page;
++        existing.Notes = string.IsNullOrWhiteSpace(Input.Notes) ? null : Input.Notes;
++        existing.Tried = Input.Tried;
++        var cats = Split(Input.Categories);
++        var keys = Split(Input.Keywords);
++        await _recipes.UpdateAsync(existing, cats, keys, ct);
++        return RedirectToPage("/Recipes/Detail", new { id = existing.Id });
++    }
++
++    private bool Validate()
++    {
++        if (string.IsNullOrWhiteSpace(Input!.Name)) ModelState.AddModelError(nameof(Input.Name), "Name is required");
++        if (string.IsNullOrWhiteSpace(Input.Book)) ModelState.AddModelError(nameof(Input.Book), "Book is required");
++        if (Input.Page < 1) ModelState.AddModelError(nameof(Input.Page), "Page must be >= 1");
++        return ModelState.IsValid;
++    }
++    private static IEnumerable<string> Split(string? raw) => string.IsNullOrWhiteSpace(raw) ? Enumerable.Empty<string>() : raw.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
++
++    public class RecipeInput
++    {
++        public string? Name { get; set; }
++        public string? Book { get; set; }
++        public int Page { get; set; }
++        public string? Notes { get; set; }
++        public bool Tried { get; set; }
++        public string? Categories { get; set; }
++        public string? Keywords { get; set; }
++    }
++}
+\ No newline at end of file
+diff --git a/ReceptRegister.Frontend/Pages/Recipes/Index.cshtml b/ReceptRegister.Frontend/Pages/Recipes/Index.cshtml
+index 6e5e256..eed5e0f 100644
+--- a/ReceptRegister.Frontend/Pages/Recipes/Index.cshtml
++++ b/ReceptRegister.Frontend/Pages/Recipes/Index.cshtml
+@@ -40,7 +40,7 @@
+                     <ul class="inline-list">@foreach (var k in r.Keywords) { <li>@k.Name</li> }</ul>
+                 }
+             </td>
+-            <td>@(r.Tried ? "✔" : "")</td>
++            <td><button type="button" class="link-button" data-toggle-tried data-id="@r.Id" data-tried="@r.Tried">@(r.Tried?"✔":"")</button></td>
+         </tr>
+     }
+     </tbody>
+diff --git a/ReceptRegister.Frontend/Pages/Shared/_Layout.cshtml b/ReceptRegister.Frontend/Pages/Shared/_Layout.cshtml
+index 84bc1ad..97a9e7f 100644
+--- a/ReceptRegister.Frontend/Pages/Shared/_Layout.cshtml
++++ b/ReceptRegister.Frontend/Pages/Shared/_Layout.cshtml
+@@ -4,24 +4,13 @@
+     <meta charset="utf-8" />
+     <meta name="viewport" content="width=device-width, initial-scale=1" />
+     <title>@(ViewData["Title"] is null ? "ReceptRegister" : ViewData["Title"] + " · ReceptRegister")</title>
++    <meta name="api-base" content="https://localhost:5001" /> @* Adjust api-base if needed *@
+     <link rel="stylesheet" href="/css/base.css" asp-append-version="true" />
++    <link rel="stylesheet" href="/css/layout.css" asp-append-version="true" />
+     <link rel="stylesheet" href="/css/forms.css" asp-append-version="true" />
+     <link rel="stylesheet" href="/css/table.css" asp-append-version="true" />
++    <link rel="stylesheet" href="/css/chips.css" asp-append-version="true" />
+     <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
+-    <style>
+-        /* Lightweight structural layout (Milestone 5 foundation) */
+-        .skip-link { position:absolute; left:-1000px; top:-1000px; background:#000; color:#fff; padding:.5rem .75rem; }
+-        .skip-link:focus { left:0; top:0; z-index:1000; }
+-        header { display:flex; align-items:center; gap:1rem; padding:.5rem 0; }
+-        nav ul { list-style:none; padding:0; margin:0; display:flex; gap:1rem; }
+-        nav a { text-decoration:none; color:inherit; }
+-        nav a[aria-current="page"] { font-weight:600; text-decoration:underline; }
+-        body { max-width:1000px; margin:0 auto; }
+-        main { min-height:60vh; }
+-        footer { margin-top:3rem; font-size:.875rem; color:#555; border-top:1px solid #ddd; padding:1rem 0; }
+-        .app-title { font-size:1.15rem; font-weight:600; margin:0; }
+-        .grow { flex:1; }
+-    </style>
+ </head>
+ <body>
+     <a href="#main" class="skip-link">Skip to content</a>
+@@ -43,6 +32,9 @@
+     <footer>
+         <p>&copy; @DateTime.UtcNow.Year ReceptRegister · <a asp-page="/Privacy">Privacy</a></p>
+     </footer>
++    <script type="module" src="/js/modules/search-enhance.js" defer></script>
++    <script type="module" src="/js/modules/toggle-tried.js" defer></script>
++    <script type="module" src="/js/modules/chips.js" defer></script>
+     @await RenderSectionAsync("Scripts", required: false)
+ </body>
+ </html>
+diff --git a/ReceptRegister.Frontend/Pages/Taxonomy/Categories.cshtml b/ReceptRegister.Frontend/Pages/Taxonomy/Categories.cshtml
+index 3c65f20..8800204 100644
+--- a/ReceptRegister.Frontend/Pages/Taxonomy/Categories.cshtml
++++ b/ReceptRegister.Frontend/Pages/Taxonomy/Categories.cshtml
+@@ -4,4 +4,13 @@
+     ViewData["Title"] = "Categories";
+ }
+ <h1>Categories</h1>
+-<p>Placeholder for managing categories (Milestone 5).</p>
++<form method="post" asp-page-handler="add" class="form-inline" novalidate>
++    <label for="Name" class="visually-hidden">New Category</label>
++    <input id="Name" name="Name" value="" placeholder="Add category" />
++    <button type="submit">Add</button>
++</form>
++<ul class="chip-list">
++@foreach (var c in Model.Categories) {
++    <li class="chip">@c.Name <form method="post" asp-page-handler="delete" style="display:inline"><input type="hidden" name="Id" value="@c.Id" /><button class="remove" title="Delete @c.Name" aria-label="Delete @c.Name">×</button></form></li>
++}
++</ul>
+diff --git a/ReceptRegister.Frontend/Pages/Taxonomy/Categories.cshtml.cs b/ReceptRegister.Frontend/Pages/Taxonomy/Categories.cshtml.cs
+index 81533fa..a74d46a 100644
+--- a/ReceptRegister.Frontend/Pages/Taxonomy/Categories.cshtml.cs
++++ b/ReceptRegister.Frontend/Pages/Taxonomy/Categories.cshtml.cs
+@@ -1,8 +1,47 @@
++using Microsoft.AspNetCore.Mvc;
+ using Microsoft.AspNetCore.Mvc.RazorPages;
++using ReceptRegister.Api.Data;
++using ReceptRegister.Api.Domain;
+ 
+ namespace ReceptRegister.Frontend.Pages.Taxonomy;
+ 
+ public class CategoriesModel : PageModel
+ {
+-    public void OnGet() { }
++    private readonly ITaxonomyRepository _taxonomy;
++    private readonly ISqliteConnectionFactory _factory;
++    public CategoriesModel(ITaxonomyRepository taxonomy, ISqliteConnectionFactory factory)
++    { _taxonomy = taxonomy; _factory = factory; }
++
++    public IReadOnlyList<Category> Categories { get; private set; } = Array.Empty<Category>();
++
++    public async Task OnGetAsync(CancellationToken ct)
++    {
++        Categories = await _taxonomy.ListCategoriesAsync(ct);
++    }
++
++    public async Task<IActionResult> OnPostAddAsync(string name, CancellationToken ct)
++    {
++        if (!string.IsNullOrWhiteSpace(name))
++        {
++            var norm = name.Trim().ToLowerInvariant();
++            await using var conn = _factory.Create();
++            await conn.OpenAsync(ct);
++            var cmd = conn.CreateCommand();
++            cmd.CommandText = "INSERT INTO Categories (Name) VALUES ($n) ON CONFLICT(Name) DO NOTHING";
++            cmd.Parameters.AddWithValue("$n", norm);
++            await cmd.ExecuteNonQueryAsync(ct);
++        }
++        return RedirectToPage();
++    }
++
++    public async Task<IActionResult> OnPostDeleteAsync(int id, CancellationToken ct)
++    {
++        await using var conn = _factory.Create();
++        await conn.OpenAsync(ct);
++        var cmd = conn.CreateCommand();
++        cmd.CommandText = "DELETE FROM Categories WHERE Id=$id";
++        cmd.Parameters.AddWithValue("$id", id);
++        await cmd.ExecuteNonQueryAsync(ct);
++        return RedirectToPage();
++    }
+ }
+diff --git a/ReceptRegister.Frontend/Pages/Taxonomy/Keywords.cshtml b/ReceptRegister.Frontend/Pages/Taxonomy/Keywords.cshtml
+index 474415e..6c1dd61 100644
+--- a/ReceptRegister.Frontend/Pages/Taxonomy/Keywords.cshtml
++++ b/ReceptRegister.Frontend/Pages/Taxonomy/Keywords.cshtml
+@@ -4,4 +4,13 @@
+     ViewData["Title"] = "Keywords";
+ }
+ <h1>Keywords</h1>
+-<p>Placeholder for managing keywords (Milestone 5).</p>
++<form method="post" asp-page-handler="add" class="form-inline" novalidate>
++    <label for="Name" class="visually-hidden">New Keyword</label>
++    <input id="Name" name="Name" value="" placeholder="Add keyword" />
++    <button type="submit">Add</button>
++</form>
++<ul class="chip-list">
++@foreach (var k in Model.Keywords) {
++    <li class="chip">@k.Name <form method="post" asp-page-handler="delete" style="display:inline"><input type="hidden" name="Id" value="@k.Id" /><button class="remove" title="Delete @k.Name" aria-label="Delete @k.Name">×</button></form></li>
++}
++</ul>
+diff --git a/ReceptRegister.Frontend/Pages/Taxonomy/Keywords.cshtml.cs b/ReceptRegister.Frontend/Pages/Taxonomy/Keywords.cshtml.cs
+index a71b7db..e9b5dfd 100644
+--- a/ReceptRegister.Frontend/Pages/Taxonomy/Keywords.cshtml.cs
++++ b/ReceptRegister.Frontend/Pages/Taxonomy/Keywords.cshtml.cs
+@@ -1,8 +1,47 @@
++using Microsoft.AspNetCore.Mvc;
+ using Microsoft.AspNetCore.Mvc.RazorPages;
++using ReceptRegister.Api.Data;
++using ReceptRegister.Api.Domain;
+ 
+ namespace ReceptRegister.Frontend.Pages.Taxonomy;
+ 
+ public class KeywordsModel : PageModel
+ {
+-    public void OnGet() { }
++    private readonly ITaxonomyRepository _taxonomy;
++    private readonly ISqliteConnectionFactory _factory;
++    public KeywordsModel(ITaxonomyRepository taxonomy, ISqliteConnectionFactory factory)
++    { _taxonomy = taxonomy; _factory = factory; }
++
++    public IReadOnlyList<Keyword> Keywords { get; private set; } = Array.Empty<Keyword>();
++
++    public async Task OnGetAsync(CancellationToken ct)
++    {
++        Keywords = await _taxonomy.ListKeywordsAsync(ct);
++    }
++
++    public async Task<IActionResult> OnPostAddAsync(string name, CancellationToken ct)
++    {
++        if (!string.IsNullOrWhiteSpace(name))
++        {
++            var norm = name.Trim().ToLowerInvariant();
++            await using var conn = _factory.Create();
++            await conn.OpenAsync(ct);
++            var cmd = conn.CreateCommand();
++            cmd.CommandText = "INSERT INTO Keywords (Name) VALUES ($n) ON CONFLICT(Name) DO NOTHING";
++            cmd.Parameters.AddWithValue("$n", norm);
++            await cmd.ExecuteNonQueryAsync(ct);
++        }
++        return RedirectToPage();
++    }
++
++    public async Task<IActionResult> OnPostDeleteAsync(int id, CancellationToken ct)
++    {
++        await using var conn = _factory.Create();
++        await conn.OpenAsync(ct);
++        var cmd = conn.CreateCommand();
++        cmd.CommandText = "DELETE FROM Keywords WHERE Id=$id";
++        cmd.Parameters.AddWithValue("$id", id);
++        await cmd.ExecuteNonQueryAsync(ct);
++        return RedirectToPage();
++    }
+ }
+diff --git a/ReceptRegister.Frontend/wwwroot/css/chips.css b/ReceptRegister.Frontend/wwwroot/css/chips.css
+new file mode 100644
+index 0000000..8d1796f
+--- /dev/null
++++ b/ReceptRegister.Frontend/wwwroot/css/chips.css
+@@ -0,0 +1,8 @@
++/* chips.css - reusable pill/chip UI (#41, #40) */
++.chip-list { list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:.35rem; }
++.chip { background:#e1e7ef; padding:.25rem .6rem; border-radius:999px; font-size:.7rem; text-transform:uppercase; letter-spacing:.5px; line-height:1; display:inline-flex; align-items:center; gap:.35rem; }
++.chip[data-selectable="true"] { cursor:pointer; }
++.chip[data-selectable="true"]:focus { outline:2px solid #1d74d8; outline-offset:2px; }
++.chip[data-selected="true"] { background:#1d74d8; color:#fff; }
++.chip button.remove { background:none; border:0; padding:0; cursor:pointer; font-size:.75rem; line-height:1; }
++.chip button.remove:focus { outline:2px solid #1d74d8; outline-offset:2px; }
+\ No newline at end of file
+diff --git a/ReceptRegister.Frontend/wwwroot/css/layout.css b/ReceptRegister.Frontend/wwwroot/css/layout.css
+new file mode 100644
+index 0000000..55910a1
+--- /dev/null
++++ b/ReceptRegister.Frontend/wwwroot/css/layout.css
+@@ -0,0 +1,12 @@
++/* layout.css - extracted structural styles (Milestone 5 #41) */
++.skip-link { position:absolute; left:-1000px; top:-1000px; background:#000; color:#fff; padding:.5rem .75rem; }
++.skip-link:focus { left:0; top:0; z-index:1000; }
++header { display:flex; align-items:center; gap:1rem; padding:.5rem 0; }
++nav ul { list-style:none; padding:0; margin:0; display:flex; gap:1rem; }
++nav a { text-decoration:none; color:inherit; }
++nav a[aria-current="page"] { font-weight:600; text-decoration:underline; }
++body { max-width:1000px; margin:0 auto; }
++main { min-height:60vh; }
++footer { margin-top:3rem; font-size:.875rem; color:#555; border-top:1px solid #ddd; padding:1rem 0; }
++.app-title { font-size:1.15rem; font-weight:600; margin:0; }
++.grow { flex:1; }
+\ No newline at end of file
+diff --git a/ReceptRegister.Frontend/wwwroot/css/site.css b/ReceptRegister.Frontend/wwwroot/css/site.css
+index 819f612..65b7c33 100644
+--- a/ReceptRegister.Frontend/wwwroot/css/site.css
++++ b/ReceptRegister.Frontend/wwwroot/css/site.css
+@@ -21,6 +21,10 @@ body {
+   margin-bottom: 60px;
+ }
+ 
++.link-button { background:none; border:0; padding:0; cursor:pointer; font:inherit; color:#1d74d8; }
++.link-button:hover, .link-button:focus { text-decoration:underline; }
++.text-danger { color:#b00020; font-size:.75rem; display:block; }
++
+ .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
+   color: var(--bs-secondary-color);
+   text-align: end;
+diff --git a/ReceptRegister.Frontend/wwwroot/js/modules/chips.js b/ReceptRegister.Frontend/wwwroot/js/modules/chips.js
+new file mode 100644
+index 0000000..8be7067
+--- /dev/null
++++ b/ReceptRegister.Frontend/wwwroot/js/modules/chips.js
+@@ -0,0 +1,10 @@
++// chips.js (#40) enhance selectable chips (future association forms)
++for (const container of document.querySelectorAll('[data-chip-select]')) {
++  container.addEventListener('click', e => {
++    const chip = e.target.closest('.chip[data-selectable="true"]');
++    if (!chip) return;
++    const selected = chip.getAttribute('data-selected') === 'true';
++    chip.setAttribute('data-selected', String(!selected));
++    // Hidden input synchronization could be added here in future iteration
++  });
++}
+\ No newline at end of file
+diff --git a/ReceptRegister.Frontend/wwwroot/js/modules/search-enhance.js b/ReceptRegister.Frontend/wwwroot/js/modules/search-enhance.js
+new file mode 100644
+index 0000000..f561dbd
+--- /dev/null
++++ b/ReceptRegister.Frontend/wwwroot/js/modules/search-enhance.js
+@@ -0,0 +1,31 @@
++// search-enhance.js (#38) - progressive enhancement for recipe search (debounced)
++const form = document.querySelector('form[role="search"]');
++if (form) {
++  const input = form.querySelector('input[name="Search"]');
++  const tableBody = document.querySelector('.recipes-table tbody');
++  const countEl = document.querySelector('.result-count');
++  let timer;
++  const apiBase = document.querySelector('meta[name="api-base"]')?.content || '';
++  const doSearch = async () => {
++    const q = input.value.trim();
++    const url = apiBase + '/recipes/?search=' + encodeURIComponent(q);
++    const res = await fetch(url);
++    if (!res.ok) return; // silent fail
++    const data = await res.json();
++    tableBody.innerHTML = '';
++    for (const r of data) {
++      const tr = document.createElement('tr');
++      tr.innerHTML = `<td><a href="/Recipes/Detail/${r.id}">${r.name}</a></td>`+
++        `<td>${r.book}</td><td>${r.page}</td>`+
++        `<td>${r.categories.length? `<ul class='inline-list'>${r.categories.map(c=>`<li>${c}</li>`).join('')}</ul>` : '<span class="muted">—</span>'}</td>`+
++        `<td>${r.keywords.length? `<ul class='inline-list'>${r.keywords.map(k=>`<li>${k}</li>`).join('')}</ul>` : '<span class="muted">—</span>'}</td>`+
++        `<td>${r.tried? '✔': ''}</td>`;
++      tableBody.appendChild(tr);
++    }
++    if (countEl) countEl.textContent = `${data.length} recipe${data.length===1?'':'s'} found.`;
++  };
++  input?.addEventListener('input', () => {
++    clearTimeout(timer);
++    timer = setTimeout(doSearch, 300);
++  });
++}
+\ No newline at end of file
+diff --git a/ReceptRegister.Frontend/wwwroot/js/modules/toggle-tried.js b/ReceptRegister.Frontend/wwwroot/js/modules/toggle-tried.js
+new file mode 100644
+index 0000000..71ecc24
+--- /dev/null
++++ b/ReceptRegister.Frontend/wwwroot/js/modules/toggle-tried.js
+@@ -0,0 +1,14 @@
++// toggle-tried.js (#39) - attach click handler to tried cells (progressive)
++document.addEventListener('click', async e => {
++  const btn = e.target.closest('[data-toggle-tried]');
++  if (!btn) return;
++  e.preventDefault();
++  const id = btn.getAttribute('data-id');
++  const tried = btn.getAttribute('data-tried') === 'true';
++  const apiBase = document.querySelector('meta[name="api-base"]')?.content || '';
++  const res = await fetch(`${apiBase}/recipes/${id}/tried?tried=${!tried}`, { method:'PATCH' });
++  if (res.ok) {
++    btn.setAttribute('data-tried', String(!tried));
++    btn.textContent = !tried ? '✔' : '';
++  }
++});
+\ No newline at end of file
+-- 
+2.39.2.windows.1
+

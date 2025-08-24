@@ -10,7 +10,12 @@ public interface IRecipesRepository
     Task UpdateAsync(Recipe recipe, IEnumerable<string> categories, IEnumerable<string> keywords, CancellationToken ct = default);
     Task DeleteAsync(int id, CancellationToken ct = default);
     Task ToggleTriedAsync(int id, bool tried, CancellationToken ct = default);
-    Task<IReadOnlyList<Recipe>> SearchAsync(string? term, CancellationToken ct = default);
+    Task<(IReadOnlyList<Recipe> Items, int Total)> SearchAsync(RecipeSearchCriteria criteria, CancellationToken ct = default);
+    Task<IReadOnlyList<Recipe>> LegacySearchAsync(string? term, CancellationToken ct = default); // temporary for frontend until enhanced wired
+    Task<bool> AttachCategoryAsync(int recipeId, int categoryId, CancellationToken ct = default);
+    Task<bool> DetachCategoryAsync(int recipeId, int categoryId, CancellationToken ct = default);
+    Task<bool> AttachKeywordAsync(int recipeId, int keywordId, CancellationToken ct = default);
+    Task<bool> DetachKeywordAsync(int recipeId, int keywordId, CancellationToken ct = default);
 }
 
 public interface ITaxonomyRepository
@@ -177,7 +182,7 @@ public class RecipesRepository : IRecipesRepository
         await cmd.ExecuteNonQueryAsync(ct);
     }
 
-    public async Task<IReadOnlyList<Recipe>> SearchAsync(string? term, CancellationToken ct = default)
+    public async Task<IReadOnlyList<Recipe>> LegacySearchAsync(string? term, CancellationToken ct = default)
     {
         await using var conn = _factory.Create();
         await conn.OpenAsync(ct);
@@ -218,6 +223,143 @@ public class RecipesRepository : IRecipesRepository
             await LoadJoins(conn, r, ct);
 
         return list;
+    }
+
+    public async Task<(IReadOnlyList<Recipe> Items, int Total)> SearchAsync(RecipeSearchCriteria criteria, CancellationToken ct = default)
+    {
+        await using var conn = _factory.Create();
+        await conn.OpenAsync(ct);
+
+        // Build dynamic WHERE clauses
+        var where = new List<string>();
+        var parameters = new Dictionary<string, object?>();
+        if (!string.IsNullOrWhiteSpace(criteria.Query))
+        {
+            where.Add(@"(r.Name LIKE $q OR r.Book LIKE $q OR r.Notes LIKE $q OR c.Name LIKE $q OR k.Name LIKE $q)");
+            parameters["$q"] = $"%{criteria.Query}%";
+        }
+        if (!string.IsNullOrWhiteSpace(criteria.Book))
+        {
+            where.Add("r.Book = $book");
+            parameters["$book"] = criteria.Book.Trim();
+        }
+        if (criteria.Tried is not null)
+        {
+            where.Add("r.Tried = $tried");
+            parameters["$tried"] = criteria.Tried.Value ? 1 : 0;
+        }
+        if (criteria.CategoryIds.Count > 0)
+        {
+            where.Add($"r.Id IN (SELECT rc.RecipeId FROM RecipeCategories rc WHERE rc.CategoryId IN ({string.Join(',', criteria.CategoryIds)}))");
+        }
+        if (criteria.KeywordIds.Count > 0)
+        {
+            where.Add($"r.Id IN (SELECT rk.RecipeId FROM RecipeKeywords rk WHERE rk.KeywordId IN ({string.Join(',', criteria.KeywordIds)}))");
+        }
+
+        var whereSql = where.Count == 0 ? string.Empty : ("WHERE " + string.Join(" AND ", where));
+
+        // Count total
+        var countCmd = conn.CreateCommand();
+        countCmd.CommandText = $@"SELECT COUNT(DISTINCT r.Id) FROM Recipes r
+LEFT JOIN RecipeCategories rc ON rc.RecipeId=r.Id
+LEFT JOIN Categories c ON c.Id=rc.CategoryId
+LEFT JOIN RecipeKeywords rk ON rk.RecipeId=r.Id
+LEFT JOIN Keywords k ON k.Id=rk.KeywordId
+{whereSql}";
+        foreach (var p in parameters)
+            countCmd.Parameters.AddWithValue(p.Key, p.Value ?? DBNull.Value);
+        var totalObj = await countCmd.ExecuteScalarAsync(ct);
+        var total = totalObj is null ? 0 : Convert.ToInt32(totalObj);
+
+        var offset = (criteria.Page - 1) * criteria.PageSize;
+        var dataCmd = conn.CreateCommand();
+        dataCmd.CommandText = $@"SELECT DISTINCT r.Id, r.Name, r.Book, r.Page, r.Notes, r.Tried FROM Recipes r
+LEFT JOIN RecipeCategories rc ON rc.RecipeId=r.Id
+LEFT JOIN Categories c ON c.Id=rc.CategoryId
+LEFT JOIN RecipeKeywords rk ON rk.RecipeId=r.Id
+LEFT JOIN Keywords k ON k.Id=rk.KeywordId
+{whereSql}
+ORDER BY r.Name
+LIMIT $ps OFFSET $off";
+        foreach (var p in parameters)
+            dataCmd.Parameters.AddWithValue(p.Key, p.Value ?? DBNull.Value);
+        dataCmd.Parameters.AddWithValue("$ps", criteria.PageSize);
+        dataCmd.Parameters.AddWithValue("$off", offset);
+
+        var list = new List<Recipe>();
+        await using (var reader = await dataCmd.ExecuteReaderAsync(ct))
+        {
+            while (await reader.ReadAsync(ct))
+            {
+                list.Add(new Recipe
+                {
+                    Id = reader.GetInt32(0),
+                    Name = reader.GetString(1),
+                    Book = reader.GetString(2),
+                    Page = reader.GetInt32(3),
+                    Notes = reader.IsDBNull(4) ? null : reader.GetString(4),
+                    Tried = reader.GetInt32(5) == 1
+                });
+            }
+        }
+        foreach (var r in list)
+            await LoadJoins(conn, r, ct);
+
+        return (list, total);
+    }
+
+    public async Task<bool> AttachCategoryAsync(int recipeId, int categoryId, CancellationToken ct = default)
+    {
+        await using var conn = _factory.Create();
+        await conn.OpenAsync(ct);
+        // Ensure recipe & category exist
+        if (!await Exists(conn, "Recipes", recipeId, ct) || !await Exists(conn, "Categories", categoryId, ct)) return false;
+        var cmd = conn.CreateCommand();
+        cmd.CommandText = "INSERT OR IGNORE INTO RecipeCategories (RecipeId, CategoryId) VALUES ($r,$c)";
+        cmd.Parameters.AddWithValue("$r", recipeId);
+        cmd.Parameters.AddWithValue("$c", categoryId);
+        await cmd.ExecuteNonQueryAsync(ct);
+        return true;
+    }
+
+    public async Task<bool> DetachCategoryAsync(int recipeId, int categoryId, CancellationToken ct = default)
+    {
+        await using var conn = _factory.Create();
+        await conn.OpenAsync(ct);
+        if (!await Exists(conn, "Recipes", recipeId, ct) || !await Exists(conn, "Categories", categoryId, ct)) return false;
+        var cmd = conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM RecipeCategories WHERE RecipeId=$r AND CategoryId=$c";
+        cmd.Parameters.AddWithValue("$r", recipeId);
+        cmd.Parameters.AddWithValue("$c", categoryId);
+        await cmd.ExecuteNonQueryAsync(ct);
+        return true;
+    }
+
+    public async Task<bool> AttachKeywordAsync(int recipeId, int keywordId, CancellationToken ct = default)
+    {
+        await using var conn = _factory.Create();
+        await conn.OpenAsync(ct);
+        if (!await Exists(conn, "Recipes", recipeId, ct) || !await Exists(conn, "Keywords", keywordId, ct)) return false;
+        var cmd = conn.CreateCommand();
+        cmd.CommandText = "INSERT OR IGNORE INTO RecipeKeywords (RecipeId, KeywordId) VALUES ($r,$k)";
+        cmd.Parameters.AddWithValue("$r", recipeId);
+        cmd.Parameters.AddWithValue("$k", keywordId);
+        await cmd.ExecuteNonQueryAsync(ct);
+        return true;
+    }
+
+    public async Task<bool> DetachKeywordAsync(int recipeId, int keywordId, CancellationToken ct = default)
+    {
+        await using var conn = _factory.Create();
+        await conn.OpenAsync(ct);
+        if (!await Exists(conn, "Recipes", recipeId, ct) || !await Exists(conn, "Keywords", keywordId, ct)) return false;
+        var cmd = conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM RecipeKeywords WHERE RecipeId=$r AND KeywordId=$k";
+        cmd.Parameters.AddWithValue("$r", recipeId);
+        cmd.Parameters.AddWithValue("$k", keywordId);
+        await cmd.ExecuteNonQueryAsync(ct);
+        return true;
     }
 
     private static async Task<Recipe?> GetCoreRecipe(SqliteConnection conn, int id, CancellationToken ct)
@@ -298,6 +440,32 @@ public class RecipesRepository : IRecipesRepository
         await del.ExecuteNonQueryAsync(ct);
 
         await UpsertTaxonomyAndLink(conn, lookupTable, linkTable, linkFkName, recipeId, names, ct);
+    }
+
+    private static async Task<bool> Exists(SqliteConnection conn, string table, int id, CancellationToken ct)
+    {
+        var cmd = conn.CreateCommand();
+        cmd.CommandText = $"SELECT 1 FROM {table} WHERE Id=$id";
+        cmd.Parameters.AddWithValue("$id", id);
+        var result = await cmd.ExecuteScalarAsync(ct);
+        return result is not null;
+    }
+}
+
+public sealed record RecipeSearchCriteria(string? Query, string? Book, IReadOnlyList<int> CategoryIds, IReadOnlyList<int> KeywordIds, bool? Tried, int Page, int PageSize)
+{
+    public static RecipeSearchCriteria Create(
+        string? query, string? book, IEnumerable<int>? categories, IEnumerable<int>? keywords, bool? tried, int? page, int? pageSize)
+    {
+        var p = page.GetValueOrDefault(1);
+        if (p < 1) p = 1;
+        var ps = pageSize.GetValueOrDefault(20);
+        if (ps < 1) ps = 1; else if (ps > 100) ps = 100;
+        return new RecipeSearchCriteria(query?.Trim(), string.IsNullOrWhiteSpace(book) ? null : book.Trim(),
+            (categories ?? Array.Empty<int>()).Distinct().ToArray(),
+            (keywords ?? Array.Empty<int>()).Distinct().ToArray(),
+            tried,
+            p, ps);
     }
 }
 
