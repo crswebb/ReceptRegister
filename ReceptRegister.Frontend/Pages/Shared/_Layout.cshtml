@@ -5,6 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@(ViewData["Title"] is null ? "ReceptRegister" : ViewData["Title"] + " · ReceptRegister")</title>
     <meta name="api-base" content="" /> @* Same-origin API now served from frontend host *@
+    @{
+        // Resolve csrf token if session present (server-side) to expose via meta for JS
+        var sessionSvcMeta = Context.RequestServices.GetService(typeof(ReceptRegister.Api.Auth.ISessionService)) as ReceptRegister.Api.Auth.ISessionService;
+        var settingsMeta = Context.RequestServices.GetService(typeof(ReceptRegister.Api.Auth.SessionSettings)) as ReceptRegister.Api.Auth.SessionSettings;
+        var cookieNameMeta = settingsMeta?.CookieName ?? "rr_session";
+        string? csrfMeta = null;
+        if (Context.Request.Cookies.TryGetValue(cookieNameMeta, out var tokMeta) && sessionSvcMeta?.Validate(tokMeta) == true)
+        {
+            csrfMeta = sessionSvcMeta.GetCsrfToken(tokMeta);
+        }
+    }
+    @if (!string.IsNullOrEmpty(csrfMeta))
+    {
+        <meta name="csrf-token" content="@csrfMeta" />
+    }
     <link rel="stylesheet" href="/css/base.css" asp-append-version="true" />
     <link rel="stylesheet" href="/css/layout.css" asp-append-version="true" />
     <link rel="stylesheet" href="/css/forms.css" asp-append-version="true" />
@@ -22,28 +37,19 @@
                 <li><a asp-page="/Taxonomy/Categories" aria-current="@(Context.Request.Path.Value?.Contains("/Taxonomy/Categories", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">Categories</a></li>
                 <li><a asp-page="/Taxonomy/Keywords" aria-current="@(Context.Request.Path.Value?.Contains("/Taxonomy/Keywords", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">Keywords</a></li>
 @{
-    // Determine authenticated state server-side (best effort) using session cookie + ISessionService
-    var isAuthed = false;
+    // Server-side initial guess; client JS will refine after /auth/status
+    var authed = false;
     var sessionSvc = Context.RequestServices.GetService(typeof(ReceptRegister.Api.Auth.ISessionService)) as ReceptRegister.Api.Auth.ISessionService;
     var settings = Context.RequestServices.GetService(typeof(ReceptRegister.Api.Auth.SessionSettings)) as ReceptRegister.Api.Auth.SessionSettings;
     var cookieName = settings?.CookieName ?? "rr_session";
-    if (Context.Request.Cookies.TryGetValue(cookieName, out var tok) && sessionSvc != null)
-    {
-        isAuthed = sessionSvc.Validate(tok);
-    }
+    if (Context.Request.Cookies.TryGetValue(cookieName, out var tok) && sessionSvc?.Validate(tok) == true) { authed = true; }
 }
-                @if (!isAuthed)
-                {
-                    <li><a asp-page="/Auth/Login" aria-current="@(Context.Request.Path.Value?.Contains("/Auth/Login", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">Login</a></li>
-                }
-                else
-                {
-                    <li>
-                        <form method="post" action="/auth/logout" class="inline" id="logout-form">
-                            <button type="submit" class="link-button">Logout</button>
-                        </form>
-                    </li>
-                }
+                <li data-auth-visible="anon" style="display:@(authed?"none":"block")"><a asp-page="/Auth/Login" aria-current="@(Context.Request.Path.Value?.Contains("/Auth/Login", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">Login</a></li>
+                <li data-auth-visible="authed" style="display:@(!authed?"none":"block")">
+                    <form method="post" action="/Auth/Logout" class="inline" id="logout-form">
+                        <button type="submit" class="link-button" data-logout>Logout</button>
+                    </form>
+                </li>
             </ul>
         </nav>
     </header>
@@ -56,26 +62,7 @@
     <script type="module" src="/js/modules/search-enhance.js" defer></script>
     <script type="module" src="/js/modules/toggle-tried.js" defer></script>
     <script type="module" src="/js/modules/chips.js" defer></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const frm = document.getElementById('logout-form');
-        if (frm) {
-            frm.addEventListener('submit', async (e) => {
-                // Add CSRF header if we have stored value (after login we could expose via meta or fetch /auth/status)
-                const csrf = window.localStorage.getItem('rr_csrf');
-                if (csrf) {
-                    e.preventDefault();
-                    const res = await fetch('/auth/logout', { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf } });
-                    if (res.ok) {
-                        window.location.href = '/Auth/Login';
-                    } else {
-                        alert('Logout failed');
-                    }
-                }
-            });
-        }
-    });
-    </script>
+    <script type="module" src="/js/modules/auth-ui.js" defer></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
