@@ -128,11 +128,11 @@ public class RecipesRepository : IRecipesRepository
 
         var insertCmd = conn.CreateCommand();
         insertCmd.CommandText = @"INSERT INTO Recipes (Name, Book, Page, Notes, Tried) VALUES ($n,$b,$p,$no,$t); SELECT last_insert_rowid();";
-    AddParam(insertCmd, "$n", recipe.Name);
-    AddParam(insertCmd, "$b", recipe.Book);
-    AddParam(insertCmd, "$p", recipe.Page);
-    AddParam(insertCmd, "$no", (object?)recipe.Notes ?? DBNull.Value);
-    AddParam(insertCmd, "$t", recipe.Tried ? 1 : 0);
+        AddParam(insertCmd, "$n", recipe.Name);
+        AddParam(insertCmd, "$b", recipe.Book);
+        AddParam(insertCmd, "$p", recipe.Page);
+        AddParam(insertCmd, "$no", (object?)recipe.Notes ?? DBNull.Value);
+        AddParam(insertCmd, "$t", recipe.Tried ? 1 : 0);
         var idObj = await insertCmd.ExecuteScalarAsync(ct);
         if (idObj is null)
             throw new InvalidOperationException("Failed to retrieve new recipe id");
