@@ -1,4 +1,6 @@
 // toggle-tried.js (#39) - progressive enhancement for toggling tried status with accessible feedback
+// Uses PATCH /recipes/{id}/tried with JSON body: { "tried": true|false }
+// Updates button state, aria-pressed, and provides a polite status message for assistive tech.
 document.addEventListener('click', async e => {
   const btn = e.target.closest('[data-toggle-tried]');
   if (!btn) return;
