@@ -360,8 +360,8 @@ LIMIT $ps OFFSET $off";
         if (!await Exists(conn, "Recipes", recipeId, ct) || !await Exists(conn, "Keywords", keywordId, ct)) return false;
         var cmd = conn.CreateCommand();
         cmd.CommandText = "INSERT OR IGNORE INTO RecipeKeywords (RecipeId, KeywordId) VALUES ($r,$k)";
-    AddParam(cmd, "$r", recipeId);
-    AddParam(cmd, "$k", keywordId);
+        AddParam(cmd, "$r", recipeId);
+        AddParam(cmd, "$k", keywordId);
         await cmd.ExecuteNonQueryAsync(ct);
         return true;
     }
