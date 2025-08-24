@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using ReceptRegister.Api.Auth;
+using ReceptRegister.Api.Data;
 
 namespace ReceptRegister.Api.Endpoints;
 
@@ -9,7 +10,7 @@ public static class AuthEndpoints
 
 	public record SetPasswordRequest(string Password);
 	public record LoginRequest(string Password);
-		public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
+	public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
 
 	public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder app)
 	{
@@ -41,12 +42,17 @@ public static class AuthEndpoints
 			return Results.NoContent();
 		});
 
-		group.MapPost("/login", async (LoginRequest req, IPasswordService svc, ISessionService sessions, HttpContext ctx, IWebHostEnvironment env, ILoginRateLimiter limiter, SessionSettings settings) =>
+		group.MapPost("/login", async (LoginRequest req, IPasswordService svc, ISessionService sessions, HttpContext ctx, ILoginRateLimiter limiter, SessionSettings settings, IWebHostEnvironment env) =>
 		{
 			if (limiter.IsLimited(ctx))
 				return Results.StatusCode(StatusCodes.Status429TooManyRequests);
 			if (!await svc.HasPasswordAsync())
 				return Results.Conflict(new { message = "Password not set yet" });
+			if (string.IsNullOrEmpty(req.Password))
+			{
+				limiter.RecordFailure(ctx);
+				return Results.Unauthorized();
+			}
 			if (!await svc.VerifyAsync(req.Password))
 			{
 				limiter.RecordFailure(ctx);
@@ -88,6 +94,8 @@ public static class AuthEndpoints
 			SessionCookieWriter.Write(ctx, settings, env, sessions, token, csrf!);
 			return Results.Ok(new { expiresAt = newExpiry, csrf });
 		});
+
+		// Debug verification endpoint removed after test stabilization.
 
 		return app;
 	}

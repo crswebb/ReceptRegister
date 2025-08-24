@@ -17,7 +17,7 @@ public interface ISessionService
 
 internal sealed record SessionEntry(DateTimeOffset ExpiresAt, string CsrfToken);
 
-internal sealed class InMemorySessionService : ISessionService, IDisposable
+public sealed class InMemorySessionService : ISessionService, IDisposable
 {
 	private readonly ConcurrentDictionary<string, SessionEntry> _sessions = new();
 	private readonly TimeSpan _ttl;
@@ -30,6 +30,7 @@ internal sealed class InMemorySessionService : ISessionService, IDisposable
 	public InMemorySessionService(IConfiguration config, TimeProvider timeProvider, ILogger<InMemorySessionService> logger)
 	{
 		var minutes = config.GetValue("RECEPT_SESSION_MINUTES", 120);
+		_ttl = TimeSpan.FromMinutes(minutes); // assign immediately after reading
 		var rememberMinutes = config.GetValue("RECEPT_SESSION_REMEMBER_MINUTES", DefaultRememberMinutes); // default 30 days
 		_rememberTtl = TimeSpan.FromMinutes(rememberMinutes);
 		_timeProvider = timeProvider;

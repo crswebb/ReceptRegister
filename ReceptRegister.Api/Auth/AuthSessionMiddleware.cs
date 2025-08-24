@@ -23,8 +23,8 @@ internal sealed class AuthSessionMiddleware
 	public async Task InvokeAsync(HttpContext context)
 	{
 		var path = context.Request.Path.Value ?? string.Empty;
-		// Public / unauthenticated paths
-		if (path == "/" || path.StartsWith("/health") || path.StartsWith("/auth"))
+		// Public / unauthenticated paths (root, simple health, api health, auth endpoints)
+		if (path == "/" || path.StartsWith("/health") || path.StartsWith("/api/health") || path.StartsWith("/auth"))
 		{
 			await _next(context);
 			return;

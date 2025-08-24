@@ -48,7 +48,9 @@ public sealed class PasswordService : IPasswordService
     {
         var cfg = await _repo.GetAsync(ct);
         if (cfg is null) return false;
-        if (_hasher.Verify(password, null, cfg.Salt, cfg.Iterations, cfg.PasswordHash))
+        var ok = _hasher.Verify(password, null, cfg.Salt, cfg.Iterations, cfg.PasswordHash);
+        // Silent failure (no sensitive diagnostics in production)
+        if (ok)
         {
             // Optional on-login transparent upgrade if iteration env increased
             var targetIterations = _config.GetValue("RECEPT_PBKDF2_ITERATIONS", cfg.Iterations);
