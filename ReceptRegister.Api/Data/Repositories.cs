@@ -109,7 +109,9 @@ public class AuthRepository : IAuthRepository
 public class RecipesRepository : IRecipesRepository
 {
     private readonly IDbConnectionFactory _factory;
-    public RecipesRepository(IDbConnectionFactory factory) => _factory = factory;
+    private readonly IDatabaseDialect _dialect;
+    public RecipesRepository(IDbConnectionFactory factory, IDatabaseDialect dialect)
+    { _factory = factory; _dialect = dialect; }
 
     private static void AddParam(DbCommand cmd, string name, object? value)
     {
@@ -126,13 +128,13 @@ public class RecipesRepository : IRecipesRepository
         await conn.OpenAsync(ct);
         await using var tx = await conn.BeginTransactionAsync(ct);
 
-        var insertCmd = conn.CreateCommand();
-        insertCmd.CommandText = @"INSERT INTO Recipes (Name, Book, Page, Notes, Tried) VALUES ($n,$b,$p,$no,$t); SELECT last_insert_rowid();";
-        AddParam(insertCmd, "$n", recipe.Name);
-        AddParam(insertCmd, "$b", recipe.Book);
-        AddParam(insertCmd, "$p", recipe.Page);
-        AddParam(insertCmd, "$no", (object?)recipe.Notes ?? DBNull.Value);
-        AddParam(insertCmd, "$t", recipe.Tried ? 1 : 0);
+    var insertCmd = conn.CreateCommand();
+    insertCmd.CommandText = _dialect.InsertRecipeSql;
+    AddParam(insertCmd, "@n", recipe.Name);
+    AddParam(insertCmd, "@b", recipe.Book);
+    AddParam(insertCmd, "@p", recipe.Page);
+    AddParam(insertCmd, "@no", (object?)recipe.Notes ?? DBNull.Value);
+    AddParam(insertCmd, "@t", recipe.Tried ? 1 : 0);
         var idObj = await insertCmd.ExecuteScalarAsync(ct);
         if (idObj is null)
             throw new InvalidOperationException("Failed to retrieve new recipe id");
@@ -163,13 +165,13 @@ public class RecipesRepository : IRecipesRepository
         await using var tx = await conn.BeginTransactionAsync(ct);
 
         var cmd = conn.CreateCommand();
-        cmd.CommandText = @"UPDATE Recipes SET Name=$n, Book=$b, Page=$p, Notes=$no, Tried=$t WHERE Id=$id";
-        AddParam(cmd, "$n", recipe.Name);
-        AddParam(cmd, "$b", recipe.Book);
-        AddParam(cmd, "$p", recipe.Page);
-        AddParam(cmd, "$no", (object?)recipe.Notes ?? DBNull.Value);
-        AddParam(cmd, "$t", recipe.Tried ? 1 : 0);
-        AddParam(cmd, "$id", recipe.Id);
+    cmd.CommandText = @"UPDATE Recipes SET Name=@n, Book=@b, Page=@p, Notes=@no, Tried=@t WHERE Id=@id";
+    AddParam(cmd, "@n", recipe.Name);
+    AddParam(cmd, "@b", recipe.Book);
+    AddParam(cmd, "@p", recipe.Page);
+    AddParam(cmd, "@no", (object?)recipe.Notes ?? DBNull.Value);
+    AddParam(cmd, "@t", recipe.Tried ? 1 : 0);
+    AddParam(cmd, "@id", recipe.Id);
         await cmd.ExecuteNonQueryAsync(ct);
 
         await ReplaceLinks(conn, recipe.Id, "RecipeCategories", categories, "Categories", "CategoryId", ct);
@@ -183,8 +185,8 @@ public class RecipesRepository : IRecipesRepository
         await using var conn = _factory.Create();
         await conn.OpenAsync(ct);
         var cmd = conn.CreateCommand();
-        cmd.CommandText = "DELETE FROM Recipes WHERE Id=$id";
-    AddParam(cmd, "$id", id);
+        cmd.CommandText = "DELETE FROM Recipes WHERE Id=@id";
+    AddParam(cmd, "@id", id);
         await cmd.ExecuteNonQueryAsync(ct);
     }
 
@@ -193,9 +195,9 @@ public class RecipesRepository : IRecipesRepository
         await using var conn = _factory.Create();
         await conn.OpenAsync(ct);
         var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE Recipes SET Tried=$t WHERE Id=$id";
-        AddParam(cmd, "$t", tried ? 1 : 0);
-        AddParam(cmd, "$id", id);
+    cmd.CommandText = "UPDATE Recipes SET Tried=@t WHERE Id=@id";
+    AddParam(cmd, "@t", tried ? 1 : 0);
+    AddParam(cmd, "@id", id);
         await cmd.ExecuteNonQueryAsync(ct);
     }
 
@@ -207,7 +209,8 @@ public class RecipesRepository : IRecipesRepository
         var cmd = conn.CreateCommand();
         if (string.IsNullOrWhiteSpace(term))
         {
-            cmd.CommandText = "SELECT Id, Name, Book, Page, Notes, Tried FROM Recipes ORDER BY Name LIMIT 200";
+            var limitClause = _dialect.IsSqlServer ? "OFFSET 0 ROWS FETCH NEXT 200 ROWS ONLY" : "LIMIT 200";
+            cmd.CommandText = $"SELECT Id, Name, Book, Page, Notes, Tried FROM Recipes ORDER BY Name {limitClause}";
         }
         else
         {
@@ -217,9 +220,9 @@ public class RecipesRepository : IRecipesRepository
                                LEFT JOIN Categories c ON c.Id=rc.CategoryId
                                LEFT JOIN RecipeKeywords rk ON rk.RecipeId=r.Id
                                LEFT JOIN Keywords k ON k.Id=rk.KeywordId
-                               WHERE r.Name LIKE $q OR r.Book LIKE $q OR c.Name LIKE $q OR k.Name LIKE $q
-                               ORDER BY r.Name LIMIT 200";
-            AddParam(cmd, "$q", $"%{term}%");
+                               WHERE r.Name LIKE @q OR r.Book LIKE @q OR c.Name LIKE @q OR k.Name LIKE @q
+                               ORDER BY r.Name " + (_dialect.IsSqlServer ? "OFFSET 0 ROWS FETCH NEXT 200 ROWS ONLY" : "LIMIT 200");
+            AddParam(cmd, "@q", $"%{term}%");
         }
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         while (await reader.ReadAsync(ct))
@@ -252,18 +255,18 @@ public class RecipesRepository : IRecipesRepository
         var parameters = new Dictionary<string, object?>();
         if (!string.IsNullOrWhiteSpace(criteria.Query))
         {
-            where.Add(@"(r.Name LIKE $q OR r.Book LIKE $q OR r.Notes LIKE $q OR c.Name LIKE $q OR k.Name LIKE $q)");
-            parameters["$q"] = $"%{criteria.Query}%";
+            where.Add(@"(r.Name LIKE @q OR r.Book LIKE @q OR r.Notes LIKE @q OR c.Name LIKE @q OR k.Name LIKE @q)");
+            parameters["@q"] = $"%{criteria.Query}%";
         }
         if (!string.IsNullOrWhiteSpace(criteria.Book))
         {
-            where.Add("r.Book = $book");
-            parameters["$book"] = criteria.Book.Trim();
+            where.Add("r.Book = @book");
+            parameters["@book"] = criteria.Book.Trim();
         }
         if (criteria.Tried is not null)
         {
-            where.Add("r.Tried = $tried");
-            parameters["$tried"] = criteria.Tried.Value ? 1 : 0;
+            where.Add("r.Tried = @tried");
+            parameters["@tried"] = criteria.Tried.Value ? 1 : 0;
         }
         if (criteria.CategoryIds.Count > 0)
         {
@@ -298,11 +301,11 @@ LEFT JOIN RecipeKeywords rk ON rk.RecipeId=r.Id
 LEFT JOIN Keywords k ON k.Id=rk.KeywordId
 {whereSql}
 ORDER BY r.Name
-LIMIT $ps OFFSET $off";
+        {(_dialect.IsSqlServer ? "OFFSET @off ROWS FETCH NEXT @ps ROWS ONLY" : "LIMIT @ps OFFSET @off")}";
         foreach (var kv in parameters)
             AddParam(dataCmd, kv.Key, kv.Value);
-        AddParam(dataCmd, "$ps", criteria.PageSize);
-        AddParam(dataCmd, "$off", offset);
+        AddParam(dataCmd, "@ps", criteria.PageSize);
+        AddParam(dataCmd, "@off", offset);
 
         var list = new List<Recipe>();
         await using (var reader = await dataCmd.ExecuteReaderAsync(ct))
@@ -333,9 +336,9 @@ LIMIT $ps OFFSET $off";
         // Ensure recipe & category exist
         if (!await Exists(conn, "Recipes", recipeId, ct) || !await Exists(conn, "Categories", categoryId, ct)) return false;
         var cmd = conn.CreateCommand();
-        cmd.CommandText = "INSERT OR IGNORE INTO RecipeCategories (RecipeId, CategoryId) VALUES ($r,$c)";
-        AddParam(cmd, "$r", recipeId);
-        AddParam(cmd, "$c", categoryId);
+    cmd.CommandText = _dialect.BuildInsertIgnoreLinkSql("RecipeCategories", "CategoryId");
+    AddParam(cmd, "@r", recipeId);
+    AddParam(cmd, "@c", categoryId);
         await cmd.ExecuteNonQueryAsync(ct);
         return true;
     }
@@ -346,9 +349,9 @@ LIMIT $ps OFFSET $off";
         await conn.OpenAsync(ct);
         if (!await Exists(conn, "Recipes", recipeId, ct) || !await Exists(conn, "Categories", categoryId, ct)) return false;
         var cmd = conn.CreateCommand();
-        cmd.CommandText = "DELETE FROM RecipeCategories WHERE RecipeId=$r AND CategoryId=$c";
-        AddParam(cmd, "$r", recipeId);
-        AddParam(cmd, "$c", categoryId);
+    cmd.CommandText = "DELETE FROM RecipeCategories WHERE RecipeId=@r AND CategoryId=@c";
+    AddParam(cmd, "@r", recipeId);
+    AddParam(cmd, "@c", categoryId);
         await cmd.ExecuteNonQueryAsync(ct);
         return true;
     }
@@ -359,9 +362,9 @@ LIMIT $ps OFFSET $off";
         await conn.OpenAsync(ct);
         if (!await Exists(conn, "Recipes", recipeId, ct) || !await Exists(conn, "Keywords", keywordId, ct)) return false;
         var cmd = conn.CreateCommand();
-        cmd.CommandText = "INSERT OR IGNORE INTO RecipeKeywords (RecipeId, KeywordId) VALUES ($r,$k)";
-        AddParam(cmd, "$r", recipeId);
-        AddParam(cmd, "$k", keywordId);
+    cmd.CommandText = _dialect.BuildInsertIgnoreLinkSql("RecipeKeywords", "KeywordId");
+    AddParam(cmd, "@r", recipeId);
+    AddParam(cmd, "@k", keywordId);
         await cmd.ExecuteNonQueryAsync(ct);
         return true;
     }
@@ -372,9 +375,9 @@ LIMIT $ps OFFSET $off";
         await conn.OpenAsync(ct);
         if (!await Exists(conn, "Recipes", recipeId, ct) || !await Exists(conn, "Keywords", keywordId, ct)) return false;
         var cmd = conn.CreateCommand();
-        cmd.CommandText = "DELETE FROM RecipeKeywords WHERE RecipeId=$r AND KeywordId=$k";
-        AddParam(cmd, "$r", recipeId);
-        AddParam(cmd, "$k", keywordId);
+    cmd.CommandText = "DELETE FROM RecipeKeywords WHERE RecipeId=@r AND KeywordId=@k";
+    AddParam(cmd, "@r", recipeId);
+    AddParam(cmd, "@k", keywordId);
         await cmd.ExecuteNonQueryAsync(ct);
         return true;
     }
@@ -382,8 +385,8 @@ LIMIT $ps OFFSET $off";
     private static async Task<Recipe?> GetCoreRecipe(DbConnection conn, int id, CancellationToken ct)
     {
         var cmd = conn.CreateCommand();
-    cmd.CommandText = "SELECT Id, Name, Book, Page, Notes, Tried FROM Recipes WHERE Id=$id";
-    AddParam(cmd, "$id", id);
+    cmd.CommandText = "SELECT Id, Name, Book, Page, Notes, Tried FROM Recipes WHERE Id=@id";
+    AddParam(cmd, "@id", id);
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         if (!await reader.ReadAsync(ct)) return null;
         return new Recipe
@@ -404,7 +407,7 @@ LIMIT $ps OFFSET $off";
         catCmd.CommandText = @"SELECT c.Id, c.Name FROM Categories c
                                INNER JOIN RecipeCategories rc ON rc.CategoryId=c.Id
                                WHERE rc.RecipeId=$id ORDER BY c.Name";
-    AddParam(catCmd, "$id", recipe.Id);
+    AddParam(catCmd, "@id", recipe.Id);
         await using (var reader = await catCmd.ExecuteReaderAsync(ct))
         {
             while (await reader.ReadAsync(ct))
@@ -416,7 +419,7 @@ LIMIT $ps OFFSET $off";
         keyCmd.CommandText = @"SELECT k.Id, k.Name FROM Keywords k
                                INNER JOIN RecipeKeywords rk ON rk.KeywordId=k.Id
                                WHERE rk.RecipeId=$id ORDER BY k.Name";
-    AddParam(keyCmd, "$id", recipe.Id);
+    AddParam(keyCmd, "@id", recipe.Id);
         await using (var reader = await keyCmd.ExecuteReaderAsync(ct))
         {
             while (await reader.ReadAsync(ct))
@@ -424,46 +427,46 @@ LIMIT $ps OFFSET $off";
         }
     }
 
-    private static async Task UpsertTaxonomyAndLink(DbConnection conn, string table, string linkTable, string linkFkName, int recipeId, IEnumerable<string> names, CancellationToken ct)
+    private async Task UpsertTaxonomyAndLink(DbConnection conn, string table, string linkTable, string linkFkName, int recipeId, IEnumerable<string> names, CancellationToken ct)
     {
         foreach (var raw in names.Select(n => n.Trim()).Where(n => n.Length > 0))
         {
             var name = raw.ToLowerInvariant(); // uniqueness case-insensitive
             // Upsert pattern: try insert, ignore conflict, then select id
             var insert = conn.CreateCommand();
-            insert.CommandText = $"INSERT INTO {table} (Name) VALUES ($n) ON CONFLICT(Name) DO NOTHING;";
-            AddParam(insert, "$n", name);
+            insert.CommandText = _dialect.BuildInsertIgnoreTaxonomySql(table);
+            AddParam(insert, "@n", name);
             await insert.ExecuteNonQueryAsync(ct);
             var sel = conn.CreateCommand();
-            sel.CommandText = $"SELECT Id FROM {table} WHERE Name=$n";
-            AddParam(sel, "$n", name);
+            sel.CommandText = $"SELECT Id FROM {table} WHERE Name=@n";
+            AddParam(sel, "@n", name);
             var idObj = await sel.ExecuteScalarAsync(ct) ?? throw new InvalidOperationException($"Failed to resolve Id for {table} name '{name}'");
             var id = Convert.ToInt32(idObj);
 
             var link = conn.CreateCommand();
-            link.CommandText = $"INSERT OR IGNORE INTO {linkTable} (RecipeId, {linkFkName}) VALUES ($r,$t)";
-            AddParam(link, "$r", recipeId);
-            AddParam(link, "$t", id);
+            link.CommandText = _dialect.BuildInsertIgnoreLinkSql(linkTable, linkFkName);
+            AddParam(link, "@r", recipeId);
+            AddParam(link, "@t", id);
             await link.ExecuteNonQueryAsync(ct);
         }
     }
 
-    private static async Task ReplaceLinks(DbConnection conn, int recipeId, string linkTable, IEnumerable<string> names, string lookupTable, string linkFkName, CancellationToken ct)
+    private async Task ReplaceLinks(DbConnection conn, int recipeId, string linkTable, IEnumerable<string> names, string lookupTable, string linkFkName, CancellationToken ct)
     {
         // Clear existing
         var del = conn.CreateCommand();
-        del.CommandText = $"DELETE FROM {linkTable} WHERE RecipeId=$r";
-    AddParam(del, "$r", recipeId);
+        del.CommandText = $"DELETE FROM {linkTable} WHERE RecipeId=@r";
+    AddParam(del, "@r", recipeId);
         await del.ExecuteNonQueryAsync(ct);
 
-        await UpsertTaxonomyAndLink(conn, lookupTable, linkTable, linkFkName, recipeId, names, ct);
+    await UpsertTaxonomyAndLink(conn, lookupTable, linkTable, linkFkName, recipeId, names, ct);
     }
 
     private static async Task<bool> Exists(DbConnection conn, string table, int id, CancellationToken ct)
     {
         var cmd = conn.CreateCommand();
-        cmd.CommandText = $"SELECT 1 FROM {table} WHERE Id=$id";
-    AddParam(cmd, "$id", id);
+        cmd.CommandText = $"SELECT 1 FROM {table} WHERE Id=@id";
+    AddParam(cmd, "@id", id);
         var result = await cmd.ExecuteScalarAsync(ct);
         return result is not null;
     }
