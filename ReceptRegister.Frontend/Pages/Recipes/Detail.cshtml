@@ -1,0 +1,44 @@
+@page "/Recipes/Detail/{id:int}"
+@model ReceptRegister.Frontend.Pages.Recipes.DetailModel
+@{
+    ViewData["Title"] = Model.Recipe?.Name ?? "Recipe";
+}
+@if (Model.Recipe is null)
+{
+    <h1>Recipe not found</h1>
+    <p><a href="/Recipes/Index">Back to list</a></p>
+}
+else
+{
+    <h1>@Model.Recipe.Name</h1>
+    <p><strong>Book:</strong> @Model.Recipe.Book<br />
+       <strong>Page:</strong> @Model.Recipe.Page<br />
+       <strong>Tried:</strong> @(Model.Recipe.Tried ? "Yes" : "No")</p>
+    <section>
+        <h2 class="visually-hidden">Taxonomy</h2>
+        <p><strong>Categories:</strong>
+            @if (Model.Recipe.Categories.Count==0) { <span class="muted">None</span>; } else {
+                <ul class="chip-list">@foreach(var c in Model.Recipe.Categories){<li class="chip">@c.Name</li>}</ul>
+            }
+        </p>
+        <p><strong>Keywords:</strong>
+            @if (Model.Recipe.Keywords.Count==0) { <span class="muted">None</span>; } else {
+                <ul class="chip-list">@foreach(var k in Model.Recipe.Keywords){<li class="chip">@k.Name</li>}</ul>
+            }
+        </p>
+    </section>
+    @if (!string.IsNullOrWhiteSpace(Model.Recipe.Notes)) {
+        <section>
+            <h2>Notes</h2>
+            <p>@Model.Recipe.Notes</p>
+        </section>
+    }
+    <p>
+        <a href="/Recipes/Edit/@Model.Recipe.Id">Edit</a> ·
+        <form method="post" asp-page-handler="delete" style="display:inline" onsubmit="return confirm('Delete this recipe?');">
+            <input type="hidden" name="Id" value="@Model.Recipe.Id" />
+            <button type="submit" class="link-button">Delete</button>
+        </form> ·
+        <a href="/Recipes/Index">Back</a>
+    </p>
+}

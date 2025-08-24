@@ -1,0 +1,12 @@
+/* layout.css - extracted structural styles (Milestone 5 #41) */
+.skip-link { position:absolute; left:-1000px; top:-1000px; background:#000; color:#fff; padding:.5rem .75rem; }
+.skip-link:focus { left:0; top:0; z-index:1000; }
+header { display:flex; align-items:center; gap:1rem; padding:.5rem 0; }
+nav ul { list-style:none; padding:0; margin:0; display:flex; gap:1rem; }
+nav a { text-decoration:none; color:inherit; }
+nav a[aria-current="page"] { font-weight:600; text-decoration:underline; }
+body { max-width:1000px; margin:0 auto; }
+main { min-height:60vh; }
+footer { margin-top:3rem; font-size:.875rem; color:#555; border-top:1px solid #ddd; padding:1rem 0; }
+.app-title { font-size:1.15rem; font-weight:600; margin:0; }
+.grow { flex:1; }

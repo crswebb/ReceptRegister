@@ -1,0 +1,12 @@
+/* table.css - milestone 5 (#41) table/list presentation */
+table { border-collapse:collapse; width:100%; font-size:.95rem; }
+th, td { text-align:left; padding:.4rem .5rem; vertical-align:top; }
+thead th { background:#f2f2f2; font-weight:600; border-bottom:2px solid #ccc; }
+tbody tr:nth-child(even) { background:#fafafa; }
+tbody tr:hover { background:#eef6ff; }
+td a { text-decoration:none; }
+td a:focus, td a:hover { text-decoration:underline; }
+.recipes-table { margin-top:.75rem; }
+ul.inline-list { list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:.3rem; }
+ul.inline-list li { background:#e1e7ef; padding:.15rem .45rem; border-radius:999px; font-size:.7rem; text-transform:uppercase; letter-spacing:.5px; }
+.empty { font-style:italic; color:#555; }

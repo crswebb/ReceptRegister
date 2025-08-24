@@ -1,0 +1,51 @@
+@page
+@model ReceptRegister.Frontend.Pages.Recipes.IndexModel
+@{
+    ViewData["Title"] = "Recipes";
+}
+<h1>Recipes</h1>
+<form method="get" class="form-inline" role="search" aria-label="Recipe search">
+    <label for="search" class="visually-hidden">Search</label>
+    <input id="search" name="Search" value="@Model.Search" placeholder="Search name, book, category, keyword" />
+    <button type="submit">Search</button>
+    @if (!string.IsNullOrWhiteSpace(Model.Search)) {
+        <a href="/Recipes/Index" class="reset-link">Clear</a>
+    }
+</form>
+<p class="result-count">@Model.Results.Count recipe@(Model.Results.Count == 1 ? "" : "s") found.</p>
+<table class="recipes-table">
+    <thead>
+    <tr>
+        <th scope="col">Name</th>
+        <th scope="col">Book</th>
+        <th scope="col">Page</th>
+        <th scope="col">Categories</th>
+        <th scope="col">Keywords</th>
+        <th scope="col">Tried</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var r in Model.Results) {
+        <tr>
+            <td><a href="/Recipes/Detail/@r.Id">@r.Name</a></td>
+            <td>@r.Book</td>
+            <td>@r.Page</td>
+            <td>
+                @if (r.Categories.Count == 0) { <span class="muted">—</span>; } else {
+                    <ul class="inline-list">@foreach (var c in r.Categories) { <li>@c.Name</li> }</ul>
+                }
+            </td>
+            <td>
+                @if (r.Keywords.Count == 0) { <span class="muted">—</span>; } else {
+                    <ul class="inline-list">@foreach (var k in r.Keywords) { <li>@k.Name</li> }</ul>
+                }
+            </td>
+            <td><button type="button" class="link-button" data-toggle-tried data-id="@r.Id" data-tried="@r.Tried">@(r.Tried?"✔":"")</button></td>
+        </tr>
+    }
+    </tbody>
+</table>
+@if (Model.Results.Count == 0)
+{
+    <p class="empty">No recipes yet. <a href="/Recipes/Create">Add one</a>.</p>
+}
