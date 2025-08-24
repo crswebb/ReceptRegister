@@ -16,13 +16,13 @@ else
     <div class="form-grid">
         <div class="field-group">
             <label for="Name">Name <span aria-hidden="true">*</span></label>
-            <input id="Name" name="Name" value="@Model.Input.Name" aria-required="true" aria-describedby="Name_help" />
+            <input id="Name" name="Name" type="text" value="@Model.Input.Name" aria-required="true" aria-describedby="Name_help" />
             <div id="Name_help" class="hint">Primary display name.</div>
             <span class="text-danger">@Model.ModelState[nameof(Model.Input.Name)]?.Errors.FirstOrDefault()?.ErrorMessage</span>
         </div>
         <div class="field-group">
             <label for="Book">Book <span aria-hidden="true">*</span></label>
-            <input id="Book" name="Book" value="@Model.Input.Book" aria-required="true" aria-describedby="Book_help" />
+            <input id="Book" name="Book" type="text" value="@Model.Input.Book" aria-required="true" aria-describedby="Book_help" />
             <div id="Book_help" class="hint">Exact title.</div>
             <span class="text-danger">@Model.ModelState[nameof(Model.Input.Book)]?.Errors.FirstOrDefault()?.ErrorMessage</span>
         </div>
@@ -34,12 +34,12 @@ else
         </div>
         <div class="field-group">
             <label for="Categories">Categories</label>
-            <input id="Categories" name="Categories" value="@Model.Input.Categories" aria-describedby="Categories_help" />
+            <input id="Categories" name="Categories" type="text" value="@Model.Input.Categories" aria-describedby="Categories_help" />
             <div id="Categories_help" class="hint">Comma separated list.</div>
         </div>
         <div class="field-group">
             <label for="Keywords">Keywords</label>
-            <input id="Keywords" name="Keywords" value="@Model.Input.Keywords" aria-describedby="Keywords_help" />
+            <input id="Keywords" name="Keywords" type="text" value="@Model.Input.Keywords" aria-describedby="Keywords_help" />
             <div id="Keywords_help" class="hint">Ingredients / attributes.</div>
         </div>
         <div class="field-group span-2">
