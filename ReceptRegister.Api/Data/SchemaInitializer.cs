@@ -1,10 +1,10 @@
-using Microsoft.Data.Sqlite;
+using System.Data.Common;
 
 namespace ReceptRegister.Api.Data;
 
 public static class SchemaInitializer
 {
-    public static async Task InitializeAsync(ISqliteConnectionFactory factory, CancellationToken ct = default)
+    public static async Task InitializeAsync(IDbConnectionFactory factory, CancellationToken ct = default)
     {
         await using var conn = factory.Create();
         await conn.OpenAsync(ct);
