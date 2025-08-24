@@ -12,22 +12,33 @@ internal sealed class AuthSessionMiddleware
 {
 	private readonly RequestDelegate _next;
 	private readonly ISessionService _sessions;
+	private readonly PasswordService _passwords;
 	private const string SessionCookie = "rr_session";
 
-	public AuthSessionMiddleware(RequestDelegate next, ISessionService sessions)
+	public AuthSessionMiddleware(RequestDelegate next, ISessionService sessions, PasswordService passwords)
 	{
 		_next = next;
 		_sessions = sessions;
+		_passwords = passwords;
 	}
 
 	public async Task InvokeAsync(HttpContext context)
 	{
 		var path = context.Request.Path.Value ?? string.Empty;
 		// Public / unauthenticated paths (root, simple health, api health, auth endpoints)
-		if (path == "/" || path.StartsWith("/health") || path.StartsWith("/api/health") || path.StartsWith("/auth"))
+		if (path.StartsWith("/health") || path.StartsWith("/api/health") || path.StartsWith("/auth"))
 		{
 			await _next(context);
 			return;
+		}
+		// Root ("/") is only public until an initial password is set. After that it is protected like other pages.
+		if (path == "/")
+		{
+			if (!await _passwords.HasPasswordAsync())
+			{
+				await _next(context);
+				return;
+			}
 		}
 
 		if (context.Request.Cookies.TryGetValue(SessionCookie, out var token) && _sessions.Validate(token))
