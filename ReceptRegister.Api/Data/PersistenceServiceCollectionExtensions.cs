@@ -37,6 +37,15 @@ public static class PersistenceServiceCollectionExtensions
 		services.AddScoped<IRecipesRepository, RecipesRepository>();
 		services.AddScoped<ITaxonomyRepository, TaxonomyRepository>();
 
+		// Dialect
+		services.AddSingleton<IDatabaseDialect>(sp =>
+		{
+			var options = sp.GetRequiredService<DatabaseOptions>();
+			return (options.Provider is null || options.Provider == "SQLite")
+				? new SqliteDialect()
+				: new SqlServerDialect();
+		});
+
 		// Provider-specific schema initializer
 		services.AddSingleton<ISchemaInitializer>(sp =>
 		{
