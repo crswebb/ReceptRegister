@@ -1,13 +1,14 @@
 using Microsoft.Data.Sqlite;
+using System.Data.Common;
 
 namespace ReceptRegister.Api.Data;
 
-public interface ISqliteConnectionFactory
+public interface IDbConnectionFactory
 {
-    SqliteConnection Create();
+    DbConnection Create();
 }
 
-public class SqliteConnectionFactory : ISqliteConnectionFactory
+public class SqliteConnectionFactory : IDbConnectionFactory
 {
     private readonly string _connectionString;
 
@@ -23,9 +24,5 @@ public class SqliteConnectionFactory : ISqliteConnectionFactory
         }.ToString();
     }
 
-    public SqliteConnection Create()
-    {
-        var conn = new SqliteConnection(_connectionString);
-        return conn;
-    }
+    public DbConnection Create() => new SqliteConnection(_connectionString);
 }
