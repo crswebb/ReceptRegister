@@ -11,6 +11,23 @@
 else
 {
 <form method="post" novalidate class="recipe-form" aria-describedby="editFormHelp">
+@{
+    var sessSettings = HttpContext.RequestServices.GetService(typeof(ReceptRegister.Api.Auth.SessionSettings)) as ReceptRegister.Api.Auth.SessionSettings;
+    var cookieName = sessSettings?.CookieName ?? "rr_session";
+    string? csrfValue = null;
+    if (Request.Cookies.TryGetValue(cookieName, out var sToken))
+    {
+        var sessSvc = HttpContext.RequestServices.GetService(typeof(ReceptRegister.Api.Auth.ISessionService)) as ReceptRegister.Api.Auth.ISessionService;
+        if (sessSvc?.Validate(sToken) == true)
+        {
+            csrfValue = sessSvc.GetCsrfToken(sToken);
+        }
+    }
+    if (!string.IsNullOrEmpty(csrfValue))
+    {
+        <input type="hidden" name="X-CSRF-TOKEN" value="@csrfValue" />
+    }
+}
     <input type="hidden" name="Id" value="@Model.Id" />
     <p id="editFormHelp" class="hint">Update details and save changes. Use commas to separate multiple categories or keywords.</p>
     <div class="form-grid">
