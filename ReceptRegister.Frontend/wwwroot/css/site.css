@@ -21,6 +21,13 @@ body {
   margin-bottom: 60px;
 }
 
+/* Accessibility utility classes */
+.visually-hidden { position:absolute !important; width:1px !important; height:1px !important; padding:0 !important; margin:-1px !important; overflow:hidden !important; clip:rect(0 0 0 0) !important; white-space:nowrap !important; border:0 !important; }
+
+/* Link focus and hover enhancements for non-color indication */
+a:hover, a:focus { text-decoration: underline; }
+a:focus { outline: 2px solid #258cfb; outline-offset: 2px; }
+
 .link-button { background:none; border:0; padding:0; cursor:pointer; font:inherit; color:#1d74d8; }
 .link-button:hover, .link-button:focus { text-decoration:underline; }
 .text-danger { color:#b00020; font-size:.75rem; display:block; }
