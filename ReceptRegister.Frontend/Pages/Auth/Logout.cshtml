@@ -1,0 +1,10 @@
+@page
+@model ReceptRegister.Frontend.Pages.Auth.LogoutModel
+@{
+    ViewData["Title"] = "Logout";
+}
+<form method="post">
+    <p>Are you sure you want to logout?</p>
+    <button type="submit">Logout</button>
+    <a asp-page="/Recipes/Index">Cancel</a>
+</form>

@@ -1,5 +1,5 @@
 // toggle-tried.js (#39) - progressive enhancement for toggling tried status with accessible feedback
-// Uses POST /recipes/{id}/tried with JSON body: { "id": number, "tried": true|false }
+// Uses POST /api/recipes/{id}/tried with JSON body: { "id": number, "tried": true|false }
 // Updates button state, aria-pressed, and provides a polite status message for assistive tech.
 document.addEventListener('click', async e => {
   const btn = e.target.closest('[data-toggle-tried]');
@@ -19,7 +19,6 @@ document.addEventListener('click', async e => {
     statusRegion.className = 'visually-hidden toggle-tried-status';
     document.body.appendChild(statusRegion);
   }
-
   const showStatus = (msg, isError = false) => {
     statusRegion.textContent = msg;
     statusRegion.classList.toggle('error', !!isError);
@@ -33,8 +32,8 @@ document.addEventListener('click', async e => {
   };
 
   try {
-    const newValue = !tried;
-    const res = await fetch(`${apiBase}/recipes/${id}/tried`, {
+  const newValue = !tried;
+  const res = await fetch(`${apiBase}/api/recipes/${id}/tried`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: Number(id), tried: newValue })
