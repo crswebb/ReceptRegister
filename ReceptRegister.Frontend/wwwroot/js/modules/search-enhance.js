@@ -29,9 +29,20 @@ if (form) {
 
   const doSearch = async () => {
   const q = input.value.trim();
-  const url = apiBase + '/api/recipes/?query=' + encodeURIComponent(q);
+  // Validate apiBase presence & construct URL safely
+  if (!apiBase) {
+    renderError('Search unavailable: API base URL not defined.');
+    return;
+  }
+  let url;
+  try {
+    url = new URL('/api/recipes/?query=' + encodeURIComponent(q), apiBase);
+  } catch (e) {
+    renderError('Search unavailable: Invalid API base URL.');
+    return;
+  }
     try {
-      const res = await fetch(url);
+      const res = await fetch(url.toString());
       if (!res.ok) {
         renderError('Search unavailable. Please try again later.');
         return;
