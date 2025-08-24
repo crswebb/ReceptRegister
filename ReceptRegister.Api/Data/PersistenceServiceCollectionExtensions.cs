@@ -2,34 +2,35 @@ namespace ReceptRegister.Api.Data;
 
 public static class PersistenceServiceCollectionExtensions
 {
-	private const string ProviderConfigKey = "Database:Provider"; // expected values: SQLite | SqlServer
-	private const string ConnectionStringKey = "Database:ConnectionString"; // used when Provider = SqlServer
-
 	public static IServiceCollection AddPersistenceServices(this IServiceCollection services)
 	{
-		services.AddSingleton<IDbConnectionFactory>(sp =>
+		// Bind and validate database options once (singleton semantics OK here as config is static post-startup in typical hosting)
+		services.AddSingleton(sp =>
 		{
 			var config = sp.GetRequiredService<IConfiguration>();
+			var options = new DatabaseOptions();
+			config.GetSection(DatabaseOptions.SectionName).Bind(options);
+			options.Validate();
+			return options;
+		});
+
+		services.AddSingleton<IDbConnectionFactory>(sp =>
+		{
+			var options = sp.GetRequiredService<DatabaseOptions>();
 			var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("PersistenceStartup");
 			var env = sp.GetRequiredService<IWebHostEnvironment>();
-			var provider = config[ProviderConfigKey];
-			if (string.IsNullOrWhiteSpace(provider))
+			var provider = options.Provider;
+			if (string.IsNullOrWhiteSpace(provider) || provider == "SQLite")
 			{
-				logger.LogInformation("No database provider configured (config key '{ProviderConfigKey}'); defaulting to SQLite.", ProviderConfigKey);
-				return new SqliteConnectionFactory(config, env);
-			}
-
-			switch (provider.Trim())
-			{
-				case "SQLite":
+				if (string.IsNullOrWhiteSpace(provider))
+					logger.LogInformation("No database provider configured; defaulting to SQLite.");
+				else
 					logger.LogInformation("Using SQLite database provider.");
-					return new SqliteConnectionFactory(config, env);
-				case "SqlServer":
-					logger.LogInformation("Using SQL Server database provider.");
-					return new SqlServerConnectionFactory(config);
-				default:
-					throw new InvalidOperationException($"Unsupported database provider '{provider}'. Expected one of: SQLite, SqlServer.");
+				return new SqliteConnectionFactory(sp.GetRequiredService<IConfiguration>(), env);
 			}
+			// provider already validated
+			logger.LogInformation("Using SQL Server database provider.");
+			return new SqlServerConnectionFactory(sp.GetRequiredService<IConfiguration>());
 		});
 
 		services.AddScoped<IRecipesRepository, RecipesRepository>();

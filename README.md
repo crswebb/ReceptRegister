@@ -146,7 +146,7 @@ Keep the backup until you confirm the new password works and data (if preserved)
 - Print or share a shortlist when planning a baking day.
 
 ## Data storage (early alpha)
-The API persists data to a local SQLite file at `App_Data/receptregister.db` (created on first run). Schema is simple:
+The API persists data to a local SQLite file at `App_Data/receptregister.db` (created on first run) by default. (NEW: An experimental SQL Server provider is now selectable – see next section.) Schema is simple:
 - Recipes (Name, Book, Page, Notes, Tried)
 - Categories & Keywords (unique name each, stored lowercase)
 - Join tables (`RecipeCategories`, `RecipeKeywords`) for many-to-many links
@@ -154,6 +154,33 @@ The API persists data to a local SQLite file at `App_Data/receptregister.db` (cr
 Foreign keys are enforced, and removing a recipe cascades its join rows. Category / keyword master rows remain (so taxonomy grows as you add terms). Back up is as easy as copying the single `.db` file while the app is stopped.
 
 In future milestones this may evolve (migrations, encryption, cloud backup), but for now the priority is a small, dependency-light foundation you can understand at a glance.
+
+### Database provider selection (experimental)
+
+You can choose between the built-in file-based SQLite store (default) and SQL Server (including Azure SQL). Configuration keys (in `appsettings.json` or environment):
+
+```json
+{
+	"Database": {
+		"Provider": "SQLite", // or "SqlServer"
+		"ConnectionString": "" // required only when Provider = SqlServer
+	}
+}
+```
+
+Notes:
+- If `Database:Provider` is omitted or blank, SQLite is used.
+- When `Provider=SqlServer`, `Database:ConnectionString` must be supplied; the application will fail fast at startup if missing.
+- Current schema & repositories still use SQLite-specific SQL (e.g. `last_insert_rowid()`, `INSERT OR IGNORE`). SQL Server support is being added incrementally in issues #105–#107.
+- A sample file `ReceptRegister.Api/appsettings.Database.sample.json` is included (copy/merge into your real settings file without comments if you need a template).
+
+Planned follow-ups (tracked in the Epic #110):
+1. Provider-specific schema initialization (#106)
+2. Neutral SQL for repositories / dialect adjustments (#107)
+3. Data migration helper (#108)
+4. Documentation expansion (#109)
+
+Until #107 is complete, selecting `SqlServer` will likely fail on operations relying on SQLite-only constructs. Use SQLite unless you are actively contributing to the provider work.
 
 — “Let’s sift the chaos and find the perfect recipe to bake today.” — Bagare Bengtsson
 
