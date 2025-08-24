@@ -113,13 +113,13 @@
             <div>
                 @if (Model.Result.Page > 1) {
                     <a class="btn btn--outline btn--sm" href="?Search=@Model.Search&PageNumber=@(Model.Result.Page-1)&PageSize=@Model.Result.PageSize" rel="prev">Prev</a>
-                } else { <span class="btn btn--subtle btn--sm" style="pointer-events:none;opacity:.5;">Prev</span> }
+                } else { <span class="btn btn--subtle btn--sm" aria-disabled="true">Prev</span> }
             </div>
             <div><span aria-current="page">Page @Model.Result.Page of @Model.Result.TotalPages</span></div>
             <div>
                 @if (Model.Result.Page < Model.Result.TotalPages) {
                     <a class="btn btn--outline btn--sm" href="?Search=@Model.Search&PageNumber=@(Model.Result.Page+1)&PageSize=@Model.Result.PageSize" rel="next">Next</a>
-                } else { <span class="btn btn--subtle btn--sm" style="pointer-events:none;opacity:.5;">Next</span> }
+                } else { <span class="btn btn--subtle btn--sm" aria-disabled="true">Next</span> }
             </div>
         </div>
     </nav>
