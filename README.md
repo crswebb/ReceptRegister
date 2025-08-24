@@ -268,6 +268,31 @@ Frontend static asset layout:
 - `wwwroot/js/` : General scripts; `modules/` contains ES modules (progressive enhancement)
 - `wwwroot/js/modules/placeholder.js` : Intentional no-op scaffold so import patterns are established early
 
+### Theming & design tokens (UI polish milestone)
+
+A lightweight token system (no framework) powers theming and consistency.
+
+Tokens live in `wwwroot/css/variables.css`:
+- Colors: `--color-*` (background, surface, text, primary, danger, success, warning, link, focus, shadows, accent backgrounds)
+- Spacing scale: `--spacing-0..8` (2px–32px) used instead of magic numbers
+- Typography: font sizes (`--fs-*`), line heights, weights (`--fw-*`)
+- Radii: `--radius-*` (including `--radius-pill` for chips)
+- Elevation: shadow presets `--elevation-*`
+- Transitions, z-index layers
+
+Dark mode: automatic via `prefers-color-scheme: dark` with explicit override using a theme toggle button (writes `data-theme="dark|light"` on `<html>` and persists preference in `localStorage` key `rr_theme`).
+
+Custom components refactored to use tokens:
+- Buttons (.btn variants: default primary, outline, subtle, danger, secondary; sizes sm/lg)
+- Forms (consistent spacing, hint + error states, accessible focus rings)
+- Tables (responsive stacking on narrow viewports; visually hidden caption for SR users)
+- Pagination (button styling alignment)
+- Recipe list can toggle between table view and new card grid layout (persisted preference `rr_recipe_layout`).
+
+Adding a new component: use existing variables; if a new semantic color is needed prefer deriving from an existing palette value and add a well‑named token (e.g. `--color-info`). Avoid embedding raw hex values in component files.
+
+Accessibility & contrast: color selections meet WCAG AA for text (normal 4.5:1, large 3:1). Focus indicators use `--color-focus-outline` with a 2px outline for visibility across themes.
+
 ## Dependency policy (early milestones)
 
 To keep the code understandable and portable:

@@ -10,38 +10,68 @@
 }
 else
 {
-<form method="post" novalidate>
+<form method="post" novalidate class="recipe-form" aria-describedby="editFormHelp">
+@{
+    var sessSettings = HttpContext.RequestServices.GetService(typeof(ReceptRegister.Api.Auth.SessionSettings)) as ReceptRegister.Api.Auth.SessionSettings;
+    var cookieName = sessSettings?.CookieName ?? "rr_session";
+    string? csrfValue = null;
+    if (Request.Cookies.TryGetValue(cookieName, out var sToken))
+    {
+        var sessSvc = HttpContext.RequestServices.GetService(typeof(ReceptRegister.Api.Auth.ISessionService)) as ReceptRegister.Api.Auth.ISessionService;
+        if (sessSvc?.Validate(sToken) == true)
+        {
+            csrfValue = sessSvc.GetCsrfToken(sToken);
+        }
+    }
+    if (!string.IsNullOrEmpty(csrfValue))
+    {
+        <input type="hidden" name="X-CSRF-TOKEN" value="@csrfValue" />
+    }
+}
     <input type="hidden" name="Id" value="@Model.Id" />
-    <div>
-        <label for="Name">Name *</label><br />
-        <input id="Name" name="Name" value="@Model.Input.Name" />
-        <span class="text-danger">@Model.ModelState[nameof(Model.Input.Name)]?.Errors.FirstOrDefault()?.ErrorMessage</span>
+    <p id="editFormHelp" class="hint">Update details and save changes. Use commas to separate multiple categories or keywords.</p>
+    <div class="form-grid">
+        <div class="field-group">
+            <label for="Name">Name <span aria-hidden="true">*</span></label>
+            <input id="Name" name="Name" type="text" value="@Model.Input.Name" aria-required="true" aria-describedby="Name_help" />
+            <div id="Name_help" class="hint">Primary display name.</div>
+            <span class="text-danger">@Model.ModelState[nameof(Model.Input.Name)]?.Errors.FirstOrDefault()?.ErrorMessage</span>
+        </div>
+        <div class="field-group">
+            <label for="Book">Book <span aria-hidden="true">*</span></label>
+            <input id="Book" name="Book" type="text" value="@Model.Input.Book" aria-required="true" aria-describedby="Book_help" />
+            <div id="Book_help" class="hint">Exact title.</div>
+            <span class="text-danger">@Model.ModelState[nameof(Model.Input.Book)]?.Errors.FirstOrDefault()?.ErrorMessage</span>
+        </div>
+    <div class="field-group inline-small">
+            <label for="Page">Page <span aria-hidden="true">*</span></label>
+            <input id="Page" name="Page" type="number" value="@Model.Input.Page" aria-required="true" aria-describedby="Page_help" />
+            <div id="Page_help" class="hint">Page number.</div>
+            <span class="text-danger">@Model.ModelState[nameof(Model.Input.Page)]?.Errors.FirstOrDefault()?.ErrorMessage</span>
+        </div>
+        <div class="field-group">
+            <label for="Categories">Categories</label>
+            <input id="Categories" name="Categories" type="text" value="@Model.Input.Categories" aria-describedby="Categories_help" />
+            <div id="Categories_help" class="hint">Comma separated list.</div>
+        </div>
+        <div class="field-group">
+            <label for="Keywords">Keywords</label>
+            <input id="Keywords" name="Keywords" type="text" value="@Model.Input.Keywords" aria-describedby="Keywords_help" />
+            <div id="Keywords_help" class="hint">Ingredients / attributes.</div>
+        </div>
+        <div class="field-group span-2">
+            <label for="Notes">Notes</label>
+            <textarea id="Notes" name="Notes" rows="4" aria-describedby="Notes_help">@Model.Input.Notes</textarea>
+            <div id="Notes_help" class="hint">Optional personal notes.</div>
+        </div>
+        <div class="field-group checkbox-inline span-2">
+            <input type="checkbox" id="Tried" name="Tried" value="true" @(Model.Input.Tried?"checked":null) />
+            <label for="Tried">Tried</label>
+        </div>
     </div>
-    <div>
-        <label for="Book">Book *</label><br />
-        <input id="Book" name="Book" value="@Model.Input.Book" />
-        <span class="text-danger">@Model.ModelState[nameof(Model.Input.Book)]?.Errors.FirstOrDefault()?.ErrorMessage</span>
+    <div class="actions">
+        <button type="submit" class="btn">Save</button>
+        <a href="/Recipes/Detail/@Model.Id" class="btn btn--subtle btn--sm">Cancel</a>
     </div>
-    <div>
-        <label for="Page">Page *</label><br />
-        <input id="Page" name="Page" type="number" value="@Model.Input.Page" />
-        <span class="text-danger">@Model.ModelState[nameof(Model.Input.Page)]?.Errors.FirstOrDefault()?.ErrorMessage</span>
-    </div>
-    <div>
-        <label for="Categories">Categories (comma separated)</label><br />
-        <input id="Categories" name="Categories" value="@Model.Input.Categories" />
-    </div>
-    <div>
-        <label for="Keywords">Keywords (comma separated)</label><br />
-        <input id="Keywords" name="Keywords" value="@Model.Input.Keywords" />
-    </div>
-    <div>
-        <label for="Notes">Notes</label><br />
-        <textarea id="Notes" name="Notes" rows="4">@Model.Input.Notes</textarea>
-    </div>
-    <div>
-        <label><input type="checkbox" name="Tried" value="true" @(Model.Input.Tried?"checked":null) /> Tried</label>
-    </div>
-    <p><button type="submit">Save</button> <a href="/Recipes/Detail/@Model.Id">Cancel</a></p>
 </form>
 }

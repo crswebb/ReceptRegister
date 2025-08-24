@@ -1,12 +1,24 @@
 /* table.css - milestone 5 (#41) table/list presentation */
 table { border-collapse:collapse; width:100%; font-size:.95rem; }
 th, td { text-align:left; padding:.4rem .5rem; vertical-align:top; }
-thead th { background:#f2f2f2; font-weight:600; border-bottom:2px solid #ccc; }
-tbody tr:nth-child(even) { background:#fafafa; }
-tbody tr:hover { background:#eef6ff; }
+thead th { background:var(--color-surface-alt); font-weight:600; border-bottom:2px solid var(--color-border-strong); }
+tbody tr:nth-child(even) { background:var(--color-surface-alt); }
+tbody tr:hover { background:var(--color-table-hover); }
 td a { text-decoration:none; }
 td a:focus, td a:hover { text-decoration:underline; }
 .recipes-table { margin-top:.75rem; }
+/* Responsive container */
+.table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+caption { text-align:left; font-size:var(--fs-100); font-weight:var(--fw-medium); color:var(--color-text-muted); padding:.25rem 0 .5rem; }
+
+/* Narrow viewport stacking (progressive enhancement) */
+@media (max-width: 640px) {
+	table.stackable thead { display:none; }
+	table.stackable tr { display:block; border:1px solid var(--color-border); border-radius:var(--radius); padding:var(--spacing-4) var(--spacing-5); margin-bottom:var(--spacing-5); background:var(--color-surface); box-shadow:var(--elevation-1); }
+	table.stackable td { display:flex; padding:.25rem 0; gap:var(--spacing-3); }
+	table.stackable td::before { content: attr(data-label); font-weight:var(--fw-medium); width:6.5rem; flex-shrink:0; color:var(--color-text-muted); }
+	table.stackable td a { flex:1; }
+}
 ul.inline-list { list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:.3rem; }
-ul.inline-list li { background:#e1e7ef; padding:.15rem .45rem; border-radius:999px; font-size:.7rem; text-transform:uppercase; letter-spacing:.5px; }
-.empty { font-style:italic; color:#555; }
+ul.inline-list li { background:var(--color-accent-bg); padding:.15rem .45rem; border-radius:var(--radius-pill); font-size:.7rem; text-transform:uppercase; letter-spacing:.5px; }
+.empty { font-style:italic; color:var(--color-text-muted); }

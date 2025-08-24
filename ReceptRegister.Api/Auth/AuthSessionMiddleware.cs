@@ -77,10 +77,20 @@ internal sealed class AuthSessionMiddleware
 			// For unsafe verbs require CSRF header (skip for /auth/* already handled above)
 			if (IsUnsafe(context.Request.Method))
 			{
-				var csrfHeader = context.Request.Headers["X-CSRF-TOKEN"].FirstOrDefault();
+				var provided = context.Request.Headers["X-CSRF-TOKEN"].FirstOrDefault();
+				// Fallback: allow token to be supplied via standard form field when using traditional HTML form posts
+				if (string.IsNullOrEmpty(provided) && context.Request.HasFormContentType)
+				{
+					try
+					{
+						var form = await context.Request.ReadFormAsync();
+						provided = form["X-CSRF-TOKEN"].FirstOrDefault() ?? form["csrf"].FirstOrDefault();
+					}
+					catch { /* ignore form read errors; will fail validation below */ }
+				}
 				var expected = _sessions.GetCsrfToken(token);
-				if (string.IsNullOrEmpty(csrfHeader) || expected is null ||
-					!CryptographicOperations.FixedTimeEquals(System.Text.Encoding.UTF8.GetBytes(csrfHeader), System.Text.Encoding.UTF8.GetBytes(expected)))
+				if (string.IsNullOrEmpty(provided) || expected is null ||
+					!CryptographicOperations.FixedTimeEquals(System.Text.Encoding.UTF8.GetBytes(provided), System.Text.Encoding.UTF8.GetBytes(expected)))
 				{
 					context.Response.StatusCode = StatusCodes.Status403Forbidden;
 					return;
