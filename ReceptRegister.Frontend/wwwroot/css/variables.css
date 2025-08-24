@@ -13,11 +13,12 @@
   --color-border-strong: #a8b0ba;
   --color-text: #1b2733;
   --color-text-muted: #5d6b7a;
-  --color-primary: #1d74d8;
-  --color-primary-hover: #1662b8;
-  --color-primary-active: #114f94;
-  --color-link: #1d74d8;
-  --color-link-hover: #155aab;
+  /* Pink primary theme */
+  --color-primary: #d81b60; /* base pink */
+  --color-primary-hover: #c2185b; /* darker hover */
+  --color-primary-active: #ad1457; /* active */
+  --color-link: #d81b60;
+  --color-link-hover: #ad1457;
   --color-danger: #c62828;
   --color-warning: #ed8500;
   --color-success: #2e7d32;
@@ -94,11 +95,12 @@
     --color-border-strong: #445461;
     --color-text: #f2f4f7;
     --color-text-muted: #9ba7b4;
-    --color-primary: #4da3ff;
-    --color-primary-hover: #398fe8;
-    --color-primary-active: #2f78c2;
-    --color-link: #4da3ff;
-    --color-link-hover: #87c4ff;
+  /* Pink variant for dark mode */
+  --color-primary: #ff5c8d; /* brighter pink for dark bg */
+  --color-primary-hover: #ff3f7a;
+  --color-primary-active: #e91e63;
+  --color-link: #ff5c8d;
+  --color-link-hover: #ff8fb0;
     --color-danger: #ef5350;
     --color-warning: #ffa733;
     --color-success: #66bb6a;
@@ -119,11 +121,11 @@
   --color-border-strong: #445461;
   --color-text: #f2f4f7;
   --color-text-muted: #9ba7b4;
-  --color-primary: #4da3ff;
-  --color-primary-hover: #398fe8;
-  --color-primary-active: #2f78c2;
-  --color-link: #4da3ff;
-  --color-link-hover: #87c4ff;
+  --color-primary: #ff5c8d;
+  --color-primary-hover: #ff3f7a;
+  --color-primary-active: #e91e63;
+  --color-link: #ff5c8d;
+  --color-link-hover: #ff8fb0;
   --color-danger: #ef5350;
   --color-warning: #ffa733;
   --color-success: #66bb6a;
