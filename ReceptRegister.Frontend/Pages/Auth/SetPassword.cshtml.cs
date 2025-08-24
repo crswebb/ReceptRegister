@@ -57,12 +57,10 @@ public class SetPasswordModel : PageModel
             return Page();
         }
 
-        // Server strength evaluation (reuse shared evaluator)
-        var eval = PasswordStrength.Evaluate(Password);
-        if (!eval.IsAcceptable)
+        // Additional server strength check (basic)
+        if (!IsStrongEnough(Password, out var strengthError))
         {
-            var msg = "Password too weak: " + string.Join(", ", eval.Suggestions.Take(3));
-            ModelState.AddModelError(nameof(Password), msg);
+            ModelState.AddModelError(nameof(Password), strengthError);
             return Page();
         }
 
@@ -75,5 +73,20 @@ public class SetPasswordModel : PageModel
         return Page();
     }
 
-    // Legacy strength method removed in favor of PasswordStrength.Evaluate
+    private static bool IsStrongEnough(string pwd, out string error)
+    {
+        int score = 0;
+        if (pwd.Length >= 12) score++;
+        if (pwd.Any(char.IsLower)) score++;
+        if (pwd.Any(char.IsUpper)) score++;
+        if (pwd.Any(char.IsDigit)) score++;
+        if (pwd.Any(ch => !char.IsLetterOrDigit(ch))) score++;
+        if (score < 3)
+        {
+            error = "Password too weak (add length, mix of upper/lower/digit/symbol).";
+            return false;
+        }
+        error = string.Empty;
+        return true;
+    }
 }
