@@ -4,6 +4,7 @@ th, td { text-align:left; padding:.4rem .5rem; vertical-align:top; }
 thead th { background:var(--color-surface-alt); font-weight:600; border-bottom:2px solid var(--color-border-strong); }
 tbody tr:nth-child(even) { background:var(--color-surface-alt); }
 tbody tr:hover { background:var(--color-table-hover); }
+tbody tr:focus-within { outline:2px solid var(--color-focus-outline); outline-offset:2px; }
 td a { text-decoration:none; }
 td a:focus, td a:hover { text-decoration:underline; }
 .recipes-table { margin-top:.75rem; }
