@@ -42,6 +42,6 @@ else
     <div>
         <label><input type="checkbox" name="Tried" value="true" @(Model.Input.Tried?"checked":null) /> Tried</label>
     </div>
-    <p><button type="submit">Save</button> <a href="/Recipes/Detail/@Model.Id">Cancel</a></p>
+    <p><button type="submit" class="btn">Save</button> <a href="/Recipes/Detail/@Model.Id" class="btn btn--subtle btn--sm">Cancel</a></p>
 </form>
 }

@@ -8,7 +8,7 @@
 <form method="get" class="form-inline" role="search" aria-label="Recipe search">
     <label for="search" class="visually-hidden">Search</label>
     <input id="search" name="Search" value="@Model.Search" placeholder="Search name, book, category, keyword" />
-    <button type="submit">Search</button>
+    <button type="submit" class="btn btn--outline btn--sm">Search</button>
     @if (!string.IsNullOrWhiteSpace(Model.Search)) {
         <a href="/Recipes/Index" class="reset-link">Clear</a>
     }

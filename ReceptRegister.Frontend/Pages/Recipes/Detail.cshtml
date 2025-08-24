@@ -34,11 +34,11 @@ else
         </section>
     }
     <p>
-        <a href="/Recipes/Edit/@Model.Recipe.Id">Edit</a> ·
+    <a href="/Recipes/Edit/@Model.Recipe.Id" class="btn btn--outline btn--sm">Edit</a> ·
         <form method="post" asp-page-handler="delete" style="display:inline" onsubmit="return confirm('Delete this recipe?');">
             <input type="hidden" name="Id" value="@Model.Recipe.Id" />
-            <button type="submit" class="link-button">Delete</button>
+            <button type="submit" class="btn btn--danger btn--sm">Delete</button>
         </form> ·
-        <a href="/Recipes/Index">Back</a>
+    <a href="/Recipes/Index" class="btn btn--subtle btn--sm">Back</a>
     </p>
 }
