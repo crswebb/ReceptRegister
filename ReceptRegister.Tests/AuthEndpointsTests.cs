@@ -34,7 +34,7 @@ public class AuthEndpointsTests
         var app = builder.Build();
         app.UseAuthSession();
         app.MapApiEndpoints();
-        await SchemaInitializer.InitializeAsync(app.Services.GetRequiredService<ISqliteConnectionFactory>());
+    await app.Services.GetRequiredService<ISchemaInitializer>().InitializeAsync();
         await app.StartAsync();
         var handler = new HttpClientHandler { UseCookies = true, CookieContainer = new System.Net.CookieContainer() };
         var client = new HttpClient(handler) { BaseAddress = new Uri(app.Urls.First()) };

@@ -4,7 +4,7 @@ using Microsoft.Data.Sqlite;
 
 namespace ReceptRegister.Tests;
 
-public class TempConnectionFactory : ISqliteConnectionFactory
+public class TempConnectionFactory : IDbConnectionFactory
 {
     private readonly string _cs;
     public TempConnectionFactory()
@@ -20,7 +20,8 @@ public class RecipeRepositoryTests
     private async Task<(IRecipesRepository recipes, ITaxonomyRepository taxonomy)> CreateReposAsync()
     {
         var factory = new TempConnectionFactory();
-        await SchemaInitializer.InitializeAsync(factory);
+    var initializer = new SqliteSchemaInitializer(factory, NullLogger<SqliteSchemaInitializer>.Instance);
+    await initializer.InitializeAsync();
         return (new RecipesRepository(factory), new TaxonomyRepository(factory));
     }
 

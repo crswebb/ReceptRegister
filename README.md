@@ -174,13 +174,19 @@ Notes:
 - Current schema & repositories still use SQLite-specific SQL (e.g. `last_insert_rowid()`, `INSERT OR IGNORE`). SQL Server support is being added incrementally in issues #105–#107.
 - A sample file `ReceptRegister.Api/appsettings.Database.sample.json` is included (copy/merge into your real settings file without comments if you need a template).
 
-Planned follow-ups (tracked in the Epic #110):
-1. Provider-specific schema initialization (#106)
-2. Neutral SQL for repositories / dialect adjustments (#107)
-3. Data migration helper (#108)
-4. Documentation expansion (#109)
+Progress (Epic #110):
+1. Provider-specific schema initialization (#106) – DONE: a provider abstraction (`ISchemaInitializer`) now creates either the SQLite or SQL Server schema at startup.
+2. Neutral SQL for repositories / dialect adjustments (#107) – IN PROGRESS NEXT: repository queries still contain SQLite-only constructs (`ON CONFLICT`, `last_insert_rowid()`).
+3. Data migration helper (#108) – PENDING.
+4. Documentation expansion (#109) – PENDING.
 
-Until #107 is complete, selecting `SqlServer` will likely fail on operations relying on SQLite-only constructs. Use SQLite unless you are actively contributing to the provider work.
+Implementation notes (#106):
+- A new `ISchemaInitializer` is registered based on `Database:Provider` and invoked during startup (API & Frontend host).
+- `SqliteSchemaInitializer` contains the former static DDL logic (transactional create-if-not-exists).
+- `SqlServerSchemaInitializer` currently provisions an equivalent schema (tables, PKs, FKs, indexes) using `IF NOT EXISTS` guards; still experimental.
+- Repositories & Razor Pages continue to use some SQLite-specific syntax; selecting SQL Server may hit unsupported paths until #107 refactors queries.
+
+Until #107 is complete, selecting `SqlServer` may fail on operations relying on SQLite-only constructs. Use SQLite unless you are actively contributing to the provider work.
 
 — “Let’s sift the chaos and find the perfect recipe to bake today.” — Bagare Bengtsson
 

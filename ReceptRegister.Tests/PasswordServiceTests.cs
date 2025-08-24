@@ -27,10 +27,10 @@ public class PasswordServiceTests
 
         // Persistence / auth infra
     var factory = existingPath is null ? new TestSqliteFactory() : new TestSqliteFactory(existingPath);
-    services.AddSingleton<ISqliteConnectionFactory>(factory);
+    services.AddSingleton<IDbConnectionFactory>(factory);
         services.AddAuthServices();
         var sp = services.BuildServiceProvider();
-        await SchemaInitializer.InitializeAsync(sp.GetRequiredService<ISqliteConnectionFactory>());
+    await sp.GetRequiredService<ISchemaInitializer>().InitializeAsync();
     return (sp.GetRequiredService<IPasswordService>(), factory.Path);
     }
 
@@ -66,7 +66,7 @@ internal sealed class FakeEnvAuth : IWebHostEnvironment
     public IFileProvider WebRootFileProvider { get; set; } = new NullFileProvider();
 }
 
-internal class TestSqliteFactory : ISqliteConnectionFactory
+internal class TestSqliteFactory : IDbConnectionFactory
 {
     public string Path { get; }
     public TestSqliteFactory() : this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"auth-{Guid.NewGuid():N}.db")) {}

@@ -27,8 +27,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseRouting();
 
-// Ensure DB schema exists for shared API endpoints (recipes, auth, taxonomy)
-await SchemaInitializer.InitializeAsync(app.Services.GetRequiredService<ISqliteConnectionFactory>());
+// Ensure DB schema exists for shared API endpoints (recipes, auth, taxonomy) using provider abstraction
+await app.Services.GetRequiredService<ISchemaInitializer>().InitializeAsync();
 // Auth session (cookie + csrf) before endpoints
 app.UseAuthSession();
 

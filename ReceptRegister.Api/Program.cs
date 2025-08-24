@@ -11,8 +11,8 @@ builder.Services.AddAuthServices();
 
 var app = builder.Build();
 
-// Ensure database schema exists (tables created) before handling requests
-await SchemaInitializer.InitializeAsync(app.Services.GetRequiredService<IDbConnectionFactory>());
+// Ensure database schema exists (tables created) before handling requests (provider-specific)
+await app.Services.GetRequiredService<ISchemaInitializer>().InitializeAsync();
 
 app.UseAuthSession();
 app.MapApiEndpoints();

@@ -28,7 +28,7 @@ public class SetPasswordPageTests
         var app = builder.Build();
     // Fresh DB under unique content root
         app.MapRazorPages();
-        await SchemaInitializer.InitializeAsync(app.Services.GetRequiredService<ISqliteConnectionFactory>());
+    await app.Services.GetRequiredService<ISchemaInitializer>().InitializeAsync();
     await app.StartAsync();
     var client = app.GetTestClient();
 

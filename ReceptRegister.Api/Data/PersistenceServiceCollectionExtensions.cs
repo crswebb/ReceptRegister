@@ -4,6 +4,7 @@ public static class PersistenceServiceCollectionExtensions
 {
 	public static IServiceCollection AddPersistenceServices(this IServiceCollection services)
 	{
+		// Register schema initializer per provider AFTER DatabaseOptions is registered.
 		// Bind and validate database options once (singleton semantics OK here as config is static post-startup in typical hosting)
 		services.AddSingleton(sp =>
 		{
@@ -35,6 +36,15 @@ public static class PersistenceServiceCollectionExtensions
 
 		services.AddScoped<IRecipesRepository, RecipesRepository>();
 		services.AddScoped<ITaxonomyRepository, TaxonomyRepository>();
+
+		// Provider-specific schema initializer
+		services.AddSingleton<ISchemaInitializer>(sp =>
+		{
+			var options = sp.GetRequiredService<DatabaseOptions>();
+			return (options.Provider is null || options.Provider == "SQLite")
+				? new SqliteSchemaInitializer(sp.GetRequiredService<IDbConnectionFactory>(), sp.GetRequiredService<ILogger<SqliteSchemaInitializer>>())
+				: new SqlServerSchemaInitializer(sp.GetRequiredService<IDbConnectionFactory>(), sp.GetRequiredService<ILogger<SqlServerSchemaInitializer>>());
+		});
 		return services;
 	}
 }
