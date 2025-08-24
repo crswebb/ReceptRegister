@@ -8,8 +8,9 @@ html {
   }
 }
 
+/* Generic focus ring adjustments (Bootstrap interop fallback retained) */
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+  box-shadow: 0 0 0 0.1rem #fff, 0 0 0 0.25rem var(--color-focus-outline);
 }
 
 html {
@@ -26,11 +27,11 @@ body {
 
 /* Link focus and hover enhancements for non-color indication */
 a:hover, a:focus { text-decoration: underline; }
-a:focus { outline: 2px solid #258cfb; outline-offset: 2px; }
+a:focus { outline: 2px solid var(--color-focus-outline); outline-offset: 2px; }
 
-.link-button { background:none; border:0; padding:0; cursor:pointer; font:inherit; color:#1d74d8; }
+.link-button { background:none; border:0; padding:0; cursor:pointer; font:inherit; color:var(--color-link); }
 .link-button:hover, .link-button:focus { text-decoration:underline; }
-.text-danger { color:#b00020; font-size:.75rem; display:block; }
+.text-danger { color:var(--color-danger); font-size:var(--fs-100); display:block; }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
   color: var(--bs-secondary-color);
@@ -42,25 +43,26 @@ a:focus { outline: 2px solid #258cfb; outline-offset: 2px; }
 }
 
 /* Password strength meter */
-.pw-meter { display:flex; gap:4px; margin:.25rem 0 .5rem; }
-.pw-meter-bar { flex:1; height:4px; background:#ddd; border-radius:2px; transition:background .3s; }
-.pw-meter-bar.filled { background:#ffb347; }
-.pw-meter-bar.filled.score-4 { background:#ffd166; }
-.pw-meter-bar.filled.score-5 { background:#a0d468; }
-.pw-meter-bar.filled.score-6 { background:#4caf50; }
+/* Password strength meter */
+.pw-meter { display:flex; gap:var(--spacing-2); margin:var(--spacing-2) 0 var(--spacing-4); }
+.pw-meter-bar { flex:1; height:4px; background:var(--color-border); border-radius:var(--radius-sm); transition:background var(--transition-base); }
+.pw-meter-bar.filled { background:var(--color-strength-1); }
+.pw-meter-bar.filled.score-4 { background:var(--color-strength-2); }
+.pw-meter-bar.filled.score-5 { background:var(--color-strength-3); }
+.pw-meter-bar.filled.score-6 { background:var(--color-strength-4); }
 
-.pw-strength-weak { color:#b00020; }
-.pw-strength-fair { color:#b97900; }
-.pw-strength-good { color:#3367d6; }
-.pw-strength-strong { color:#2e7d32; }
+.pw-strength-weak { color:var(--color-danger); }
+.pw-strength-fair { color:var(--color-warning); }
+.pw-strength-good { color:var(--color-primary); }
+.pw-strength-strong { color:var(--color-success); }
 
-.pw-suggestions { margin:.25rem 0 0; padding-left:1.1rem; font-size:.75rem; color:#555; }
+.pw-suggestions { margin:var(--spacing-2) 0 0; padding-left:1.1rem; font-size:var(--fs-100); color:var(--color-text-muted); }
 .pw-suggestions li { list-style:disc; }
 
 /* Session expiry modal */
 .session-modal.hidden { display:none; }
 .session-modal { position:fixed; inset:0; z-index:1000; }
 .session-modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.4); }
-.session-modal-dialog { position:relative; max-width:420px; margin:10% auto; background:#fff; padding:1.25rem 1.5rem; border-radius:6px; box-shadow:0 4px 16px rgba(0,0,0,.25); }
+.session-modal-dialog { position:relative; max-width:420px; margin:10% auto; background:var(--color-surface); padding:1.25rem 1.5rem; border-radius:var(--radius-lg); box-shadow:var(--elevation-4); color:var(--color-text); }
 .session-modal-dialog h2 { margin-top:0; font-size:1.25rem; }
 .session-modal .actions { margin-top:1rem; display:flex; gap:.75rem; justify-content:flex-end; }

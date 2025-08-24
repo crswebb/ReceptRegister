@@ -7,6 +7,8 @@
   --color-background: #ffffff;
   --color-surface: #ffffff;
   --color-surface-alt: #f5f7fa;
+  --color-accent-bg: #e1e7ef; /* badges, chips, subtle pills */
+  --color-table-hover: #eef6ff; /* table row hover */
   --color-border: #d7dce2;
   --color-border-strong: #a8b0ba;
   --color-text: #1b2733;
@@ -22,6 +24,12 @@
   --color-focus-outline: #258cfb;
   --color-shadow: rgba(0,0,0,0.12);
   --color-shadow-strong: rgba(0,0,0,0.24);
+
+  /* Password strength meter palette */
+  --color-strength-1: #ffb347; /* weak */
+  --color-strength-2: #ffd166; /* fair */
+  --color-strength-3: #a0d468; /* good */
+  --color-strength-4: #4caf50; /* strong */
 
   /* Spacing scale (t-shirt sizes) */
   --spacing-0: 0;
@@ -80,6 +88,8 @@
     --color-background: #0f1419;
     --color-surface: #1a222b;
     --color-surface-alt: #222c36;
+  --color-accent-bg: #2a3540;
+  --color-table-hover: #1f2a33;
     --color-border: #2e3a46;
     --color-border-strong: #445461;
     --color-text: #f2f4f7;
@@ -103,6 +113,8 @@
   --color-background: #0f1419;
   --color-surface: #1a222b;
   --color-surface-alt: #222c36;
+  --color-accent-bg: #2a3540;
+  --color-table-hover: #1f2a33;
   --color-border: #2e3a46;
   --color-border-strong: #445461;
   --color-text: #f2f4f7;
