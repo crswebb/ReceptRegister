@@ -16,7 +16,8 @@ public static class HealthExtensions
 
 	public static IEndpointRouteBuilder MapAppHealth(this IEndpointRouteBuilder endpoints)
 	{
-		endpoints.MapGet("/health", () => Results.Ok(new { status = "ok", app = "api" }));
+		// To avoid conflicts with frontend /health when unified, expose JSON health at /api/health.
+		endpoints.MapGet("/api/health", () => Results.Ok(new { status = "ok", app = "api" }));
 		return endpoints;
 	}
 }

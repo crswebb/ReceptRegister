@@ -3,6 +3,8 @@ using ReceptRegister.Api.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.FileProviders;
 
 namespace ReceptRegister.Tests;
 
@@ -20,7 +22,8 @@ public class PasswordServiceTests
         var cfg = new ConfigurationBuilder().AddInMemoryCollection(dict).Build();
         services.AddSingleton<IConfiguration>(cfg);
         services.AddLogging();
-        services.AddSingleton<TimeProvider>(TimeProvider.System);
+    services.AddSingleton<TimeProvider>(TimeProvider.System);
+    services.AddSingleton<IWebHostEnvironment>(new FakeEnvAuth());
 
         // Persistence / auth infra
         services.AddSingleton<ISqliteConnectionFactory>(_ => new TestSqliteFactory());
@@ -52,6 +55,16 @@ public class PasswordServiceTests
         Assert.True(await upgradeSvc.VerifyAsync("secret")); // triggers upgrade silently
         // Can't easily assert new iteration without exposing repo; assume log emitted. Future: expose method to read config.
     }
+}
+
+internal sealed class FakeEnvAuth : IWebHostEnvironment
+{
+    public string ApplicationName { get; set; } = "Test";
+    public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
+    public string ContentRootPath { get; set; } = ".";
+    public string EnvironmentName { get; set; } = "Development";
+    public string WebRootPath { get; set; } = ".";
+    public IFileProvider WebRootFileProvider { get; set; } = new NullFileProvider();
 }
 
 internal class TestSqliteFactory : ISqliteConnectionFactory

@@ -2,6 +2,8 @@ using ReceptRegister.Api.Auth;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.FileProviders;
 using Xunit;
 
 namespace ReceptRegister.Tests;
@@ -16,8 +18,9 @@ public class PasswordHasherTests
             {"RECEPT_PBKDF2_ITERATIONS", "100000"}
         }).Build();
         services.AddSingleton<IConfiguration>(cfg);
-        services.AddLogging(b => b.AddDebug());
-        services.AddScoped<IPasswordHasher, Pbkdf2PasswordHasher>();
+    services.AddLogging(b => b.AddDebug());
+    services.AddSingleton<IWebHostEnvironment>(new FakeEnv());
+    services.AddAuthServices();
         return services.BuildServiceProvider().GetRequiredService<IPasswordHasher>();
     }
 
@@ -54,7 +57,8 @@ public class PasswordHasherTests
         }).Build();
         servicesA.AddSingleton<IConfiguration>(cfgA);
         servicesA.AddLogging();
-        servicesA.AddAuthServices();
+    servicesA.AddSingleton<IWebHostEnvironment>(new FakeEnv());
+    servicesA.AddAuthServices();
         var hasherA = servicesA.BuildServiceProvider().GetRequiredService<IPasswordHasher>();
 
         // Provider B with pepper B
@@ -66,7 +70,8 @@ public class PasswordHasherTests
         }).Build();
         servicesB.AddSingleton<IConfiguration>(cfgB);
         servicesB.AddLogging();
-        servicesB.AddAuthServices();
+    servicesB.AddSingleton<IWebHostEnvironment>(new FakeEnv());
+    servicesB.AddAuthServices();
         var hasherB = servicesB.BuildServiceProvider().GetRequiredService<IPasswordHasher>();
 
     // Act: hash using pepperA, then attempt verification using pepperB which should fail
@@ -74,4 +79,14 @@ public class PasswordHasherTests
     Assert.True(hasherA.Verify("secret", null, saltA, iterA, hashA)); // own pepper succeeds
     Assert.False(hasherB.Verify("secret", null, saltA, iterA, hashA)); // different pepper should fail
     }
+}
+
+internal sealed class FakeEnv : IWebHostEnvironment
+{
+    public string ApplicationName { get; set; } = "Test";
+    public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
+    public string ContentRootPath { get; set; } = ".";
+    public string EnvironmentName { get; set; } = "Development";
+    public string WebRootPath { get; set; } = ".";
+    public IFileProvider WebRootFileProvider { get; set; } = new NullFileProvider();
 }

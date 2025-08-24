@@ -4,6 +4,7 @@
     ViewData["Title"] = "Recipes";
 }
 <h1>Recipes</h1>
+<p id="search-results-count" class="visually-hidden" aria-live="polite" aria-atomic="true">Listing @Model.Results.Count recipe@(Model.Results.Count == 1 ? "" : "s").</p>
 <form method="get" class="form-inline" role="search" aria-label="Recipe search">
     <label for="search" class="visually-hidden">Search</label>
     <input id="search" name="Search" value="@Model.Search" placeholder="Search name, book, category, keyword" />
@@ -32,12 +33,12 @@
             <td>@r.Page</td>
             <td>
                 @if (r.Categories.Count == 0) { <span class="muted">—</span>; } else {
-                    <ul class="inline-list">@foreach (var c in r.Categories) { <li>@c.Name</li> }</ul>
+                    <ul class="inline-list" role="list">@foreach (var c in r.Categories) { <li role="listitem">@c.Name</li> }</ul>
                 }
             </td>
             <td>
                 @if (r.Keywords.Count == 0) { <span class="muted">—</span>; } else {
-                    <ul class="inline-list">@foreach (var k in r.Keywords) { <li>@k.Name</li> }</ul>
+                    <ul class="inline-list" role="list">@foreach (var k in r.Keywords) { <li role="listitem">@k.Name</li> }</ul>
                 }
             </td>
             <td><button type="button" class="link-button" data-toggle-tried data-id="@r.Id" data-tried="@r.Tried">@(r.Tried?"✔":"")</button></td>

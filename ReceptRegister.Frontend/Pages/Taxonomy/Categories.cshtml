@@ -9,8 +9,8 @@
     <input id="Name" name="Name" value="" placeholder="Add category" />
     <button type="submit">Add</button>
 </form>
-<ul class="chip-list">
+<ul class="chip-list" role="list">
 @foreach (var c in Model.Categories) {
-    <li class="chip">@c.Name <form method="post" asp-page-handler="delete" style="display:inline"><input type="hidden" name="Id" value="@c.Id" /><button class="remove" title="Delete @c.Name" aria-label="Delete @c.Name">×</button></form></li>
+    <li class="chip" role="listitem">@c.Name <form method="post" asp-page-handler="delete" style="display:inline"><input type="hidden" name="Id" value="@c.Id" /><button class="remove" title="Delete category @c.Name" aria-label="Delete category @c.Name">×</button></form></li>
 }
 </ul>

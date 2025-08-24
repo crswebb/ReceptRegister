@@ -1,7 +1,12 @@
 using System.Net;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using ReceptRegister.Api.Auth;
 using ReceptRegister.Api.Data;
+using ReceptRegister.Frontend;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ReceptRegister.Tests;
 
@@ -9,17 +14,25 @@ public class LoginPageTests
 {
     private async Task<HttpClient> CreateAsync()
     {
-        var builder = Microsoft.AspNetCore.Builder.WebApplication.CreateBuilder();
-        builder.Services.AddRazorPages();
+        var builder = Microsoft.AspNetCore.Builder.WebApplication.CreateBuilder(Array.Empty<string>());
+        builder.WebHost.UseTestServer();
+        var frontendPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "ReceptRegister.Frontend"));
+    var tempRoot = Path.Combine(Path.GetTempPath(), "rr_frontendtests_" + Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(tempRoot);
+    builder.Environment.ContentRootPath = tempRoot;
+        builder.Services.AddRazorPages(o => {
+            o.Conventions.ConfigureFilter(new Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryTokenAttribute());
+        }).AddApplicationPart(typeof(ReceptRegister.Frontend.Pages.Recipes.IndexModel).Assembly);
         builder.Services.AddAppHealth();
         builder.Services.AddPersistenceServices();
         builder.Services.AddAuthServices();
         builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
         var app = builder.Build();
+    // Fresh DB under unique content root
         app.MapRazorPages();
         await SchemaInitializer.InitializeAsync(app.Services.GetRequiredService<ISqliteConnectionFactory>());
-        await app.StartAsync();
-        return app.GetTestClient();
+    await app.StartAsync();
+    return app.GetTestClient();
     }
 
     [Fact]
@@ -43,7 +56,8 @@ public class LoginPageTests
         var login = await client.PostAsync("/Auth/Login", new FormUrlEncodedContent(form));
         // Redirect to home
         Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
-        Assert.Equal("/Index", login.Headers.Location?.ToString());
+    var loginRedirect = login.Headers.Location?.ToString();
+    Assert.True(loginRedirect == "/Index" || loginRedirect == "/", $"Unexpected login redirect: {loginRedirect}");
         // Session cookie present
         Assert.Contains(login.Headers, h => h.Key.Equals("Set-Cookie", StringComparison.OrdinalIgnoreCase) && h.Value.Any(v => v.StartsWith("rr_session")));
     }

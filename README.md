@@ -160,26 +160,37 @@ Two apps make up ReceptRegister:
 - API (Minimal API): hosts the JSON endpoints and persistence
 - Frontend (Razor Pages): serves the HTML UI and static assets
 
-### Option 1: Quick start (two terminals)
-```powershell
-dotnet watch run --project ReceptRegister.Api
-```
+### Option 1: Single process (recommended now)
+The frontend project hosts both the UI pages and the API endpoints (same origin):
 ```powershell
 dotnet watch run --project ReceptRegister.Frontend
 ```
-Then browse the frontend (it calls into the API). Health checks:
-- API:   GET https://localhost:<api-port>/health -> JSON `{ "status": "ok" }`
-- Front: GET https://localhost:<frontend-port>/health -> plain text `ok`
+Health check: `GET https://localhost:<frontend-port>/health` -> `ok` (also JSON under `/api/health` if defined).
 
-### Option 2: Orchestration script
-Use the helper script which launches both with file watching:
+### Option 2: Legacy two‑process (if you prefer separate)
+You can still run the API alone (for tests or experimentation) and point the frontend meta `api-base` to it:
 ```powershell
-./run-dev.ps1
+dotnet watch run --project ReceptRegister.Api
+dotnet watch run --project ReceptRegister.Frontend
 ```
-Press Enter in the script window to stop both processes.
+Adjust the `<meta name="api-base" />` tag if using a fixed API port.
+
+### Option 3: Orchestration script (if retained)
+If `run-dev.ps1` exists you can continue to use it to launch both; otherwise single process is simplest.
 
 ### Ports
 Default Kestrel development ports are assigned by ASP.NET; you can pin them in each project Properties/launchSettings.json if you prefer stable values.
+
+### HTTPS in development
+The application only enables `UseHttpsRedirection()` outside of `Development`. Rationale:
+- Keeps local startup logs clean (avoids "Failed to determine the https port" warning when only HTTP is configured).
+- Simplifies first-run experience (no dev certificate prompts).
+- Session cookies are still marked HttpOnly; for production deployment you should run behind HTTPS (reverse proxy or Kestrel) so HSTS + redirection apply.
+
+If you want HTTPS locally:
+1. Trust/create a dev cert: `dotnet dev-certs https --trust`
+2. Run the HTTPS profile: `dotnet run --project ReceptRegister.Frontend --launch-profile https`
+3. Optionally move the `app.UseHttpsRedirection()` call back outside the environment check or add an explicit HTTPS Kestrel endpoint in `appsettings.Development.json`.
 
 ## Publishing (self-contained example)
 
