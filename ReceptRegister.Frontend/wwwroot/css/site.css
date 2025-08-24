@@ -21,6 +21,19 @@ body {
   margin-bottom: 60px;
 }
 
+/* Password strength meter */
+.pw-meter { position: relative; height:6px; background:#e0e0e0; border-radius:3px; margin-top:4px; margin-bottom:4px; overflow:hidden; }
+.pw-meter-fill { height:100%; width:0; transition:width .2s ease; background:linear-gradient(90deg,#d9534f,#f0ad4e); }
+.pw-score-0,.pw-score-1,.pw-score-2 { background:linear-gradient(90deg,#d9534f,#f0ad4e); }
+.pw-score-3,.pw-score-4 { background:linear-gradient(90deg,#f0ad4e,#5bc0de); }
+.pw-score-5 { background:linear-gradient(90deg,#5bc0de,#5cb85c); }
+.pw-score-6 { background:linear-gradient(90deg,#4cae4c,#3d8b3d); }
+.pw-strength-weak { color:#b00020; }
+.pw-strength-fair { color:#b58900; }
+.pw-strength-good { color:#0b7285; }
+.pw-strength-strong { color:#2e7d32; }
+.pw-suggestions { font-size: .75rem; }
+
 .link-button { background:none; border:0; padding:0; cursor:pointer; font:inherit; color:#1d74d8; }
 .link-button:hover, .link-button:focus { text-decoration:underline; }
 .text-danger { color:#b00020; font-size:.75rem; display:block; }

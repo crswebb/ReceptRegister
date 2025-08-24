@@ -38,6 +38,7 @@ Your shelves stay beautiful, your pages stay clean, and your baking time goes in
 - On first visit, if no password has been set yet, you’ll be guided to create one.
 - After that, you’ll sign in before you can use the app.
 - If you ever forget the password, the site administrator can clear the saved password value in the database to enable the “set a new password” screen again (see [Manual recovery](#manual-recovery-quick-steps)).
+ - For the full threat model, CSRF/session details, and environment variable list see [SECURITY.md](./SECURITY.md).
 
 ### Password hashing details (early auth milestone)
 Passwords are hashed with PBKDF2 (SHA‑256) using:
@@ -80,7 +81,7 @@ Environment variables (additional):
 | `RECEPT_LOGIN_MAX_ATTEMPTS` | Max failed logins per window | 5 (raise carefully) |
 | `RECEPT_LOGIN_WINDOW_SECONDS` | Sliding window size | 300 |
 
-The built‑in session store is in‑memory (single process). If you redeploy or restart, sessions are invalidated. Future milestone can add persistent or distributed storage.
+The built‑in session store is in‑memory (single process). If you redeploy or restart, sessions are invalidated. A lightweight auto‑refresh (client calls `/auth/refresh` when ~25% of original lifetime remains) keeps active users signed in without extending idle sessions excessively. Future milestone can add persistent or distributed storage.
 
 ### Password recovery & rotation
 If the admin password is lost you can force the application back into the initial "set password" state.
