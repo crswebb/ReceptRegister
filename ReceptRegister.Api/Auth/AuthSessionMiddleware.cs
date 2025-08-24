@@ -12,10 +12,10 @@ internal sealed class AuthSessionMiddleware
 {
 	private readonly RequestDelegate _next;
 	private readonly ISessionService _sessions;
-	private readonly PasswordService _passwords;
+	private readonly IPasswordService _passwords;
 	private const string SessionCookie = "rr_session";
 
-	public AuthSessionMiddleware(RequestDelegate next, ISessionService sessions, PasswordService passwords)
+	public AuthSessionMiddleware(RequestDelegate next, ISessionService sessions, IPasswordService passwords)
 	{
 		_next = next;
 		_sessions = sessions;
