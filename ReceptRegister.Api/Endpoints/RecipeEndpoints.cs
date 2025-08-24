@@ -46,6 +46,7 @@ public static class RecipeEndpoints
 				Tried = req.Tried
 			};
 			var id = await repo.AddAsync(recipe, req.Categories, req.Keywords, ct);
+			// Created location should reflect API mount path
 			return Results.Created($"/api/recipes/{id}", Mapping.ToDetail(recipe));
 		}).AddEndpointFilter<ValidationFilter>();
 

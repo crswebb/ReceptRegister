@@ -32,8 +32,8 @@ document.addEventListener('click', async e => {
   };
 
   try {
-    const newValue = !tried;
-    const res = await fetch(`${apiBase}/api/recipes/${id}/tried`, {
+  const newValue = !tried;
+  const res = await fetch(`${apiBase}/api/recipes/${id}/tried`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: Number(id), tried: newValue })
