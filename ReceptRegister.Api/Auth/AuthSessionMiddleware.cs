@@ -12,14 +12,14 @@ internal sealed class AuthSessionMiddleware
 {
 	private readonly RequestDelegate _next;
 	private readonly ISessionService _sessions;
-	private readonly IPasswordService _passwords;
+	private readonly IServiceScopeFactory _scopeFactory;
 	private const string SessionCookie = "rr_session";
 
-	public AuthSessionMiddleware(RequestDelegate next, ISessionService sessions, IPasswordService passwords)
+	public AuthSessionMiddleware(RequestDelegate next, ISessionService sessions, IServiceScopeFactory scopeFactory)
 	{
 		_next = next;
 		_sessions = sessions;
-		_passwords = passwords;
+		_scopeFactory = scopeFactory;
 	}
 
 	public async Task InvokeAsync(HttpContext context)
@@ -34,7 +34,10 @@ internal sealed class AuthSessionMiddleware
 		// Root ("/") is only public until an initial password is set. After that it is protected like other pages.
 		if (path == "/")
 		{
-			if (!await _passwords.HasPasswordAsync())
+			// Resolve scoped password service only when needed
+			await using var scope = _scopeFactory.CreateAsyncScope();
+			var passwordSvc = scope.ServiceProvider.GetRequiredService<IPasswordService>();
+			if (!await passwordSvc.HasPasswordAsync())
 			{
 				await _next(context);
 				return;
