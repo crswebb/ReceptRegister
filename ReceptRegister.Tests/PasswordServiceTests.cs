@@ -3,6 +3,7 @@ using ReceptRegister.Api.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 
@@ -25,8 +26,10 @@ public class PasswordServiceTests
     services.AddSingleton<TimeProvider>(TimeProvider.System);
     services.AddSingleton<IWebHostEnvironment>(new FakeEnvAuth());
 
-        // Persistence / auth infra
+    // Persistence / auth infra
+    services.AddPersistenceServices(); // registers ISchemaInitializer & dialect abstraction
     var factory = existingPath is null ? new TestSqliteFactory() : new TestSqliteFactory(existingPath);
+    // Override default registered factory with test-specific file-based one
     services.AddSingleton<IDbConnectionFactory>(factory);
         services.AddAuthServices();
         var sp = services.BuildServiceProvider();
@@ -74,5 +77,5 @@ internal class TestSqliteFactory : IDbConnectionFactory
     {
         Path = existingPath;
     }
-    public Microsoft.Data.Sqlite.SqliteConnection Create() => new(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder { DataSource = Path, ForeignKeys = true }.ToString());
+    public System.Data.Common.DbConnection Create() => new Microsoft.Data.Sqlite.SqliteConnection(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder { DataSource = Path, ForeignKeys = true }.ToString());
 }
