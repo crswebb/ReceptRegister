@@ -176,17 +176,52 @@ Notes:
 
 Progress (Epic #110):
 1. Provider-specific schema initialization (#106) – DONE: a provider abstraction (`ISchemaInitializer`) now creates either the SQLite or SQL Server schema at startup.
-2. Neutral SQL for repositories / dialect adjustments (#107) – IN PROGRESS NEXT: repository queries still contain SQLite-only constructs (`ON CONFLICT`, `last_insert_rowid()`).
-3. Data migration helper (#108) – PENDING.
+2. Neutral SQL for repositories / dialect adjustments (#107) – DONE (initial pass): repositories now use a runtime `IDatabaseDialect` (SQLite or SQL Server) for inserts, identity retrieval, taxonomy upserts, link creation, and paging. Further optimization & consolidation may follow.
+3. Data migration helper (#108) – INITIAL IMPLEMENTATION: one-shot SQLite -> SQL Server migrator (see Migration section below).
 4. Documentation expansion (#109) – PENDING.
 
-Implementation notes (#106):
+Implementation notes (#106 / #107):
 - A new `ISchemaInitializer` is registered based on `Database:Provider` and invoked during startup (API & Frontend host).
 - `SqliteSchemaInitializer` contains the former static DDL logic (transactional create-if-not-exists).
 - `SqlServerSchemaInitializer` currently provisions an equivalent schema (tables, PKs, FKs, indexes) using `IF NOT EXISTS` guards; still experimental.
-- Repositories & Razor Pages continue to use some SQLite-specific syntax; selecting SQL Server may hit unsupported paths until #107 refactors queries.
+- Razor Pages taxonomy add/delete handlers now also use the dialect abstraction for taxonomy upsert (aligned with repositories).
 
-Until #107 is complete, selecting `SqlServer` may fail on operations relying on SQLite-only constructs. Use SQLite unless you are actively contributing to the provider work.
+Current limitation: No automated integration test yet verifies SQL Server end-to-end (planned alongside #108 migration tooling).
+### Data migration (SQLite to SQL Server)
+
+An initial migration helper now exists to move data from an existing SQLite `receptregister.db` file into a SQL Server database.
+
+Usage (target = SQL Server):
+
+1. Configure `Database:Provider=SqlServer` and a valid `Database:ConnectionString` (env vars or appsettings).
+2. Run the API project with the `--migrate-sqlite=<path-to-existing-sqlite-db>` argument.
+	Example PowerShell:
+	```powershell
+	dotnet run --project ReceptRegister.Api -- --migrate-sqlite="C:\\data\\receptregister.db" 
+	```
+3. The process will:
+	- Ensure the target schema exists (runs `ISchemaInitializer`).
+	- Read all taxonomy + recipes from the SQLite file (read-only).
+	- Upsert taxonomy terms (categories / keywords) into SQL Server (skips existing names).
+	- Insert recipes skipping any that already exist by natural key (Name + Book + Page).
+	- Recreate many-to-many links.
+4. On success it prints a summary and exits without starting the web server.
+
+Safety / idempotency:
+- You can re-run; existing taxonomy terms are ignored and duplicate recipes (natural key) are skipped.
+- Migration never deletes data in the target.
+
+Limitations / future enhancements:
+- Only supports SQLite -> SQL Server (not reverse, not incremental diffs).
+- Does not yet migrate the `AuthConfig` password row (intentional; set a new password after migrating content).
+- No batching / streaming for extremely large datasets (loads all recipe rows into memory first — acceptable for small personal libraries).
+- No automated integration test yet exercises the migrator (planned). 
+
+After migration:
+- Start the combined Frontend (or API) normally pointing at SQL Server.
+- Visit the site; you will be in setup mode (no password) unless you manually migrated AuthConfig which is intentionally not handled.
+- Set a new password and verify recipes appear.
+
 
 — “Let’s sift the chaos and find the perfect recipe to bake today.” — Bagare Bengtsson
 

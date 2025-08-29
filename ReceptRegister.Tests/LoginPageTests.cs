@@ -1,12 +1,12 @@
 using System.Net;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using ReceptRegister.Api.Localization; // for AddConfiguredLocalization
 using Microsoft.Extensions.Configuration;
 using ReceptRegister.Api.Auth;
 using ReceptRegister.Api.Data;
 using ReceptRegister.Frontend;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace ReceptRegister.Tests;
 
@@ -19,9 +19,11 @@ public class LoginPageTests
         var frontendPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "ReceptRegister.Frontend"));
     var tempRoot = TestPathHelpers.NewFrontendTempRoot();
     builder.Environment.ContentRootPath = tempRoot;
-        builder.Services.AddRazorPages(o => {
+    builder.Services.AddRazorPages(o => {
             o.Conventions.ConfigureFilter(new Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryTokenAttribute());
         }).AddApplicationPart(typeof(ReceptRegister.Frontend.Pages.Recipes.IndexModel).Assembly);
+    builder.Services.AddLocalization();
+    builder.Services.AddConfiguredLocalization(builder.Configuration);
         builder.Services.AddAppHealth();
         builder.Services.AddPersistenceServices();
         builder.Services.AddAuthServices();

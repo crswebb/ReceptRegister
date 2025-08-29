@@ -9,8 +9,9 @@ public class KeywordsModel : PageModel
 {
     private readonly ITaxonomyRepository _taxonomy;
     private readonly IDbConnectionFactory _factory;
-    public KeywordsModel(ITaxonomyRepository taxonomy, IDbConnectionFactory factory)
-    { _taxonomy = taxonomy; _factory = factory; }
+    private readonly IDatabaseDialect _dialect;
+    public KeywordsModel(ITaxonomyRepository taxonomy, IDbConnectionFactory factory, IDatabaseDialect dialect)
+    { _taxonomy = taxonomy; _factory = factory; _dialect = dialect; }
 
     public IReadOnlyList<Keyword> Keywords { get; private set; } = Array.Empty<Keyword>();
 
@@ -26,13 +27,10 @@ public class KeywordsModel : PageModel
             var norm = name.Trim().ToLowerInvariant();
             await using var conn = _factory.Create();
             await conn.OpenAsync(ct);
-            var cmd = conn.CreateCommand();
-            cmd.CommandText = "INSERT INTO Keywords (Name) VALUES (@n) ON CONFLICT(Name) DO NOTHING"; // TODO provider-specific upsert strategy for SQL Server
-            var p = cmd.CreateParameter();
-            p.ParameterName = "@n";
-            p.Value = norm;
-            cmd.Parameters.Add(p);
-            await cmd.ExecuteNonQueryAsync(ct);
+            var upsert = conn.CreateCommand();
+            upsert.CommandText = _dialect.BuildInsertIgnoreTaxonomySql("Keywords");
+            upsert.AddParam("@n", norm);
+            await upsert.ExecuteNonQueryAsync(ct);
         }
         return RedirectToPage();
     }
@@ -43,10 +41,7 @@ public class KeywordsModel : PageModel
         await conn.OpenAsync(ct);
     var cmd = conn.CreateCommand();
     cmd.CommandText = "DELETE FROM Keywords WHERE Id=@id";
-    var p = cmd.CreateParameter();
-    p.ParameterName = "@id";
-    p.Value = id;
-    cmd.Parameters.Add(p);
+    cmd.AddParam("@id", id);
     await cmd.ExecuteNonQueryAsync(ct);
         return RedirectToPage();
     }

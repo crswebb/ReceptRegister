@@ -10,6 +10,7 @@ using ReceptRegister.Api.Auth;
 using ReceptRegister.Api.Data;
 using ReceptRegister.Api.Endpoints;
 using ReceptRegister.Api;
+using ReceptRegister.Api.Localization;
 
 namespace ReceptRegister.Tests;
 
@@ -19,13 +20,15 @@ public class AuthRoundtripTests
     {
     var builder = WebApplication.CreateBuilder(Array.Empty<string>());
     builder.WebHost.UseUrls("http://127.0.0.1:0");
-    builder.Host.UseEnvironment("Development");
+    builder.Environment.EnvironmentName = "Development";
     var tempRoot = TestPathHelpers.NewApiTempRoot();
     builder.Environment.ContentRootPath = tempRoot;
     // Environment forced via Host.UseEnvironment above
         // No special debug configuration required now
     // Use default logging configuration (no console provider in test project)
-        builder.Services.AddAppHealth();
+    builder.Services.AddAppHealth();
+    builder.Services.AddLocalization();
+    builder.Services.AddConfiguredLocalization(builder.Configuration);
         builder.Services.AddPersistenceServices();
         builder.Services.AddAuthServices();
         builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
@@ -45,8 +48,8 @@ public class AuthRoundtripTests
         var (client, sp) = await CreateAsync();
         const string pwd = "RoundTrip1!";
         // Password not set yet -> protected endpoint unauthorized
-        var protectedResp = await client.GetAsync("/recipes");
-        Assert.Equal(HttpStatusCode.Unauthorized, protectedResp.StatusCode);
+    var protectedResp = await client.GetAsync("/api/recipes");
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, protectedResp.StatusCode); // setup mode before password
 
         // Set password via endpoint
     var setResp = await client.PostAsync("/auth/set-password", new StringContent($"{{\"Password\":\"{pwd}\"}}", Encoding.UTF8, "application/json"));
@@ -87,17 +90,17 @@ public class AuthRoundtripTests
 
         // Use CSRF for POST protected
         client.DefaultRequestHeaders.Add("X-CSRF-TOKEN", loginPayload.csrf);
-    var create = await client.PostAsJsonAsync("/recipes", new { Name = "R", Book = "B", Page = 1, Notes = "", Tried = false, Categories = Array.Empty<string>(), Keywords = Array.Empty<string>() });
+    var create = await client.PostAsJsonAsync("/api/recipes", new { Name = "Rc", Book = "B", Page = 1, Notes = "", Tried = false, Categories = Array.Empty<string>(), Keywords = Array.Empty<string>() });
         Assert.Equal(HttpStatusCode.Created, create.StatusCode);
 
         // GET protected now OK
-        var list = await client.GetAsync("/recipes");
+    var list = await client.GetAsync("/api/recipes");
         Assert.Equal(HttpStatusCode.OK, list.StatusCode);
 
         // Negative: tamper with CSRF
         client.DefaultRequestHeaders.Remove("X-CSRF-TOKEN");
         client.DefaultRequestHeaders.Add("X-CSRF-TOKEN", "deadbeef");
-    var failTamper = await client.PostAsJsonAsync("/recipes", new { Name = "X", Book = "B", Page = 2, Notes = "", Tried = false, Categories = Array.Empty<string>(), Keywords = Array.Empty<string>() });
+    var failTamper = await client.PostAsJsonAsync("/api/recipes", new { Name = "X", Book = "B", Page = 2, Notes = "", Tried = false, Categories = Array.Empty<string>(), Keywords = Array.Empty<string>() });
         Assert.Equal(HttpStatusCode.Forbidden, failTamper.StatusCode);
     }
 

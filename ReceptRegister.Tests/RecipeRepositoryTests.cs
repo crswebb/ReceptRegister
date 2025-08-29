@@ -1,6 +1,7 @@
 using ReceptRegister.Api.Data;
 using ReceptRegister.Api.Domain;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ReceptRegister.Tests;
 
@@ -12,17 +13,18 @@ public class TempConnectionFactory : IDbConnectionFactory
         var file = Path.Combine(Path.GetTempPath(), $"recept-test-{Guid.NewGuid():N}.db");
         _cs = new SqliteConnectionStringBuilder { DataSource = file, ForeignKeys = true }.ToString();
     }
-    public SqliteConnection Create() => new(_cs);
+    public System.Data.Common.DbConnection Create() => new SqliteConnection(_cs);
 }
 
 public class RecipeRepositoryTests
 {
     private async Task<(IRecipesRepository recipes, ITaxonomyRepository taxonomy)> CreateReposAsync()
     {
-        var factory = new TempConnectionFactory();
+    var factory = new TempConnectionFactory();
     var initializer = new SqliteSchemaInitializer(factory, NullLogger<SqliteSchemaInitializer>.Instance);
     await initializer.InitializeAsync();
-        return (new RecipesRepository(factory), new TaxonomyRepository(factory));
+    var dialect = new SqliteDialect();
+    return (new RecipesRepository(factory, dialect), new TaxonomyRepository(factory));
     }
 
     [Fact]

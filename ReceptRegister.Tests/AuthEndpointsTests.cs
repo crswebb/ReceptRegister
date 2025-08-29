@@ -9,6 +9,7 @@ using ReceptRegister.Api.Auth;
 using ReceptRegister.Api.Data;
 using System;
 using ReceptRegister.Api.Endpoints;
+using ReceptRegister.Api.Localization;
 using ReceptRegister.Api;
 
 namespace ReceptRegister.Tests;
@@ -19,7 +20,7 @@ public class AuthEndpointsTests
     {
     var builder = Microsoft.AspNetCore.Builder.WebApplication.CreateBuilder(Array.Empty<string>());
     builder.WebHost.UseUrls("http://127.0.0.1:0");
-    builder.Host.UseEnvironment("Development");
+    builder.Environment.EnvironmentName = "Development";
     var tempRoot = TestPathHelpers.NewApiTempRoot();
         builder.Environment.ContentRootPath = tempRoot;
         // Environment forced via Host.UseEnvironment above
@@ -27,7 +28,9 @@ public class AuthEndpointsTests
         if (cfg != null)
             builder.Configuration.AddInMemoryCollection(cfg);
     // Minimal logging (default providers) to avoid missing console package references in test project
-        builder.Services.AddAppHealth();
+    builder.Services.AddAppHealth();
+    builder.Services.AddLocalization();
+    builder.Services.AddConfiguredLocalization(builder.Configuration);
         builder.Services.AddPersistenceServices();
         builder.Services.AddAuthServices();
         builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
@@ -45,9 +48,9 @@ public class AuthEndpointsTests
     public async Task SetPassword_Then_Login_Flow()
     {
     var (client, services) = await CreateClientAsync();
-        // No password yet: accessing /recipes unauthorized
-        var respUnauthorized = await client.GetAsync("/recipes");
-        Assert.Equal(HttpStatusCode.Unauthorized, respUnauthorized.StatusCode);
+        // No password yet: accessing protected API returns 503 (setup mode)
+    var respSetup = await client.GetAsync("/api/recipes");
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, respSetup.StatusCode);
 
         // Set password
         var set = await client.PostAsync("/auth/set-password", new StringContent("{\"Password\":\"Passw0rd!\"}", Encoding.UTF8, "application/json"));
@@ -94,15 +97,15 @@ public class AuthEndpointsTests
     Assert.True(goodLogin.Headers.TryGetValues("Set-Cookie", out var _), "Expected Set-Cookie header on login response");
 
         // Now /recipes should be authorized (will return empty list OK)
-        var ok = await client.GetAsync("/recipes");
+    var ok = await client.GetAsync("/api/recipes");
         Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
 
         // CSRF required for state-changing (example: attempt to create recipe without header gets 403)
-    var failPost = await client.PostAsJsonAsync("/recipes", new { Name = "A", Book = "B", Page = 1, Notes = "", Tried = false, Categories = Array.Empty<string>(), Keywords = Array.Empty<string>() });
+    var failPost = await client.PostAsJsonAsync("/api/recipes", new { Name = "A", Book = "B", Page = 1, Notes = "", Tried = false, Categories = Array.Empty<string>(), Keywords = Array.Empty<string>() });
         Assert.Equal(HttpStatusCode.Forbidden, failPost.StatusCode);
 
         client.DefaultRequestHeaders.Add("X-CSRF-TOKEN", loginPayload.csrf);
-    var goodPost = await client.PostAsJsonAsync("/recipes", new { Name = "A", Book = "B", Page = 1, Notes = "", Tried = false, Categories = Array.Empty<string>(), Keywords = Array.Empty<string>() });
+    var goodPost = await client.PostAsJsonAsync("/api/recipes", new { Name = "AB", Book = "B", Page = 1, Notes = "", Tried = false, Categories = Array.Empty<string>(), Keywords = Array.Empty<string>() });
         Assert.Equal(HttpStatusCode.Created, goodPost.StatusCode);
     }
 
