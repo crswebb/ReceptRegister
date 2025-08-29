@@ -184,9 +184,9 @@ Implementation notes (#106 / #107):
 - A new `ISchemaInitializer` is registered based on `Database:Provider` and invoked during startup (API & Frontend host).
 - `SqliteSchemaInitializer` contains the former static DDL logic (transactional create-if-not-exists).
 - `SqlServerSchemaInitializer` currently provisions an equivalent schema (tables, PKs, FKs, indexes) using `IF NOT EXISTS` guards; still experimental.
-- Razor Pages taxonomy add/delete handlers still embed a SQLite-oriented upsert pattern with `ON CONFLICT` (will be aligned with dialect helper in a minor follow-up). All repository operations have been ported to the dialect abstraction.
+- Razor Pages taxonomy add/delete handlers now also use the dialect abstraction for taxonomy upsert (aligned with repositories).
 
-Current limitation: taxonomy add endpoints in the UI still use `ON CONFLICT` and will fail on SQL Server until adjusted; repository APIs are provider-neutral.
+Current limitation: No automated integration test yet verifies SQL Server end-to-end (planned alongside #108 migration tooling).
 
 — “Let’s sift the chaos and find the perfect recipe to bake today.” — Bagare Bengtsson
 
