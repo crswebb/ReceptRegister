@@ -29,10 +29,7 @@ public class CategoriesModel : PageModel
             await conn.OpenAsync(ct);
             var upsert = conn.CreateCommand();
             upsert.CommandText = _dialect.BuildInsertIgnoreTaxonomySql("Categories");
-            var p = upsert.CreateParameter();
-            p.ParameterName = "@n";
-            p.Value = norm;
-            upsert.Parameters.Add(p);
+            upsert.AddParam("@n", norm);
             await upsert.ExecuteNonQueryAsync(ct);
         }
         return RedirectToPage();
@@ -44,10 +41,7 @@ public class CategoriesModel : PageModel
         await conn.OpenAsync(ct);
     var cmd = conn.CreateCommand();
     cmd.CommandText = "DELETE FROM Categories WHERE Id=@id";
-    var p = cmd.CreateParameter();
-    p.ParameterName = "@id";
-    p.Value = id;
-    cmd.Parameters.Add(p);
+    cmd.AddParam("@id", id);
     await cmd.ExecuteNonQueryAsync(ct);
         return RedirectToPage();
     }
