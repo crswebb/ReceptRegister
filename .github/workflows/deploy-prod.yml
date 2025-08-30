@@ -1,0 +1,144 @@
+name: Production Deploy
+
+on:
+  push:
+    branches:
+      - 'release/**'
+  pull_request:
+    branches:
+      - 'release/**'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Skip actual deploy (build + test + artifact only)'
+        required: false
+        default: 'false'
+      smoke_path:
+        description: 'Override smoke test path (defaults /health)'
+        required: false
+        default: '/health'
+
+permissions:
+  contents: read
+  id-token: write   # Needed for OIDC azure/login
+  pull-requests: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  PROJECT_PATH: 'ReceptRegister.Frontend/ReceptRegister.Frontend.csproj'
+  PUBLISH_DIR: 'publish'
+  BUILD_CONFIG: 'Release'
+
+jobs:
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore ${{ env.PROJECT_PATH }}
+
+      - name: Build (Release)
+        run: dotnet build ${{ env.PROJECT_PATH }} -c $BUILD_CONFIG --no-restore
+
+      - name: Test
+        run: dotnet test ReceptRegister.Tests/ReceptRegister.Tests.csproj -c $BUILD_CONFIG --no-build --logger "trx;LogFileName=test-results.trx"
+
+      - name: Publish
+        run: dotnet publish ${{ env.PROJECT_PATH }} -c $BUILD_CONFIG -o $PUBLISH_DIR /p:PublishSingleFile=false
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-drop
+          path: ${{ env.PUBLISH_DIR }}
+
+  deploy:
+    name: Deploy & Smoke Test
+    needs: build-test
+    runs-on: ubuntu-latest
+    environment: production
+    # Only deploy on push (merged code) or manual dispatch with dry_run != true; not on PR validation.
+    if: ${{ (github.event_name == 'push' && github.event.inputs.dry_run != 'true') || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true') }}
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: production-drop
+          path: ${{ env.PUBLISH_DIR }}
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          package: ${{ env.PUBLISH_DIR }}
+
+      - name: Wait for warmup
+        run: |
+          echo "Waiting 15s for app warmup..."
+          sleep 15
+
+      - name: Smoke Test (Health)
+        run: |
+          set -e
+          URL="https://${{ secrets.AZURE_WEBAPP_HOST }}${{ github.event.inputs.smoke_path || '/health' }}"
+          echo "Probing $URL";
+          for i in {1..5}; do
+            STATUS=$(curl -sk -o /dev/null -w '%{http_code}' "$URL" || true)
+            if [ "$STATUS" = "200" ]; then echo "Health OK (200)"; exit 0; fi
+            echo "Attempt $i failed (status=$STATUS); retrying in 5s"; sleep 5;
+          done
+          echo "Health check failed after retries"; exit 1
+
+      - name: Basic JSON Endpoint Check (/auth/status unauthenticated)
+        run: |
+          set -e
+          URL="https://${{ secrets.AZURE_WEBAPP_HOST }}/auth/status"
+          echo "GET $URL";
+            RESP=$(curl -sk "$URL") || (echo 'Request failed' && exit 1)
+          echo "$RESP" | jq '.' >/dev/null 2>&1 || (echo 'Invalid JSON' && exit 1)
+          echo "Auth status JSON validated"
+
+      - name: Summarize
+        run: |
+          echo "### Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "App: ${{ secrets.AZURE_WEBAPP_NAME }}" >> $GITHUB_STEP_SUMMARY
+          echo "Host: https://${{ secrets.AZURE_WEBAPP_HOST }}" >> $GITHUB_STEP_SUMMARY
+          echo "Smoke Path: ${{ github.event.inputs.smoke_path || '/health' }}" >> $GITHUB_STEP_SUMMARY
+
+  dry-run-note:
+    name: Dry Run Notice
+    needs: build-test
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.dry_run == 'true' && github.event_name != 'pull_request' }}
+    steps:
+      - name: Summary
+        run: |
+          echo "### Dry Run Completed" >> $GITHUB_STEP_SUMMARY
+          echo "Artifacts built but deployment skipped." >> $GITHUB_STEP_SUMMARY

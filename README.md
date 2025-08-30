@@ -266,15 +266,32 @@ Security reminders:
 | `Certificate chain was issued by an authority that is not trusted` (local dev) | Older dev machine certificate store | Keep `Encrypt=True;TrustServerCertificate=False`; ensure OS root certs updated (Windows Update). Avoid disabling encryption |
 | Migration tool very slow | High network latency + many round trips | (Future) Batch insert enhancement (#118/#120); for now run from a machine in same region |
 
-### Roadmap / follow-ups
+## Release Branch & Azure App Service Deployment
 
-The initial migration and dual-provider work is complete; enhancements tracked separately:
-- #118: SQL Server integration test for `DataMigrationRunner`.
-- #119: Optional AuthConfig (password hash) migration flag.
-- #120: Dry-run / summary mode for migration.
+A GitHub Actions workflow (`.github/workflows/release-deploy.yml`) builds + deploys the unified Frontend (which hosts the API) when you push to any branch matching `release/**`.
 
-These are not required for basic SQL Server usage; they refine reliability & UX.
+### Setup Steps
+1. Create a release branch, e.g. `release/2025-09-initial`.
+2. In Azure: provision an App Service (Linux) targeting .NET 8+.
+3. Configure an Azure AD federated identity (recommended) or create a service principal.
+4. Add these repository secrets:
+   - `AZURE_CLIENT_ID` – App registration (service principal) client ID.
+   - `AZURE_TENANT_ID` – Directory (tenant) ID.
+   - `AZURE_SUBSCRIPTION_ID` – Subscription containing the Web App.
+   - `AZURE_WEBAPP_NAME` – Name of the Web App resource.
+   - `AZURE_WEBAPP_HOST` – Host name (e.g. `myrecept.azurewebsites.net`).
+5. Add application settings in App Service (Configuration > Application settings):
+   - `RECEPT_PBKDF2_ITERATIONS` (e.g. 180000)
+   - `RECEPT_PEPPER` (strong secret – DO NOT COMMIT)
+   - `RECEPTREGISTER__Database__Provider=SqlServer`
+   - `RECEPTREGISTER__Database__ConnectionString=Server=...;Initial Catalog=...;User ID=...;Password=...;Encrypt=True;TrustServerCertificate=False;`
+6. Push commits to the `release/...` branch; workflow will build & deploy.
 
+Manual run: Use the workflow_dispatch event (can toggle deploy boolean). Health endpoint is probed post-deploy (`/health`).
+
+Rollback: push a revert commit to the same release branch (or create a new `release/...` branch at previous good commit). Consider adding deployment slots later for zero-downtime swaps.
+
+---
 
 — “Let’s sift the chaos and find the perfect recipe to bake today.” — Bagare Bengtsson
 

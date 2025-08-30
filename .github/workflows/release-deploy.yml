@@ -1,0 +1,87 @@
+name: Release Build & Deploy (App Service)
+
+on:
+  push:
+    branches:
+      - 'release/**'
+  pull_request:
+    branches:
+      - 'release/**'
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Deploy after build? (true/false)'
+        default: 'true'
+        required: false
+
+permissions:
+  contents: read
+  id-token: write   # for Azure federated credentials (OIDC)
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  PROJECT: 'ReceptRegister.Frontend'
+  PUBLISH_DIR: 'publish'
+
+jobs:
+  build-and-deploy:
+    name: Build & (optional) Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore $PROJECT/$PROJECT.csproj
+
+      - name: Build
+        run: dotnet build $PROJECT/$PROJECT.csproj -c Release --no-restore
+
+      - name: Publish
+        run: |
+          dotnet publish $PROJECT/$PROJECT.csproj -c Release -o $PUBLISH_DIR \
+            /p:PublishSingleFile=false \
+            /p:IncludeNativeLibrariesForSelfExtract=true
+
+      - name: Archive Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-publish
+          path: ${{ env.PUBLISH_DIR }}
+
+      - name: Azure Login (OIDC)
+        # Deploy on:
+        # - workflow_dispatch with deploy==true
+        # - push to release/*
+        # - pull_request whose base is release/* (deploy preview of main into release)
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deploy == 'true') || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')) || (github.event_name == 'pull_request' && startsWith(github.base_ref, 'release/')) }}
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Azure Web App
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deploy == 'true') || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')) || (github.event_name == 'pull_request' && startsWith(github.base_ref, 'release/')) }}
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          package: ${{ env.PUBLISH_DIR }}
+          # slot-name: 'staging'  # enable if you add a staging slot
+
+      - name: Post Deployment Health Check
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deploy == 'true') || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')) || (github.event_name == 'pull_request' && startsWith(github.base_ref, 'release/')) }}
+        run: |
+          echo "Probing /health..."
+          curl -fsS https://${{ secrets.AZURE_WEBAPP_HOST }}/health || (echo 'Health check failed' && exit 1)
+
+      - name: Summary
+        run: |
+          echo "Deployment pipeline completed." >> $GITHUB_STEP_SUMMARY
+          echo "Branch: $GITHUB_REF" >> $GITHUB_STEP_SUMMARY
+          if [ -f $PUBLISH_DIR/ReceptRegister.Frontend.dll ]; then echo "Publish output present" >> $GITHUB_STEP_SUMMARY; fi
