@@ -276,6 +276,31 @@ The initial migration and dual-provider work is complete; enhancements tracked s
 These are not required for basic SQL Server usage; they refine reliability & UX.
 
 
+## Release / Deployment Policy
+
+Workflow overview:
+- Always open a Pull Request from `main` (head) to a `release/*` branch (base).
+- Pull Requests against `release/*` run build + test only (no deployment).
+- Deployment occurs only after merge (push) to the `release/*` branch or via manual `workflow_dispatch` with deployment enabled.
+- Optional `dry_run` input (manual dispatch) lets you validate build/tests without deploying.
+
+Rationale:
+- Prevents accidental production changes from unmerged / unreviewed code.
+- Keeps environment side-effects limited to code that has passed PR review & branch protection on `main`.
+- Simplifies rollback: revert or reset the `release/*` branch to a prior main commit and push.
+
+To cut a release:
+1. Ensure `main` is green.
+2. Create (or reuse) a `release/yyyymmdd-*` branch from `main` if it doesn't exist.
+3. Open PR: base = that release branch, compare = `main`.
+4. After checks pass, merge the PR (squash or fast-forward per repo rules).
+5. Action push trigger deploys to App Service and runs health smoke test.
+
+Secrets required (set once): `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_WEBAPP_NAME`, `AZURE_WEBAPP_HOST`.
+
+Future enhancements (optional): deployment slots, artifact provenance, environment protection approvals.
+
+
 — “Let’s sift the chaos and find the perfect recipe to bake today.” — Bagare Bengtsson
 
 ## Documentation & maintenance scripts

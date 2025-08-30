@@ -1,0 +1,102 @@
+name: Release Build & Deploy
+
+on:
+  push:
+    branches:
+      - 'release/**'
+  pull_request:
+    branches:
+      - 'release/**'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Skip deploy (build & test only)'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: read
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  PROJECT_PATH: 'ReceptRegister.Frontend/ReceptRegister.Frontend.csproj'
+  PUBLISH_DIR: 'publish'
+  BUILD_CONFIG: 'Release'
+
+jobs:
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore ${{ env.PROJECT_PATH }}
+
+      - name: Build
+        run: dotnet build ${{ env.PROJECT_PATH }} -c $BUILD_CONFIG --no-restore
+
+      - name: Test
+        run: dotnet test ReceptRegister.Tests/ReceptRegister.Tests.csproj -c $BUILD_CONFIG --no-build --logger "trx;LogFileName=test-results.trx"
+
+      - name: Publish
+        if: ${{ github.event_name != 'pull_request' || github.event.inputs.dry_run != 'true' }}
+        run: dotnet publish ${{ env.PROJECT_PATH }} -c $BUILD_CONFIG -o $PUBLISH_DIR /p:PublishSingleFile=false
+
+      - name: Upload Artifact
+        if: ${{ github.event_name != 'pull_request' || github.event.inputs.dry_run != 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-drop
+          path: ${{ env.PUBLISH_DIR }}
+
+  deploy:
+    name: Deploy
+    needs: build-test
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && github.event.inputs.dry_run != 'true' }}
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release-drop
+          path: ${{ env.PUBLISH_DIR }}
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          package: ${{ env.PUBLISH_DIR }}
+
+      - name: Smoke Test
+        run: |
+          set -e
+          URL="https://${{ secrets.AZURE_WEBAPP_HOST }}/health"
+          echo "Probing $URL";
+          for i in {1..5}; do
+            STATUS=$(curl -sk -o /dev/null -w '%{http_code}' "$URL" || true)
+            if [ "$STATUS" = "200" ]; then echo "Health OK"; exit 0; fi
+            echo "Attempt $i failed status=$STATUS"; sleep 5;
+          done
+          echo "Health check failed"; exit 1
+
+      - name: Summary
+        run: |
+          echo "### Release Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "Branch: $GITHUB_REF" >> $GITHUB_STEP_SUMMARY
+          echo "App: ${{ secrets.AZURE_WEBAPP_NAME }}" >> $GITHUB_STEP_SUMMARY
