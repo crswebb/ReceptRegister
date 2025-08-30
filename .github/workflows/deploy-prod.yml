@@ -76,7 +76,6 @@ jobs:
     name: Deploy & Smoke Test
     needs: build-test
     runs-on: ubuntu-latest
-    environment: production
     # Only deploy on push (merged code) or manual dispatch with dry_run != true; not on PR validation.
     if: ${{ (github.event_name == 'push' && github.event.inputs.dry_run != 'true') || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true') }}
     steps:
