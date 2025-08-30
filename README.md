@@ -263,7 +263,7 @@ Security reminders:
 | `Cannot open server requested by the login` | Wrong server or database name | Verify `Server=` and `Initial Catalog=` values |
 | `Client with IP address ... is not allowed to access the server` | Firewall rule missing | Add client IP in server Networking settings |
 | Long first query (~5-15s) | Serverless database resumed | Expected; subsequent queries faster |
-| `Certificate chain was issued by an authority that is not trusted` (local dev) | Older dev machine certificates store | Keep `Encrypt=True;TrustServerCertificate=False`; ensure OS root certs updated (Windows Update). Avoid disabling encryption |
+| `Certificate chain was issued by an authority that is not trusted` (local dev) | Older dev machine certificate store | Keep `Encrypt=True;TrustServerCertificate=False`; ensure OS root certs updated (Windows Update). Avoid disabling encryption |
 | Migration tool very slow | High network latency + many round trips | (Future) Batch insert enhancement (#118/#120); for now run from a machine in same region |
 
 ### Roadmap / follow-ups
