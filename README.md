@@ -242,6 +242,9 @@ The initial migration and dual-provider work is complete; enhancements tracked s
 These are not required for basic SQL Server usage; they refine reliability & UX.
 
 
+<<<<<<< HEAD
+=======
+
 
 — “Let’s sift the chaos and find the perfect recipe to bake today.” — Bagare Bengtsson
 
