@@ -222,49 +222,15 @@ After migration:
 - Visit the site; you will be in setup mode (no password) unless you manually migrated AuthConfig which is intentionally not handled.
 - Set a new password and verify recipes appear.
 
-### Azure SQL quickstart (experimental provider)
+### Deployment (neutral note)
 
-You can point the application at an Azure SQL Database (recommended for a small personal deployment: serverless, basic tier). These steps assume you already have an Azure subscription.
+This repository does not prescribe a single production deployment path. You can self-host, containerize, or integrate with any managed database / platform you prefer (SQLite file for simplicity, or SQL Server/Azure SQL using the provider abstraction). Each operator is responsible for:
+- Provisioning infrastructure (compute, storage, networking)
+- Supplying environment variables / secrets securely
+- Enabling HTTPS and backups
+- Monitoring and updating the app
 
-1. Create resource (Portal):
-	- Search "Azure SQL" -> "Create" -> "SQL database".
-	- Select (or create) a logical server. For low-cost dev, choose serverless compute if available; basic tiers are also fine (recipe index is small).
-	- Enable "Allow Azure services and resources to access this server" during creation (simplifies firewall).
-2. Networking / firewall:
-	- Add your current client IP so you can connect initially. (Or later, configure a private endpoint / specific IP range.)
-3. Authentication:
-	- Use SQL auth with a strong admin password (store it in a password manager). Azure AD auth is possible but not documented here.
-4. Connection string:
-	- After provisioning, go to the database -> "Connection strings" -> copy the ADO.NET connection string. It looks like: `Server=tcp:<servername>.database.windows.net,1433;Initial Catalog=<dbname>;Persist Security Info=False;User ID=<user>;Password=<pw>;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;`
-	- DO NOT commit this; store in environment variable or user secrets.
-5. App configuration:
-	- Set `Database:Provider=SqlServer`.
-	- Set `Database:ConnectionString` to the copied string (ideally via environment variable, e.g. `RECEPTREGISTER__Database__ConnectionString`).
-6. First run:
-	- Start the application; schema will auto-create. Confirm logs show `SqlServerSchemaInitializer` ran.
-7. (Optional) Migrate existing local SQLite data:
-	- Run migration mode: `dotnet run --project ReceptRegister.Api -- --migrate-sqlite="C:\\path\\to\\receptregister.db"` then start normally.
-
-Cost & performance notes:
-- Serverless Azure SQL can pause; expect a cold-start latency (several seconds) on first query after idle period.
-- For extremely low usage you might still prefer file-based SQLite to avoid hosting cost entirely.
-- The application issues light, parameterized queries; the Basic / S0 tier should be ample.
-
-Security reminders:
-- Always use `Encrypt=True;TrustServerCertificate=False` (default from portal) to enforce TLS.
-- Restrict firewall to only the hosts that need access (App Service, your IP, etc.).
-- Never commit the connection string; prefer environment injection / Azure configuration.
-
-### Azure SQL troubleshooting
-
-| Symptom | Cause | Suggested fix |
-|---------|-------|---------------|
-| `Login failed for user` | Wrong username or password | Regenerate password in portal; update env variable |
-| `Cannot open server requested by the login` | Wrong server or database name | Verify `Server=` and `Initial Catalog=` values |
-| `Client with IP address ... is not allowed to access the server` | Firewall rule missing | Add client IP in server Networking settings |
-| Long first query (~5-15s) | Serverless database resumed | Expected; subsequent queries faster |
-| `Certificate chain was issued by an authority that is not trusted` (local dev) | Older dev machine certificate store | Keep `Encrypt=True;TrustServerCertificate=False`; ensure OS root certs updated (Windows Update). Avoid disabling encryption |
-| Migration tool very slow | High network latency + many round trips | (Future) Batch insert enhancement (#118/#120); for now run from a machine in same region |
+The previous README content that described one maintainer's specific cloud environment has been intentionally removed to keep this project vendor‑neutral. Consult the code (schema initializers, dialect abstraction) to implement your own deployment strategy.
 
 ### Roadmap / follow-ups
 
@@ -275,30 +241,6 @@ The initial migration and dual-provider work is complete; enhancements tracked s
 
 These are not required for basic SQL Server usage; they refine reliability & UX.
 
-
-## Release / Deployment Policy
-
-Workflow overview:
-- Always open a Pull Request from `main` (head) to a `release/*` branch (base).
-- Pull Requests against `release/*` run build + test only (no deployment).
-- Deployment occurs only after merge (push) to the `release/*` branch or via manual `workflow_dispatch` with deployment enabled.
-- Optional `dry_run` input (manual dispatch) lets you validate build/tests without deploying.
-
-Rationale:
-- Prevents accidental production changes from unmerged / unreviewed code.
-- Keeps environment side-effects limited to code that has passed PR review & branch protection on `main`.
-- Simplifies rollback: revert or reset the `release/*` branch to a prior main commit and push.
-
-To cut a release:
-1. Ensure `main` is green.
-2. Create (or reuse) a `release/yyyymmdd-*` branch from `main` if it doesn't exist.
-3. Open PR: base = that release branch, compare = `main`.
-4. After checks pass, merge the PR (squash or fast-forward per repo rules).
-5. Action push trigger deploys to App Service and runs health smoke test.
-
-Secrets required (set once): `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_WEBAPP_NAME`, `AZURE_WEBAPP_HOST`.
-
-Future enhancements (optional): deployment slots, artifact provenance, environment protection approvals.
 
 
 — “Let’s sift the chaos and find the perfect recipe to bake today.” — Bagare Bengtsson
