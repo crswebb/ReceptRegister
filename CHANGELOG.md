@@ -9,17 +9,21 @@ The format loosely follows Keep a Changelog, with unreleased changes collected u
 
 ## [preview-2] - 2025-08-30
 ### Added
-- Release workflow enabling build/test on PRs to `release/**` and deploy only on push (no PR auto-deploy).
+- Release workflow: build & test on PRs to `release/**`; publish & deploy only on push (policy codified in #124).
+- Changelog file introduced.
 
 ### Changed
-- README: Removed instance-specific deployment details; added neutral deployment guidance.
+- README sanitized: removed instance-specific deployment details; added neutral deployment note (#125).
+
+### Removed
+- Azure instance-specific instructions from README (moved to neutral guidance).
 
 ### Security
-- (no changes)
+- No security-affecting changes.
 
-## [preview-1] - 2025-08-??
+## [preview-1] - 2025-08-22
 ### Added
-- Initial preview branch scaffolding (see commit history prior to `preview-2`).
+- Initial preview scaffolding and baseline features (see commit history prior to `preview-2`).
 
 [Unreleased]: https://github.com/crswebb/ReceptRegister/compare/release/preview-2...HEAD
 [preview-2]: https://github.com/crswebb/ReceptRegister/compare/release/preview-1...release/preview-2
