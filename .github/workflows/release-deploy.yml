@@ -48,11 +48,12 @@ jobs:
         run: dotnet test ReceptRegister.Tests/ReceptRegister.Tests.csproj -c $BUILD_CONFIG --no-build --logger "trx;LogFileName=test-results.trx"
 
       - name: Publish
-        if: ${{ github.event_name != 'pull_request' || github.event.inputs.dry_run != 'true' }}
+        # Publish only when not a PR and (if manual dispatch, not a dry_run)
+        if: ${{ github.event_name != 'pull_request' && (github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true') }}
         run: dotnet publish ${{ env.PROJECT_PATH }} -c $BUILD_CONFIG -o $PUBLISH_DIR /p:PublishSingleFile=false
 
       - name: Upload Artifact
-        if: ${{ github.event_name != 'pull_request' || github.event.inputs.dry_run != 'true' }}
+        if: ${{ github.event_name != 'pull_request' && (github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true') }}
         uses: actions/upload-artifact@v4
         with:
           name: release-drop
@@ -62,7 +63,8 @@ jobs:
     name: Deploy
     needs: build-test
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && github.event.inputs.dry_run != 'true' }}
+    # Deploy only for push events OR manual dispatch without dry_run (never for PR)
+    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true') }}
     steps:
       - name: Download Artifact
         uses: actions/download-artifact@v4
