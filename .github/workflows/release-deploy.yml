@@ -20,7 +20,7 @@ permissions:
   pull-requests: read
 
 env:
-  DOTNET_VERSION: '8.0.x'
+  DOTNET_VERSION: '10.0.x'
   PROJECT_PATH: 'ReceptRegister.Frontend/ReceptRegister.Frontend.csproj'
   PUBLISH_DIR: 'publish'
   BUILD_CONFIG: 'Release'
@@ -48,11 +48,12 @@ jobs:
         run: dotnet test ReceptRegister.Tests/ReceptRegister.Tests.csproj -c $BUILD_CONFIG --no-build --logger "trx;LogFileName=test-results.trx"
 
       - name: Publish
-        if: ${{ github.event_name != 'pull_request' || github.event.inputs.dry_run != 'true' }}
+        # Publish only for push events (release branch) or manual dispatch when not a dry_run.
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true') }}
         run: dotnet publish ${{ env.PROJECT_PATH }} -c $BUILD_CONFIG -o $PUBLISH_DIR /p:PublishSingleFile=false
 
       - name: Upload Artifact
-        if: ${{ github.event_name != 'pull_request' || github.event.inputs.dry_run != 'true' }}
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true') }}
         uses: actions/upload-artifact@v4
         with:
           name: release-drop
@@ -62,6 +63,7 @@ jobs:
     name: Deploy
     needs: build-test
     runs-on: ubuntu-latest
+    # Deploy only on push (never on PR or manual dispatch) and inherently not a dry_run path.
     if: ${{ github.event_name == 'push' && github.event.inputs.dry_run != 'true' }}
     steps:
       - name: Download Artifact
