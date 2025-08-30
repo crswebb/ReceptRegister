@@ -11,4 +11,11 @@
   <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
   </ItemGroup>
 
+  <!-- Prevent duplicate appsettings*.json collisions when this project is referenced by Frontend during publish.
+       Configuration is supplied by the hosting (Frontend) project, so we do not need to copy these files from the API assembly. -->
+  <ItemGroup>
+    <Content Update="appsettings.json" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />
+    <Content Update="appsettings.Development.json" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
 </Project>
