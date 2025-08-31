@@ -50,7 +50,17 @@ jobs:
       - name: Publish
         # Publish only for push events (release branch) or manual dispatch when not a dry_run.
         if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true') }}
-        run: dotnet publish ${{ env.PROJECT_PATH }} -c $BUILD_CONFIG -o $PUBLISH_DIR /p:PublishSingleFile=false
+        run: |
+          echo "Publishing self-contained linux-x64 (App Service lacks preview shared runtime)"
+          dotnet publish ${{ env.PROJECT_PATH }} -c $BUILD_CONFIG -r linux-x64 --self-contained true -o $PUBLISH_DIR /p:PublishSingleFile=false
+
+      - name: Publish Diagnostics
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true') }}
+        run: |
+          echo "Listing publish output:";
+          find $PUBLISH_DIR -maxdepth 1 -type f -printf '%f\n' | sort | head -n 40;
+          echo "dotnet --info (build runner):";
+          dotnet --info
 
       - name: Upload Artifact
         if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true') }}
@@ -90,14 +100,19 @@ jobs:
       - name: Smoke Test
         run: |
           set -e
-          URL="https://${{ secrets.AZURE_WEBAPP_HOST }}/health"
-          echo "Probing $URL";
+          BASE="https://${{ secrets.AZURE_WEBAPP_HOST }}"
+          PATHS="/api/health /health"
+          echo "Probing health endpoints ($PATHS) at $BASE";
           for i in {1..5}; do
-            STATUS=$(curl -sk -o /dev/null -w '%{http_code}' "$URL" || true)
-            if [ "$STATUS" = "200" ]; then echo "Health OK"; exit 0; fi
-            echo "Attempt $i failed status=$STATUS"; sleep 5;
+            for P in $PATHS; do
+              URL="$BASE$P"
+              STATUS=$(curl -sk -o /dev/null -w '%{http_code}' "$URL" || true)
+              echo "Attempt $i $P -> $STATUS"
+              if [ "$STATUS" = "200" ]; then echo "Health OK via $P"; exit 0; fi
+            done
+            sleep 5;
           done
-          echo "Health check failed"; exit 1
+          echo "Health check failed (paths tried: $PATHS)"; exit 1
 
       - name: Summary
         run: |
