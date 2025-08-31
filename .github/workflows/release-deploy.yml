@@ -119,7 +119,8 @@ jobs:
               { "name": "RECEPT_DEFAULT_CULTURE", "value": "${{ env.RECEPT_DEFAULT_CULTURE }}", "slotSetting": false },
               { "name": "RECEPT_SUPPORTED_CULTURES", "value": "${{ env.RECEPT_SUPPORTED_CULTURES }}", "slotSetting": false },
               { "name": "RECEPT_DB_PROVIDER", "value": "SqlServer", "slotSetting": false },
-              { "name": "RECEPT_DB_CONNECTIONSTRING", "value": "${{ secrets.RECEPT_DB_CONNECTIONSTRING }}", "slotSetting": true }
+              { "name": "RECEPT_DB_CONNECTIONSTRING", "value": "${{ secrets.RECEPT_DB_CONNECTIONSTRING }}", "slotSetting": true },
+              { "name": "RECEPT_PEPPER", "value": "${{ secrets.RECEPT_PEPPER_VALUE }}", "slotSetting": true }
             ]
 
       # - name: Configure App Settings
