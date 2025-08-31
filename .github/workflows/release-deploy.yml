@@ -50,7 +50,17 @@ jobs:
       - name: Publish
         # Publish only for push events (release branch) or manual dispatch when not a dry_run.
         if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true') }}
-        run: dotnet publish ${{ env.PROJECT_PATH }} -c $BUILD_CONFIG -o $PUBLISH_DIR /p:PublishSingleFile=false
+        run: |
+          echo "Publishing self-contained linux-x64 (App Service lacks preview shared runtime)"
+          dotnet publish ${{ env.PROJECT_PATH }} -c $BUILD_CONFIG -r linux-x64 --self-contained true -o $PUBLISH_DIR /p:PublishSingleFile=false
+
+      - name: Publish Diagnostics
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true') }}
+        run: |
+          echo "Listing publish output:";
+          find $PUBLISH_DIR -maxdepth 1 -type f -printf '%f\n' | sort | head -n 40;
+          echo "dotnet --info (build runner):";
+          dotnet --info
 
       - name: Upload Artifact
         if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true') }}
