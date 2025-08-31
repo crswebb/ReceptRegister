@@ -92,6 +92,10 @@ jobs:
     # GitHub Environment enables a single federated credential (subject: repo:crswebb/ReceptRegister:environment:ReceptRegister)
     environment:
       name: ReceptRegister
+    env:
+      AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
+      RECEPT_DEFAULT_CULTURE: ${{ vars.RECEPT_DEFAULT_CULTURE }}
+      RECEPT_SUPPORTED_CULTURES: ${{ vars.RECEPT_SUPPORTED_CULTURES }}
     steps:
       - name: Download Artifact
         uses: actions/download-artifact@v4
@@ -106,22 +110,19 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Configure App Settings
-        if: ${{ github.event_name == 'push' }}
-        run: |
-          set -e
-          echo "Setting App Service application settings (cultures + security vars)"
-          # NOTE: Ensure the following secrets/variables exist in the GitHub Environment:
-          #   secrets: AZURE_RESOURCE_GROUP, RECEPT_PEPPER
-          #   variables: RECEPT_DEFAULT_CULTURE, RECEPT_SUPPORTED_CULTURES
-          # Additional optional vars (iterations, session minutes, etc.) can be added later.
-          az webapp config appsettings set \
-            --name ${{ secrets.AZURE_WEBAPP_NAME }} \
-            # Add --resource-group <name> if needed; omitted here pending secret confirmation \
-            --settings \
-              RECEPT_DEFAULT_CULTURE='${{ vars.RECEPT_DEFAULT_CULTURE }}' \
-              RECEPT_SUPPORTED_CULTURES='${{ vars.RECEPT_SUPPORTED_CULTURES }}' \
-              RECEPT_PEPPER='${{ secrets.RECEPT_PEPPER }}'
+      # - name: Configure App Settings
+      #   if: ${{ github.event_name == 'push' }}
+      #   run: |
+      #     set -e
+      #     echo "(App settings update skipped - pending provision of AZURE_RESOURCE_GROUP & RECEPT_PEPPER secrets)"
+      #     # When ready, uncomment and provide required secrets, then run:
+      #     # az webapp config appsettings set \
+      #     #   --name ${{ secrets.AZURE_WEBAPP_NAME }} \
+      #     #   --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+      #     #   --settings \
+      #     #     RECEPT_DEFAULT_CULTURE='${{ vars.RECEPT_DEFAULT_CULTURE }}' \
+      #     #     RECEPT_SUPPORTED_CULTURES='${{ vars.RECEPT_SUPPORTED_CULTURES }}' \
+      #     #     RECEPT_PEPPER='${{ secrets.RECEPT_PEPPER }}'
 
       - name: Deploy to App Service
         uses: azure/webapps-deploy@v3
