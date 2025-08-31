@@ -110,6 +110,18 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Configure App Service Settings (Issue #166)
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          app-settings-json: |
+            [
+              { "name": "RECEPT_DEFAULT_CULTURE", "value": "${{ env.RECEPT_DEFAULT_CULTURE }}", "slotSetting": false },
+              { "name": "RECEPT_SUPPORTED_CULTURES", "value": "${{ env.RECEPT_SUPPORTED_CULTURES }}", "slotSetting": false },
+              { "name": "RECEPT_DB_PROVIDER", "value": "SqlServer", "slotSetting": false },
+              { "name": "RECEPT_DB_CONNECTIONSTRING", "value": "${{ secrets.RECEPT_DB_CONNECTIONSTRING }}", "slotSetting": true }
+            ]
+
       # - name: Configure App Settings
       #   if: ${{ github.event_name == 'push' }}
       #   run: |
