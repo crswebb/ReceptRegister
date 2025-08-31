@@ -7,6 +7,19 @@ The format loosely follows Keep a Changelog, with unreleased changes collected u
 ## [Unreleased]
 - (placeholder)
 
+## [preview-3] - 2025-08-31
+### Added
+- (placeholder)
+
+### Changed
+- (placeholder)
+
+### Removed
+- (placeholder)
+
+### Security
+- (placeholder)
+
 ## [preview-2] - 2025-08-30
 ### Added
 - Release workflow: build & test on PRs to `release/**`; publish & deploy only on push (policy codified in #124).
@@ -25,5 +38,6 @@ The format loosely follows Keep a Changelog, with unreleased changes collected u
 ### Added
 - Initial preview scaffolding and baseline features (see commit history prior to `preview-2`).
 
-[Unreleased]: https://github.com/crswebb/ReceptRegister/compare/release/preview-2...HEAD
+[Unreleased]: https://github.com/crswebb/ReceptRegister/compare/release/preview-3...HEAD
+[preview-3]: https://github.com/crswebb/ReceptRegister/compare/release/preview-2...release/preview-3
 [preview-2]: https://github.com/crswebb/ReceptRegister/compare/release/preview-1...release/preview-2
