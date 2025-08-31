@@ -31,7 +31,11 @@ public static class LocalizationExtensions
         string[] supported;
         if (!string.IsNullOrWhiteSpace(envSupportedRaw))
         {
-            var split = envSupportedRaw.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var split = envSupportedRaw
+                .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(s => TrimWrappingQuotes(s))
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .ToArray();
             supported = split.Length > 0 ? split : new[] { defaultCultureName };
         }
         else
@@ -100,5 +104,17 @@ public static class LocalizationExtensions
         public FixedOnlyRequestCultureProvider(CultureInfo culture) => _culture = new RequestCulture(culture);
         public Task<ProviderCultureResult?> DetermineProviderCultureResult(HttpContext httpContext)
             => Task.FromResult<ProviderCultureResult?>(new ProviderCultureResult(_culture.Culture.Name, _culture.UICulture.Name));
+    }
+
+    private static string TrimWrappingQuotes(string input)
+    {
+        if (input.Length >= 2)
+        {
+            if ((input[0] == '"' && input[^1] == '"') || (input[0] == '\'' && input[^1] == '\''))
+            {
+                return input.Substring(1, input.Length - 2).Trim();
+            }
+        }
+        return input;
     }
 }
