@@ -61,10 +61,12 @@ jobs:
 
   deploy:
     name: Deploy
-    needs: build-test
-    runs-on: ubuntu-latest
-    # Deploy only on push (never on PR or manual dispatch) and inherently not a dry_run path.
+    needs: [build-test]
     if: ${{ github.event_name == 'push' && github.event.inputs.dry_run != 'true' }}
+    runs-on: ubuntu-latest
+    # GitHub Environment enables a single federated credential (subject: repo:crswebb/ReceptRegister:environment:ReceptRegister)
+    environment:
+      name: ReceptRegister
     steps:
       - name: Download Artifact
         uses: actions/download-artifact@v4
