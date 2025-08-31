@@ -62,6 +62,20 @@ jobs:
           echo "dotnet --info (build runner):";
           dotnet --info
 
+      - name: Guard: Single runtimeconfig
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true') }}
+        run: |
+          set -e
+          COUNT=$(find $PUBLISH_DIR -maxdepth 1 -name '*.runtimeconfig.json' | wc -l)
+          echo "runtimeconfig.json file count: $COUNT"
+          if [ "$COUNT" -ne 1 ]; then
+            echo "Expected exactly 1 *.runtimeconfig.json in publish output; found $COUNT" >&2
+            echo "Files found:" >&2
+            find $PUBLISH_DIR -name '*.runtimeconfig.json' -print >&2 || true
+            exit 1
+          fi
+          echo "Runtimeconfig guard passed."
+
       - name: Upload Artifact
         if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true') }}
         uses: actions/upload-artifact@v4
@@ -96,6 +110,7 @@ jobs:
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
           package: ${{ env.PUBLISH_DIR }}
+          clean: true
 
       - name: Smoke Test
         run: |

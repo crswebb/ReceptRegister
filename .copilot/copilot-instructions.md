@@ -118,6 +118,31 @@ Implements core auth hardening. Closes #56. Follow-up test harness in #80 [no-cl
 - Releases (optional for later):  
   - Tag main with v0.x.y when producing packaged builds; keep a short Release notes section summarizing changes and breaking notes.
 
+### Promotion model (feature -> main -> release)
+Copilot must never suggest committing directly to a release branch or pushing feature work there first.
+
+Golden path:
+```text
+feat/*  -> PR -> main (squash merge)
+main    -> PR -> release/preview-N (deployment)
+```
+
+Rules:
+1. Feature branches always target `main`.
+2. A release branch (`release/preview-N`) is cut from `main` only for stabilization/deployment.
+3. Release branches must not contain commits absent from `main` (exception: temporary revert, which must be followed by a proper fix merged to `main`).
+4. If divergence is detected (commit exists only on release), Copilot should propose: (a) cherry‑pick it into a feature branch & PR to `main`, then remove from release OR (b) revert it from the release branch.
+5. Hotfix: branch from `main`, merge to `main`, then promote `main` to release.
+6. Copilot should offer a promotion PR skeleton when it notices new `main` commits not yet in the active release branch.
+
+Validation hints Copilot can apply:
+- Compare `git rev-list --left-right origin/release/preview-N...origin/main` to identify stray commits.
+- Fail early if a user requests changes directly on a release branch (suggest creating a feature branch instead).
+
+Changelog assist:
+- On cutting a new release branch, move `[Unreleased]` entries to `[preview-N]`, add diff links, and reinitialize `[Unreleased]` with a placeholder.
+- Ensure the PR promoting `main` to release references the issues already closed (no new `Closes #` lines needed).
+
 ### Branch cleanup policy (for Copilot awareness)
 After a PR is squash‑merged, its feature branch must be deleted (local + remote) within 24 hours unless there is a documented follow‑up requiring it to persist. Temporary linearization / backup branches (e.g. `*-linear`, `backup/*`) are deleted immediately after use. If historical preservation is needed, create an annotated tag (`archive/<slug>`) before deletion. Copilot should proactively suggest pruning merged branches when it detects they are ancestors of `origin/main` and not referenced by an open PR.
 
