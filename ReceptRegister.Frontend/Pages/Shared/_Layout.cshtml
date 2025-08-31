@@ -60,7 +60,7 @@
         @RenderBody()
     </main>
     <footer>
-        <p>&copy; @DateTime.UtcNow.Year ReceptRegister · <a asp-page="/Privacy">Privacy</a></p>
+        <p>&copy; @DateTime.UtcNow.Year ReceptRegister · <a asp-page="/Privacy">Privacy</a> · <a asp-page="/Debug">Debug</a></p>
     </footer>
     <button type="button" id="theme-toggle" class="link-button" style="position:fixed;bottom:var(--spacing-6,16px);right:var(--spacing-6,16px);">@L["Button.ToggleTheme"]</button>
     <script type="module" src="/js/modules/search-enhance.js" defer></script>
