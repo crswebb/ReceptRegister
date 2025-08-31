@@ -7,6 +7,7 @@ The format loosely follows Keep a Changelog, with unreleased changes collected u
 ## [Unreleased]
 ### Added
 - Mobile-friendly collapsible navigation menu (feature #139) with animated expand/collapse.
+- Debug page exposing runtime settings (cultures, database provider/connection, environment) (#163).
 
 ## [preview-2] - 2025-08-30
 ### Added
