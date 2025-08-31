@@ -159,4 +159,19 @@ public class FrontendPagesTests : IDisposable
         Assert.Contains("Veggie Pizza", catHtml);
         Assert.DoesNotContain("Apple Pie", catHtml);
     }
+
+    [Fact]
+    public async Task Debug_Page_Shows_Settings()
+    {
+        var client = await CreateAsync();
+        var resp = await client.GetAsync("/Debug");
+        resp.EnsureSuccessStatusCode();
+        var html = await resp.Content.ReadAsStringAsync();
+        Assert.Contains("Debug Settings", html);
+        Assert.Contains("Localization", html);
+        Assert.Contains("Database", html);
+        Assert.Contains("Application", html);
+        // Should include default culture (en-US fallback if not configured)
+        Assert.Contains("en-US", html);
+    }
 }
