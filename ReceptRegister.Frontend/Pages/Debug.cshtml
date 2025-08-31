@@ -1,0 +1,42 @@
+@page "/Debug"
+@model ReceptRegister.Frontend.Pages.DebugModel
+@{
+    ViewData["Title"] = "Debug";
+}
+<h1>Debug Settings</h1>
+<p>This page lists runtime settings and environment-derived values to help verify configuration.</p>
+
+<section>
+    <h2>Localization</h2>
+    <dl>
+        <dt>Current Culture</dt><dd>@Model.CurrentCulture</dd>
+        <dt>Current UI Culture</dt><dd>@Model.CurrentUICulture</dd>
+        <dt>Default Culture</dt><dd>@Model.DefaultCulture</dd>
+        <dt>Supported Cultures</dt><dd>@string.Join(", ", Model.SupportedCultures)</dd>
+        <dt>Env RECEPT_DEFAULT_CULTURE</dt><dd>@Model.EnvDefaultCulture ?? <em>(not set)</em></dd>
+        <dt>Env RECEPT_SUPPORTED_CULTURES</dt><dd>@Model.EnvSupportedCultures ?? <em>(not set)</em></dd>
+    </dl>
+</section>
+
+<section>
+    <h2>Database</h2>
+    <dl>
+        <dt>Configured Provider</dt><dd>@Model.DatabaseProvider</dd>
+        <dt>Configured ConnectionString</dt><dd>@(string.IsNullOrWhiteSpace(Model.ConfigConnectionString)?"(empty/unused)":Model.ConfigConnectionString)</dd>
+        <dt>Resolved ConnectionString</dt><dd>@Model.ResolvedConnectionString</dd>
+        <dt>Env RECEPT_DB_PROVIDER</dt><dd>@Model.EnvDbProvider ?? <em>(not set)</em></dd>
+        <dt>Env RECEPT_DB_CONNECTIONSTRING</dt><dd>@Model.EnvDbConnectionString ?? <em>(not set)</em></dd>
+    </dl>
+</section>
+
+<section>
+    <h2>Application</h2>
+    <dl>
+        <dt>Environment</dt><dd>@Model.EnvironmentName</dd>
+        <dt>Content Root</dt><dd>@Model.ContentRoot</dd>
+        <dt>Assembly Version</dt><dd>@Model.AssemblyVersion</dd>
+        <dt>UTC Now</dt><dd>@Model.UtcNow.ToString("u")</dd>
+    </dl>
+</section>
+
+<p><small>This page is informational only; no secrets should be displayed. Connection strings may be redacted in production scenarios.</small></p>
