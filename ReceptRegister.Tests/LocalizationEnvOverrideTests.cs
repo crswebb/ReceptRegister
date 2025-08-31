@@ -59,4 +59,29 @@ public class LocalizationEnvOverrideTests
             Environment.SetEnvironmentVariable("RECEPT_DEFAULT_CULTURE", oldDef);
         }
     }
+
+    [Fact]
+    public async Task QuotedSupportedCultures_Are_Trimmed()
+    {
+        var oldDef = Environment.GetEnvironmentVariable("RECEPT_DEFAULT_CULTURE");
+        var oldSupp = Environment.GetEnvironmentVariable("RECEPT_SUPPORTED_CULTURES");
+        try
+        {
+            Environment.SetEnvironmentVariable("RECEPT_DEFAULT_CULTURE", "sv-SE");
+            Environment.SetEnvironmentVariable("RECEPT_SUPPORTED_CULTURES", "\"sv-SE\",\"en-US\"");
+            var builder = WebApplication.CreateBuilder(Array.Empty<string>());
+            builder.Services.AddLocalization();
+            builder.Services.AddConfiguredLocalization(builder.Configuration);
+            var app = builder.Build();
+            var opts = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RequestLocalizationOptions>>().Value;
+            var names = opts.SupportedCultures.Select(c => c.Name).ToArray();
+            Assert.Contains("sv-SE", names);
+            Assert.Contains("en-US", names);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("RECEPT_DEFAULT_CULTURE", oldDef);
+            Environment.SetEnvironmentVariable("RECEPT_SUPPORTED_CULTURES", oldSupp);
+        }
+    }
 }
