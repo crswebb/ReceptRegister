@@ -275,6 +275,15 @@ These details are retained for convenience but are also covered under Security d
 <a id="data--persistence-summary"></a>
 **Summary:** Pluggable storage via a provider abstraction: default SQLite file or SQL Server backend selected by configuration. Repositories use a database dialect for SQL differences. A one-shot migrator can seed SQL Server from an existing SQLite file (idempotent taxonomy upsert + natural key dedupe). Full migration usage & provider notes moved to `docs/data-migration.md`.
 
+### Supported database providers
+
+| Provider | `Database:Provider` value | Status | Notes |
+|----------|---------------------------|--------|-------|
+| SQLite (default) | `SQLite` (or omitted) | Stable | File-based; auto-creates `App_Data/receptregister.db`; no connection string needed. |
+| SQL Server / Azure SQL | `SqlServer` | Experimental | Requires `Database:ConnectionString` (or env `RECEPT_DB_CONNECTIONSTRING`); schema + dialect coverage expanding (#105–#107). |
+
+Select via configuration or environment variable `RECEPT_DB_PROVIDER`. If unset or invalid, the application falls back to SQLite (invalid values throw during validation). See `docs/data-migration.md` for migration and dialect details.
+
 See: [Data Migration & Provider Details](docs/data-migration.md)
 <details>
 <summary><strong>Show full data provider & migration details…</strong></summary>
@@ -291,7 +300,7 @@ In future milestones this may evolve (migrations, encryption, cloud backup), but
 
 ### Database provider selection (experimental)
 
-You can choose between the built-in file-based SQLite store (default) and SQL Server (including Azure SQL). Configuration keys (in `appsettings.json` or environment):
+You can choose between the built-in file-based SQLite store (default) and SQL Server (including Azure SQL). Configuration keys (in `appsettings.json` or environment). New in feature #144: you can override these via environment variables without touching JSON files.
 
 ```json
 {
@@ -305,6 +314,22 @@ You can choose between the built-in file-based SQLite store (default) and SQL Se
 Notes:
 - If `Database:Provider` is omitted or blank, SQLite is used.
 - When `Provider=SqlServer`, `Database:ConnectionString` must be supplied; the application will fail fast at startup if missing.
+Environment variable overrides (feature #144):
+
+| Variable | Example | Description |
+|----------|---------|-------------|
+| `RECEPT_DB_PROVIDER` | `SqlServer` | Forces provider selection (case-insensitive: `sqlite`, `sqlserver`, `mssql`). |
+| `RECEPT_DB_CONNECTIONSTRING` | `Server=.\\SQLEXPRESS;Database=Recept;Trusted_Connection=True;Encrypt=False` | Sets the SQL Server connection string when provider = SqlServer. |
+
+If both configuration and environment variables are present, environment variables win. A fallback alias `RECEPT_DB_CONNECTION` is also accepted for the connection string.
+
+PowerShell example:
+```powershell
+$env:RECEPT_DB_PROVIDER = 'SqlServer'
+$env:RECEPT_DB_CONNECTIONSTRING = 'Server=.\\SQLEXPRESS;Database=Recept;Trusted_Connection=True;Encrypt=False'
+dotnet run --project ReceptRegister.Frontend
+```
+The application will start using SQL Server instead of the default SQLite file.
 - Current schema & repositories still use SQLite-specific SQL (e.g. `last_insert_rowid()`, `INSERT OR IGNORE`). SQL Server support is being added incrementally in issues #105–#107.
 - A sample file `ReceptRegister.Api/appsettings.Database.sample.json` is included (copy/merge into your real settings file without comments if you need a template).
 
