@@ -37,14 +37,14 @@ Two apps make up ReceptRegister:
 ```mermaid
 flowchart LR
 	user((User Browser)) --> FE[Frontend (Razor Pages)]
-	subgraph Single Process (default)
+	subgraph SingleProcess [Single Process (default)]
 		FE --> API[Minimal API Endpoints]
 	end
 	API --> DAL[(Repository Layer)]
 	DAL --> DIA[Database Dialect Abstraction]
 	DIA -->|SQLite| SQLITE[(SQLite File\nreceptregister.db)]
 	DIA -->|SQL Server| MSSQL[(SQL Server / Azure SQL)]
-	MIG[Optional One-shot Migration Runner]\n(SQLite -> SQL Server) --> MSSQL
+	MIG["Optional One-shot Migration Runner\n(SQLite -> SQL Server)"] --> MSSQL
 	%% Legend
 	classDef stor fill:#f9f9f9,stroke:#555,stroke-width:1px;
 	class SQLITE,MSSQL stor;
