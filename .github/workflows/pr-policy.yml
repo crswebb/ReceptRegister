@@ -67,3 +67,18 @@ jobs:
             }
 
             core.info('PR policy checks completed.');
+      - name: Checkout repository (for README size check)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Advisory README size check
+        run: |
+          if [ ! -f README.md ]; then
+            echo "::error::README.md not found after checkout"; exit 1;
+          fi
+          echo "README line count: $(wc -l < README.md)"
+          LINES=$(wc -l < README.md)
+          MAX=350
+            if [ "$LINES" -gt "$MAX" ]; then
+              echo "::warning::README has $LINES lines (limit $MAX). Consider extracting content into docs/.";
+            fi
