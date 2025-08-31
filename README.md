@@ -1,8 +1,56 @@
 # ReceptRegister
 
+> “Let’s sift the chaos and find the perfect recipe to bake today.” — Bagare Bengtsson
+
 ReceptRegister is your personal, searchable index for pastry recipes from your book collection. Instead of flipping through sticky notes and indexes, you can find the right recipe in seconds and jump straight to the page.
 
-## What you can store
+## Table of Contents
+1. [Overview](#overview)
+2. [Features](#features)
+	1. [What you can store](#what-you-can-store)
+	2. [What you can do](#what-you-can-do)
+	3. [How it feels](#how-it-feels-to-use)
+	4. [Everyday examples](#everyday-examples)
+	5. [Why it’s helpful](#why-its-helpful)
+3. [Quick Start](#quick-start)
+4. [Security & Access](#security--access)
+	1. [Password hashing & strength](#password-hashing--password-strength)
+	2. [Sessions & authentication endpoints](#sessions--authentication-endpoints)
+	3. [Password recovery & rotation](#password-recovery--rotation)
+	4. [Manual recovery (quick steps)](#manual-recovery-quick-steps)
+5. [Localization](#localization)
+	1. [Overrides (feature #137)](#localization-overrides-feature-137)
+	2. [Fixed culture groundwork](#localization-fixed-culture-groundwork)
+6. [UI / Frontend](#ui--frontend)
+	1. [Mobile friendly menu](#mobile-friendly-menu-feature-139)
+	2. [Theming & design tokens](#theming--design-tokens-ui-polish-milestone)
+7. [Data & Persistence](#data--persistence)
+	1. [Storage (alpha)](#data-storage-early-alpha)
+	2. [Database provider selection](#database-provider-selection-experimental)
+	3. [Data migration](#data-migration-sqlite-to-sql-server)
+8. [API](#api-milestone-4)
+	1. [Core endpoints](#core-endpoints)
+	2. [Query parameters](#query-parameters)
+	3. [Validation & errors](#validation--errors)
+	4. [Tried endpoint change](#tried-endpoint-change)
+9. [Running Locally](#running-locally-milestone-1-scaffolding)
+10. [Publishing](#publishing-self-contained-example)
+11. [Deployment](#deployment-neutral-note)
+12. [Roadmap & Future Ideas](#roadmap--future-ideas)
+13. [Documentation & Maintenance Scripts](#documentation--maintenance-scripts)
+14. [Dependency Policy](#dependency-policy-early-milestones)
+
+---
+
+## Overview
+
+Two apps make up ReceptRegister:
+- API (Minimal API): JSON endpoints & persistence.
+- Frontend (Razor Pages): HTML UI + also (optionally) hosts the API (single-process mode recommended).
+
+## Features
+
+### What you can store
 - Recipe name (e.g., “Kanelbullar”)
 - Book title (which book it comes from)
 - Page number (where to find it in the book)
@@ -10,30 +58,41 @@ ReceptRegister is your personal, searchable index for pastry recipes from your b
 - Keywords (one or more, like “cardamom”, “chocolate”, “gluten-free”)
 - Tried checkbox (mark whether you’ve baked it yet)
 
-## What you can do
+### What you can do
 - Search by name, book, category, or keyword.
 - Quickly see the exact page number in the right book.
 - Filter by “tried” or “not tried” to plan your next bake.
 - Browse by book or category when you’re in the mood for a certain style.
 - Update entries as you explore your library.
- - (API) Query with paging & combined filters (book, category ids, keyword ids, tried) for efficient large libraries.
+- (API) Query with paging & combined filters (book, category ids, keyword ids, tried) for efficient large libraries.
 
-## How it feels to use
+### How it feels to use
 - A simple search bar to find recipes by words you remember.
 - Clear filters for book, category, and tried status.
 - A tidy list showing: Name • Book • Page • Categories • Tried.
 - A focused details view to review and edit a recipe’s information.
 
-## Everyday examples
+### Everyday examples
 - Type “cardamom” to find every recipe with that flavor.
 - Filter by “Buns” to plan a fika spread.
 - Look up “Bröd och Bageri” and jump to page 123.
 - Show only “not tried” recipes to pick your next bake.
 
-## Why it’s helpful
+### Why it’s helpful
 Your shelves stay beautiful, your pages stay clean, and your baking time goes into actual baking—not searching. Think of it as the well‑labeled spice rack for your recipe books.
 
-## Security and access
+## Quick Start
+
+Run the combined frontend (hosts UI + API):
+
+```powershell
+dotnet watch run --project ReceptRegister.Frontend
+```
+Then open the shown localhost URL, set the initial password, and start indexing recipes.
+
+Need separate processes? See [Running Locally](#running-locally-milestone-1-scaffolding).
+
+## Security & access
 - The app is protected with a password.
 - On first visit, if no password has been set yet, you’ll be guided to create one.
 - After that, you’ll sign in before you can use the app.
@@ -57,6 +116,8 @@ If no pepper is configured a warning is logged at startup (safe for local dev). 
 
 Password strength is evaluated server‑side (source of truth) with a 0–6 score (length >=8, length >=12, lowercase, uppercase, digit, symbol). A score of 3+ is required. The client progressively enhances the Set Password UI with a small meter and top suggestions; validation still occurs on the server.
 
+## Localization
+
 ### Localization overrides (feature #137)
 Localization is configured via the `Localization` section in configuration files. You can now override the default and supported cultures using environment variables (takes precedence over config):
 
@@ -74,6 +135,8 @@ $env:RECEPT_SUPPORTED_CULTURES = 'sv-SE,en-US'
 dotnet run --project ReceptRegister.Frontend
 ```
 The application will start with `sv-SE` active and both `sv-SE` / `en-US` registered.
+
+## UI / Frontend
 
 ### Mobile friendly menu (feature #139)
 On small screens (<=700px width) the primary navigation collapses behind a toggle button labeled "Menu" (localized). Tapping the button expands the list in a vertical column; tapping again closes it. The button's accessible state is conveyed via `aria-expanded` and its label changes to "Close menu" when open. On larger viewports the menu is always visible and the toggle is hidden.
@@ -167,14 +230,18 @@ Alternative: you may delete the entire `receptregister.db` file instead (after b
 
 Keep the backup until you confirm the new password works and data (if preserved) is intact.
 
-## Future ideas
+## Roadmap & Future Ideas
+
+### Future ideas
 - Import from a simple spreadsheet to add many recipes at once.
 - Mark favorites or add a quick rating.
 - Add personal notes and tips you discover while baking.
 - Attach photos of results for inspiration.
 - Print or share a shortlist when planning a baking day.
 
-## Data storage (early alpha)
+## Data & Persistence
+
+### Data storage (early alpha)
 The API persists data to a local SQLite file at `App_Data/receptregister.db` (created on first run) by default. (NEW: An experimental SQL Server provider is now selectable – see next section.) Schema is simple:
 - Recipes (Name, Book, Page, Notes, Tried)
 - Categories & Keywords (unique name each, stored lowercase)
@@ -251,7 +318,7 @@ After migration:
 - Visit the site; you will be in setup mode (no password) unless you manually migrated AuthConfig which is intentionally not handled.
 - Set a new password and verify recipes appear.
 
-### Deployment (neutral note)
+## Deployment (neutral note)
 
 This repository does not prescribe a single production deployment path. You can self-host, containerize, or integrate with any managed database / platform you prefer (SQLite file for simplicity, or SQL Server/Azure SQL using the provider abstraction). Each operator is responsible for:
 - Provisioning infrastructure (compute, storage, networking)
@@ -269,8 +336,6 @@ The initial migration and dual-provider work is complete; enhancements tracked s
 - #120: Dry-run / summary mode for migration.
 
 These are not required for basic SQL Server usage; they refine reliability & UX.
-
-— “Let’s sift the chaos and find the perfect recipe to bake today.” — Bagare Bengtsson
 
 ## Documentation & maintenance scripts
 
@@ -494,4 +559,4 @@ To keep the code understandable and portable:
 
 This constraint can be revisited in later milestones if/when complexity warrants it.
 
-— “Let’s sift the chaos and find the perfect recipe to bake today.” — Bagare Bengtsson
+> Happy baking and organized browsing!
