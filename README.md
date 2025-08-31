@@ -75,6 +75,17 @@ dotnet run --project ReceptRegister.Frontend
 ```
 The application will start with `sv-SE` active and both `sv-SE` / `en-US` registered.
 
+### Mobile friendly menu (feature #139)
+On small screens (<=700px width) the primary navigation collapses behind a toggle button labeled "Menu" (localized). Tapping the button expands the list in a vertical column; tapping again closes it. The button's accessible state is conveyed via `aria-expanded` and its label changes to "Close menu" when open. On larger viewports the menu is always visible and the toggle is hidden.
+
+No configuration is required. Internationalization keys added:
+| Key | English | Swedish |
+|-----|---------|---------|
+| `Nav.Menu` | Menu | Meny |
+| `Nav.CloseMenu` | Close menu | Stäng meny |
+
+Progressive enhancement: if JavaScript fails to load, the list remains visible (graceful degradation) because the markup renders the `<nav>` normally and the toggle button (if shown) does not hide content without script.
+
 ### Sessions & authentication endpoints
 After setting a password via `POST /auth/set-password`, obtain a session with `POST /auth/login`.
 

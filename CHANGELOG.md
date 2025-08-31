@@ -5,7 +5,8 @@ All notable changes to this project will be documented in this file.
 The format loosely follows Keep a Changelog, with unreleased changes collected under the `[Unreleased]` section. Versions / previews are cut from `main` into `release/*` branches.
 
 ## [Unreleased]
-- (placeholder)
+### Added
+- Mobile-friendly collapsible navigation menu (feature #139) with animated expand/collapse.
 
 ## [preview-2] - 2025-08-30
 ### Added
