@@ -62,7 +62,10 @@ public class FrontendPagesTests : IDisposable
         var resp = await client.GetAsync("/Recipes/Index");
         resp.EnsureSuccessStatusCode();
         var html = await resp.Content.ReadAsStringAsync();
-        Assert.Contains("No recipes yet", html);
+        Assert.Contains("No recipes yet.", html);
+        Assert.Contains("<a href=\"/Recipes/Create\">Add one</a>.", html);
+        // Ensure the localized pieces are separate and no encoded anchor remnants remain
+        Assert.DoesNotContain("&lt;a href=\"/Recipes/Create\"", html);
     }
 
     [Fact]

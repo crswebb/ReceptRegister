@@ -73,7 +73,7 @@
 </div>
 @if (Model.Result.TotalItems == 0)
 {
-    <p class="empty">@Html.Raw(L["Page.Recipes.Empty"])</p>
+    <p class="empty">@L["Page.Recipes.Empty"] <a href="/Recipes/Create">@L["Page.Recipes.AddOne"]</a>.</p>
 }
 
 @section Scripts {
