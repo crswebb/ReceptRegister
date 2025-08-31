@@ -57,6 +57,24 @@ If no pepper is configured a warning is logged at startup (safe for local dev). 
 
 Password strength is evaluated server‑side (source of truth) with a 0–6 score (length >=8, length >=12, lowercase, uppercase, digit, symbol). A score of 3+ is required. The client progressively enhances the Set Password UI with a small meter and top suggestions; validation still occurs on the server.
 
+### Localization overrides (feature #137)
+Localization is configured via the `Localization` section in configuration files. You can now override the default and supported cultures using environment variables (takes precedence over config):
+
+| Variable | Example | Description |
+|----------|---------|-------------|
+| `RECEPT_DEFAULT_CULTURE` | `sv-SE` | Sets the default culture (thread + request). Falls back to `en-US` if invalid. |
+| `RECEPT_SUPPORTED_CULTURES` | `sv-SE,en-US` | Comma or semicolon separated list of supported culture codes. Invalid codes are skipped; if empty after filtering, default is used. |
+
+If `RECEPT_SUPPORTED_CULTURES` is omitted, the list comes from `Localization:SupportedCultures` or defaults to the single default culture.
+
+Example (PowerShell):
+```powershell
+$env:RECEPT_DEFAULT_CULTURE = 'sv-SE'
+$env:RECEPT_SUPPORTED_CULTURES = 'sv-SE,en-US'
+dotnet run --project ReceptRegister.Frontend
+```
+The application will start with `sv-SE` active and both `sv-SE` / `en-US` registered.
+
 ### Sessions & authentication endpoints
 After setting a password via `POST /auth/set-password`, obtain a session with `POST /auth/login`.
 
@@ -241,11 +259,6 @@ The initial migration and dual-provider work is complete; enhancements tracked s
 
 These are not required for basic SQL Server usage; they refine reliability & UX.
 
-
-<<<<<<< HEAD
-=======
-
-
 — “Let’s sift the chaos and find the perfect recipe to bake today.” — Bagare Bengtsson
 
 ## Documentation & maintenance scripts
@@ -253,6 +266,7 @@ These are not required for basic SQL Server usage; they refine reliability & UX.
 Additional security notes live in `SECURITY.md` (session/CSRF design, environment variables, threat model). A helper script `tools/prune-merged.ps1` can archive (tag) and delete fully merged feature branches; read its synopsis (`Get-Content tools/prune-merged.ps1 | more`) before use. Always review tags pushed to ensure no unreviewed work is lost.
 
 ## Running locally (Milestone 1 scaffolding)
+
 ## API (Milestone 4)
 
 ### Core Endpoints
@@ -385,6 +399,8 @@ Adding a new component: use existing variables; if a new semantic color is neede
 Accessibility & contrast: color selections meet WCAG AA for text (normal 4.5:1, large 3:1). Focus indicators use `--color-focus-outline` with a 2px outline for visibility across themes.
 
 ### Localization (fixed culture groundwork)
+
+Note: You can override the configured default & supported cultures at runtime using the environment variables described earlier in the "Localization overrides (feature #137)" section (`RECEPT_DEFAULT_CULTURE`, `RECEPT_SUPPORTED_CULTURES`). Config file values are used only when env vars are absent.
 
 Localization groundwork is in place so UI strings can be translated. Currently the application uses a fixed culture configured in `appsettings.json` (no end‑user language switcher yet). See Issues: #97 (overall), #99 (extraction), #100 (Swedish), #98 (this documentation).
 
