@@ -11,12 +11,18 @@ Welcome! This project favors a simple, disciplined workflow to keep changes read
 See `.copilot/copilot-instructions.md` for full guardrails, commit message recipe, and persona.
 
 ## Workflow at a glance
+Feature development is always done in a short‑lived feature branch. Promotion to deployment happens via a release branch.
+
 1) Pick or open an issue describing the change (never start work without an issue).  
-2) Create a branch from `main` using the naming pattern below.  
-3) Open a Draft PR immediately and include at least one closure line (e.g. `Closes #41`).  
+2) Create a feature branch from `main` using the naming pattern below.  
+3) Open a Draft PR to `main` immediately and include at least one closure line (e.g. `Closes #41`).  
 4) Push incremental commits; keep your branch up to date by rebasing onto `main` (never merge `main` into your branch).  
 5) Keep the PR body accurate as scope evolves (add more `Closes #` lines if you intentionally finish additional issues).  
-6) When ready, mark PR “Ready for review”, ensure checks are green, and squash-merge.
+6) When ready, mark PR “Ready for review”, ensure checks are green, and squash‑merge into `main`.  
+7) Release promotion: open a PR from `main` to the active `release/preview-*` branch (or fast‑forward / reset the release branch) to deploy. No feature work ever lands first in a release branch.  
+8) Cut a new release/preview branch from `main` only when you intend to stabilize & deploy a new preview (naming: `release/preview-N`).
+
+If an urgent production fix is needed: create `hotfix/<issue>-<slug>` from `main`, PR → `main`, then immediately promote `main` into the release branch.
 
 ## Branch naming
 Pattern: `type/scope-<issueNumber>-<short-slug>`
@@ -138,6 +144,66 @@ Generated or build artifacts committed (e.g. `obj/` / `bin/`):
 ## Hotfixes
 - Branch from `main` as `hotfix/<issueNumber>-<slug>`.  
 - Keep the fix minimal; open PR quickly; squash-merge after checks pass.
+
+## Release branch promotion model
+Release branches exist only for deployment/stabilization. They should **never** contain work not already merged into `main`.
+
+Principles:
+- `main` is the single integration trunk; it must stay green (tests passing) at all times.
+- A release branch (`release/preview-N`) is cut from `main` when you decide to produce/iterate on a deployable preview.
+- All feature branches target `main` only. After a feature merges, you *promote* by updating the release branch with the current `main` (PR `main` → `release/preview-N`, or fast‑forward/reset if acceptable).
+- No cherry-picks into the release branch except: (1) critical hotfix already merged to `main` or (2) a temporary revert while stabilizing (followed by a proper fix to `main`).
+- If divergence occurs (a commit appears only on the release branch), fix it immediately by either merging it properly through `main` or reverting it from the release branch.
+
+Promotion workflow (normal case):
+```text
+feat/*  -> PR -> main (squash merge)
+main    -> PR -> release/preview-N (deploy)
+```
+
+Updating the release branch:
+```powershell
+# Option A (PR based – preserves review / CI):
+git checkout main
+git fetch origin
+git pull --ff-only origin main
+git checkout -b promote/main-to-preview-N
+git merge --ff-only origin/release/preview-N || echo "(If diverged, prefer reset approach)"
+# (Usually empty merge; branch contains only main commits.)
+# Open PR: base=release/preview-N compare=promote/main-to-preview-N
+
+# Option B (fast-forward the release branch) – only if policy allows direct push:
+git checkout release/preview-N
+git fetch origin
+git reset --hard origin/main
+git push --force-with-lease origin release/preview-N
+```
+
+Cutting a new preview branch:
+```powershell
+git checkout main
+git fetch origin
+git pull --ff-only origin main
+git checkout -b release/preview-3
+git push -u origin release/preview-3
+```
+
+Changelog & tagging:
+- Update `CHANGELOG.md` in `main` just before cutting the new branch (move entries from `[Unreleased]` to a new `[preview-N]` section).
+- After branch cut, update `[Unreleased]` diff links to compare from the new release branch.
+- Tag (optional) if you want immutable refs: `git tag -a v0.0.0-preview.N <sha>` then `git push origin v0.0.0-preview.N`.
+
+Hotfix on current preview:
+1. Branch from `main` (not the release branch).  
+2. Implement & merge via PR to `main`.  
+3. Promote `main` to release branch (PR or fast-forward).  
+4. Deploy.
+
+Rationale:
+- Ensures a single source of truth (main) for all accepted work.
+- Avoids “mystery” fixes living only in release branches.
+- Simplifies auditing & rollback (one linear main history).
+
 
 Thank you for keeping the dough smooth and the history clean! 🍞
 
