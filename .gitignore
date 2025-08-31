@@ -7,6 +7,9 @@
 **/obj/
 
 # User secrets / local data
+## Local ad-hoc publish output (developer convenience folder, not source)
+/local-publish/
+
 *.db
 *.db-shm
 *.db-wal
