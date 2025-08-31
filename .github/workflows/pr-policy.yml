@@ -29,25 +29,31 @@ jobs:
             const baseRef = pr.base.ref;
             const body = pr.body || '';
 
-            // Base branch must be main
-            if (baseRef !== 'main') {
-              core.setFailed(`Base branch must be 'main' (got '${baseRef}')`);
+            const isReleaseTarget = baseRef.startsWith('release/');
+            const isPromotion = isReleaseTarget && branch === 'main';
+
+            if (!isPromotion && baseRef !== 'main') {
+              core.setFailed(`Base branch must be 'main' (got '${baseRef}') unless promoting main -> release/*`);
             }
 
-            // Branch naming: type/(optional scope-)?<issue>-<slug>
-            const branchRe = new RegExp(
-              '^(feat|fix|chore|docs|test|refactor|perf|build|ci|hotfix)/' +
-              '(?:(api|frontend|infra|docs)-)?' +
-              '(\\d+)-([a-z0-9-]+)$'
-            );
-            if (!branchRe.test(branch)) {
-              core.setFailed(`Branch '${branch}' does not match naming pattern: type/(scope-)?<issueNumber>-<short-slug>`);
-            }
+            if (isPromotion) {
+              core.info(`Detected release promotion (main -> ${baseRef}); relaxing branch name & issue linkage checks.`);
+            } else {
+              // Feature/fix PR into main: enforce naming
+              const branchRe = new RegExp(
+                '^(feat|fix|chore|docs|test|refactor|perf|build|ci|hotfix)/' +
+                '(?:(api|frontend|infra|docs)-)?' +
+                '(\\\d+)-([a-z0-9-]+)$'
+              );
+              if (!branchRe.test(branch)) {
+                core.setFailed(`Branch '${branch}' does not match naming pattern: type/(scope-)?<issueNumber>-<short-slug>`);
+              }
 
-            // PR body must reference an issue (Closes|Fixes #<n>)
-            const closesRe = /(Closes|Fixes) #\d+/i;
-            if (!closesRe.test(body)) {
-              core.setFailed('PR body must include issue linkage, e.g., "Closes #123"');
+              // PR body must reference an issue (Closes|Fixes #<n>)
+              const closesRe = /(Closes|Fixes) #\\d+/i;
+              if (!closesRe.test(body)) {
+                core.setFailed('PR body must include issue linkage, e.g., "Closes #123"');
+              }
             }
 
             // Ensure the branch is up to date with base (no behind)
