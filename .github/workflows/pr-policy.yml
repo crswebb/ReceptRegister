@@ -30,26 +30,33 @@ jobs:
             const body = pr.body || '';
 
             const isReleaseTarget = baseRef.startsWith('release/');
-            const isPromotion = isReleaseTarget && branch === 'main';
+            const isPromotionBranch = isReleaseTarget && (branch === 'main' || branch.startsWith('promote/'));
+            // Allow future additional promotion naming (e.g., chore/<issue>-promote-preview-N)
+            const isAlternatePromotionPattern = isReleaseTarget && /^(chore|ci)\/\d+-promote-/.test(branch);
+            const isPromotion = isPromotionBranch || isAlternatePromotionPattern;
 
             if (!isPromotion && baseRef !== 'main') {
-              core.setFailed(`Base branch must be 'main' (got '${baseRef}') unless promoting main -> release/*`);
+              core.setFailed(`Base branch must be 'main' (got '${baseRef}') unless doing a promotion to release/* (branch=main or promote/*).`);
             }
 
             if (isPromotion) {
-              core.info(`Detected release promotion (main -> ${baseRef}); relaxing branch name & issue linkage checks.`);
+              core.info(`Detected release promotion (${branch} -> ${baseRef}); relaxing branch naming & divergence checks.`);
+              // Still encourage issue linkage for traceability
+              const closesRe = /(Closes|Fixes) #\d+/i;
+              if (!closesRe.test(body)) {
+                core.warning('Promotion PR missing issue linkage (e.g., "Closes #123"). Consider adding for traceability.');
+              }
             } else {
-              // Feature/fix PR into main: enforce naming
+              // Standard PR into main: enforce naming
               const branchRe = new RegExp(
                 '^(feat|fix|chore|docs|test|refactor|perf|build|ci|hotfix)/' +
                 '(?:(api|frontend|infra|docs)-)?' +
-                '(\\\d+)-([a-z0-9-]+)$'
+                '(\\d+)-([a-z0-9-]+)$'
               );
               if (!branchRe.test(branch)) {
                 core.setFailed(`Branch '${branch}' does not match naming pattern: type/(scope-)?<issueNumber>-<short-slug>`);
               }
 
-              // PR body must reference an issue (Closes|Fixes #<n>)
               const closesRe = /(Closes|Fixes) #\\d+/i;
               if (!closesRe.test(body)) {
                 core.setFailed('PR body must include issue linkage, e.g., "Closes #123"');
@@ -61,15 +68,27 @@ jobs:
             const repo = context.repo.repo;
             const baseHead = `${baseRef}...${pr.head.sha}`;
             const compare = await github.rest.repos.compareCommitsWithBasehead({ owner, repo, basehead: baseHead });
-            if (compare.data.status === 'behind' || compare.data.status === 'diverged') {
-              core.setFailed(`Branch is ${compare.data.status} ${compare.data.behind_by} commits from '${baseRef}'. Please rebase onto latest '${baseRef}'.`);
+            if (!isPromotion) {
+              if (compare.data.status === 'behind' || compare.data.status === 'diverged') {
+                core.setFailed(`Branch is ${compare.data.status} ${compare.data.behind_by} commits from '${baseRef}'. Please rebase onto latest '${baseRef}'.`);
+              }
+            } else {
+              if (compare.data.status === 'behind') {
+                core.setFailed(`Promotion branch is behind '${baseRef}' which is unexpected; update branch.`);
+              } else if (compare.data.status === 'diverged') {
+                core.warning(`Promotion branch diverged from '${baseRef}'. Verify intended fast-forward of release branch.`);
+              } else if (compare.data.status === 'ahead') {
+                core.info(`Promotion branch ahead of '${baseRef}' by ${compare.data.ahead_by} commits (expected).`);
+              }
             }
 
             // Enforce rebase-first: no merge commits (parents > 1)
             const commits = await github.rest.pulls.listCommits({ owner, repo, pull_number: pr.number, per_page: 100 });
             const hasMergeCommit = commits.data.some(c => (c.parents || []).length > 1);
-            if (hasMergeCommit) {
+            if (!isPromotion && hasMergeCommit) {
               core.setFailed('Merge commits detected in PR branch history. Please rebase onto main and drop merge commits.');
+            } else if (isPromotion && hasMergeCommit) {
+              core.warning('Merge commit(s) detected in promotion branch; consider recreating a linear promotion for cleaner history, but allowing.');
             }
 
             core.info('PR policy checks completed.');
