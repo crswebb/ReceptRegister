@@ -9,10 +9,10 @@ public class DatabaseEnvOverrideTests
     [Fact]
     public void EnvProvider_Overrides_Config()
     {
-        var oldProv = Environment.GetEnvironmentVariable("RECEPT_DB_PROVIDER");
-        var oldConn = Environment.GetEnvironmentVariable("RECEPT_DB_CONNECTIONSTRING");
-        Environment.SetEnvironmentVariable("RECEPT_DB_PROVIDER", null);
-        Environment.SetEnvironmentVariable("RECEPT_DB_CONNECTIONSTRING", null);
+    var oldProv = Environment.GetEnvironmentVariable("RECEPT_DB_PROVIDER");
+    var oldConn = Environment.GetEnvironmentVariable("RECEPT_DB_CONNECTIONSTRING");
+    Environment.SetEnvironmentVariable("RECEPT_DB_PROVIDER", null);
+    Environment.SetEnvironmentVariable("RECEPT_DB_CONNECTIONSTRING", null);
         try
         {
             Environment.SetEnvironmentVariable("RECEPT_DB_PROVIDER", "sqlite"); // lower-case variant
@@ -32,10 +32,10 @@ public class DatabaseEnvOverrideTests
     [Fact]
     public void EnvConnectionString_Overrides_Config()
     {
-        var oldProv = Environment.GetEnvironmentVariable("RECEPT_DB_PROVIDER");
-        var oldConn = Environment.GetEnvironmentVariable("RECEPT_DB_CONNECTIONSTRING");
-        Environment.SetEnvironmentVariable("RECEPT_DB_PROVIDER", null);
-        Environment.SetEnvironmentVariable("RECEPT_DB_CONNECTIONSTRING", null);
+    var oldProv = Environment.GetEnvironmentVariable("RECEPT_DB_PROVIDER");
+    var oldConn = Environment.GetEnvironmentVariable("RECEPT_DB_CONNECTIONSTRING");
+    Environment.SetEnvironmentVariable("RECEPT_DB_PROVIDER", null);
+    Environment.SetEnvironmentVariable("RECEPT_DB_CONNECTIONSTRING", null);
         try
         {
             Environment.SetEnvironmentVariable("RECEPT_DB_PROVIDER", "SqlServer");
@@ -57,10 +57,10 @@ public class DatabaseEnvOverrideTests
     [Fact]
     public void MissingConnectionString_WhenSqlServer_Throws()
     {
-        var oldProv = Environment.GetEnvironmentVariable("RECEPT_DB_PROVIDER");
-        var oldConn = Environment.GetEnvironmentVariable("RECEPT_DB_CONNECTIONSTRING");
-        Environment.SetEnvironmentVariable("RECEPT_DB_PROVIDER", null);
-        Environment.SetEnvironmentVariable("RECEPT_DB_CONNECTIONSTRING", null);
+    var oldProv = Environment.GetEnvironmentVariable("RECEPT_DB_PROVIDER");
+    var oldConn = Environment.GetEnvironmentVariable("RECEPT_DB_CONNECTIONSTRING");
+    Environment.SetEnvironmentVariable("RECEPT_DB_PROVIDER", null);
+    Environment.SetEnvironmentVariable("RECEPT_DB_CONNECTIONSTRING", null);
         try
         {
             Environment.SetEnvironmentVariable("RECEPT_DB_PROVIDER", "SqlServer");
