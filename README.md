@@ -1,5 +1,8 @@
 # ReceptRegister
 
+![Build (Release Branches)](https://img.shields.io/github/actions/workflow/status/crswebb/ReceptRegister/release-deploy.yml?branch=release%2Fpreview-4&label=release%20build)
+![SDK](https://img.shields.io/badge/.NET-10.0_preview-blue)
+
 > “Let’s sift the chaos and find the perfect recipe to bake today.” — Bagare Bengtsson
 
 ReceptRegister is your personal, searchable index for pastry recipes from your book collection. Instead of flipping through sticky notes and indexes, you can find the right recipe in seconds and jump straight to the page.
@@ -7,38 +10,19 @@ ReceptRegister is your personal, searchable index for pastry recipes from your b
 ## Table of Contents
 1. [Overview](#overview)
 2. [Features](#features)
-	1. [What you can store](#what-you-can-store)
-	2. [What you can do](#what-you-can-do)
-	3. [How it feels](#how-it-feels-to-use)
-	4. [Everyday examples](#everyday-examples)
-	5. [Why it’s helpful](#why-its-helpful)
 3. [Quick Start](#quick-start)
-4. [Security & Access](#security--access)
-	1. [Password hashing & strength](#password-hashing--password-strength)
-	2. [Sessions & authentication endpoints](#sessions--authentication-endpoints)
-	3. [Password recovery & rotation](#password-recovery--rotation)
-	4. [Manual recovery (quick steps)](#manual-recovery-quick-steps)
-5. [Localization](#localization)
-	1. [Overrides (feature #137)](#localization-overrides-feature-137)
-	2. [Fixed culture groundwork](#localization-fixed-culture-groundwork)
-6. [UI / Frontend](#ui--frontend)
-	1. [Mobile friendly menu](#mobile-friendly-menu-feature-139)
-	2. [Theming & design tokens](#theming--design-tokens-ui-polish-milestone)
-7. [Data & Persistence](#data--persistence)
-	1. [Storage (alpha)](#data-storage-early-alpha)
-	2. [Database provider selection](#database-provider-selection-experimental)
-	3. [Data migration](#data-migration-sqlite-to-sql-server)
+4. [Security (Summary)](#security-summary) *(full: docs/security.md)*
+5. [Localization (Summary)](#localization-summary) *(full: docs/localization.md)*
+6. [UI / Frontend (Summary)](#ui--frontend-summary) *(full: docs/theming.md)*
+7. [Data & Persistence (Summary)](#data--persistence-summary) *(full: docs/data-migration.md)*
 8. [API](#api-milestone-4)
-	1. [Core endpoints](#core-endpoints)
-	2. [Query parameters](#query-parameters)
-	3. [Validation & errors](#validation--errors)
-	4. [Tried endpoint change](#tried-endpoint-change)
 9. [Running Locally](#running-locally-milestone-1-scaffolding)
 10. [Publishing](#publishing-self-contained-example)
 11. [Deployment](#deployment-neutral-note)
 12. [Roadmap & Future Ideas](#roadmap--future-ideas)
-13. [Documentation & Maintenance Scripts](#documentation--maintenance-scripts)
-14. [Dependency Policy](#dependency-policy-early-milestones)
+13. [Glossary](#glossary) *(docs/glossary.md)*
+14. [Documentation & Maintenance Scripts](#documentation--maintenance-scripts)
+15. [Dependency Policy](#dependency-policy-early-milestones)
 
 ---
 
@@ -47,6 +31,26 @@ ReceptRegister is your personal, searchable index for pastry recipes from your b
 Two apps make up ReceptRegister:
 - API (Minimal API): JSON endpoints & persistence.
 - Frontend (Razor Pages): HTML UI + also (optionally) hosts the API (single-process mode recommended).
+
+### Architecture Diagram
+
+```mermaid
+flowchart LR
+	user((User Browser)) --> FE[Frontend (Razor Pages)]
+	subgraph Single Process (default)
+		FE --> API[Minimal API Endpoints]
+	end
+	API --> DAL[(Repository Layer)]
+	DAL --> DIA[Database Dialect Abstraction]
+	DIA -->|SQLite| SQLITE[(SQLite File\nreceptregister.db)]
+	DIA -->|SQL Server| MSSQL[(SQL Server / Azure SQL)]
+	MIG[Optional One-shot Migration Runner]\n(SQLite -> SQL Server) --> MSSQL
+	%% Legend
+	classDef stor fill:#f9f9f9,stroke:#555,stroke-width:1px;
+	class SQLITE,MSSQL stor;
+```
+
+The diagram shows the default single-process mode where the frontend also exposes the Minimal API. A database dialect abstraction allows the same repositories to target either SQLite or SQL Server. A one‑shot migration helper can populate SQL Server from an existing SQLite library.
 
 ## Features
 
@@ -92,7 +96,31 @@ Then open the shown localhost URL, set the initial password, and start indexing 
 
 Need separate processes? See [Running Locally](#running-locally-milestone-1-scaffolding).
 
+### Contributing Quick Start
+Prerequisites: .NET SDK (see badge above for required major version), Git.
+
+Clone & run (single-process mode hosting UI + API):
+```powershell
+git clone https://github.com/crswebb/ReceptRegister.git
+cd ReceptRegister
+dotnet watch run --project ReceptRegister.Frontend
+```
+Create a branch:
+```powershell
+git checkout -b feature/your-change
+```
+Commit using a concise prefix (feat:, fix:, docs:, refactor:, chore:) and open a PR against `main` referencing an issue (policy enforced).
+
+Read: [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines (PR policy, testing, branch naming, commit style).
+
 ## Security & access
+<a id="security-summary"></a>
+**Summary:** Secure single-user access using PBKDF2 (SHA-256) hashed password with salt + optional pepper, in-memory session cookies (HttpOnly) with CSRF token for state-changing requests, rate-limited login, and manual recovery path by clearing the AuthConfig row. Full details (hash parameters, rotation, recovery, session endpoints) have been moved to `docs/security.md`.
+
+See: [Full Security Details](docs/security.md)
+<details>
+<summary><strong>Show full security details (hashing parameters, sessions, recovery…)</strong></summary>
+
 - The app is protected with a password.
 - On first visit, if no password has been set yet, you’ll be guided to create one.
 - After that, you’ll sign in before you can use the app.
@@ -115,39 +143,6 @@ Environment variables:
 If no pepper is configured a warning is logged at startup (safe for local dev). Changing the pepper after setting a password will invalidate verification (you would need to reset the password). Keep it stable and rotate only with a coordinated password reset.
 
 Password strength is evaluated server‑side (source of truth) with a 0–6 score (length >=8, length >=12, lowercase, uppercase, digit, symbol). A score of 3+ is required. The client progressively enhances the Set Password UI with a small meter and top suggestions; validation still occurs on the server.
-
-## Localization
-
-### Localization overrides (feature #137)
-Localization is configured via the `Localization` section in configuration files. You can now override the default and supported cultures using environment variables (takes precedence over config):
-
-| Variable | Example | Description |
-|----------|---------|-------------|
-| `RECEPT_DEFAULT_CULTURE` | `sv-SE` | Sets the default culture (thread + request). Falls back to `en-US` if invalid. |
-| `RECEPT_SUPPORTED_CULTURES` | `sv-SE,en-US` | Comma or semicolon separated list of supported culture codes. Invalid codes are skipped; if empty after filtering, default is used. |
-
-If `RECEPT_SUPPORTED_CULTURES` is omitted, the list comes from `Localization:SupportedCultures` or defaults to the single default culture.
-
-Example (PowerShell):
-```powershell
-$env:RECEPT_DEFAULT_CULTURE = 'sv-SE'
-$env:RECEPT_SUPPORTED_CULTURES = 'sv-SE,en-US'
-dotnet run --project ReceptRegister.Frontend
-```
-The application will start with `sv-SE` active and both `sv-SE` / `en-US` registered.
-
-## UI / Frontend
-
-### Mobile friendly menu (feature #139)
-On small screens (<=700px width) the primary navigation collapses behind a toggle button labeled "Menu" (localized). Tapping the button expands the list in a vertical column; tapping again closes it. The button's accessible state is conveyed via `aria-expanded` and its label changes to "Close menu" when open. On larger viewports the menu is always visible and the toggle is hidden.
-
-No configuration is required. Internationalization keys added:
-| Key | English | Swedish |
-|-----|---------|---------|
-| `Nav.Menu` | Menu | Meny |
-| `Nav.CloseMenu` | Close menu | Stäng meny |
-
-Progressive enhancement: if JavaScript fails to load, the list remains visible (graceful degradation) because the markup renders the `<nav>` normally and the toggle button (if shown) does not hide content without script.
 
 ### Sessions & authentication endpoints
 After setting a password via `POST /auth/set-password`, obtain a session with `POST /auth/login`.
@@ -230,6 +225,61 @@ Alternative: you may delete the entire `receptregister.db` file instead (after b
 
 Keep the backup until you confirm the new password works and data (if preserved) is intact.
 
+</details>
+
+## Localization
+<a id="localization-summary"></a>
+**Summary:** Localization groundwork lets you set a default culture and supported cultures via configuration or environment variables (`RECEPT_DEFAULT_CULTURE`, `RECEPT_SUPPORTED_CULTURES`). UI strings live in resource files with planned future user-selectable switching. Detailed override examples, resource usage, and troubleshooting moved to `docs/localization.md`.
+
+See: [Full Localization Guide](docs/localization.md)
+<details>
+<summary><strong>Show localization override examples & resource workflow…</strong></summary>
+
+### Localization overrides (feature #137)
+Localization is configured via the `Localization` section in configuration files. You can now override the default and supported cultures using environment variables (takes precedence over config):
+
+| Variable | Example | Description |
+|----------|---------|-------------|
+| `RECEPT_DEFAULT_CULTURE` | `sv-SE` | Sets the default culture (thread + request). Falls back to `en-US` if invalid. |
+| `RECEPT_SUPPORTED_CULTURES` | `sv-SE,en-US` | Comma or semicolon separated list of supported culture codes. Invalid codes are skipped; if empty after filtering, default is used. |
+
+If `RECEPT_SUPPORTED_CULTURES` is omitted, the list comes from `Localization:SupportedCultures` or defaults to the single default culture.
+
+Example (PowerShell):
+```powershell
+$env:RECEPT_DEFAULT_CULTURE = 'sv-SE'
+$env:RECEPT_SUPPORTED_CULTURES = 'sv-SE,en-US'
+dotnet run --project ReceptRegister.Frontend
+```
+The application will start with `sv-SE` active and both `sv-SE` / `en-US` registered.
+</details>
+
+## UI / Frontend
+<a id="ui--frontend-summary"></a>
+**Summary:** Responsive Razor Pages UI with progressive enhancement: mobile navigation toggle, theme (light/dark) via CSS design tokens, accessible focus/contrast, recipe layout options, and client helpers for auth/session + password strength meter. Deep theming and token catalog moved to `docs/theming.md`.
+
+See: [Theming & Design Tokens](docs/theming.md)
+<details>
+<summary><strong>Show UI details (mobile menu, sessions, recovery steps)…</strong></summary>
+
+### Mobile friendly menu (feature #139)
+On small screens (<=700px width) the primary navigation collapses behind a toggle button labeled "Menu" (localized). Tapping the button expands the list in a vertical column; tapping again closes it. The button's accessible state is conveyed via `aria-expanded` and its label changes to "Close menu" when open. On larger viewports the menu is always visible and the toggle is hidden.
+
+No configuration is required. Internationalization keys added:
+| Key | English | Swedish |
+|-----|---------|---------|
+| `Nav.Menu` | Menu | Meny |
+| `Nav.CloseMenu` | Close menu | Stäng meny |
+
+Progressive enhancement: if JavaScript fails to load, the list remains visible (graceful degradation) because the markup renders the `<nav>` normally and the toggle button (if shown) does not hide content without script.
+
+### (Legacy duplicates) Sessions, recovery and manual recovery
+These details are retained for convenience but are also covered under Security details above.
+
+<!-- (Content removed here to avoid duplication; see security details block) -->
+
+</details>
+
 ## Roadmap & Future Ideas
 
 ### Future ideas
@@ -240,6 +290,12 @@ Keep the backup until you confirm the new password works and data (if preserved)
 - Print or share a shortlist when planning a baking day.
 
 ## Data & Persistence
+<a id="data--persistence-summary"></a>
+**Summary:** Pluggable storage via a provider abstraction: default SQLite file or SQL Server backend selected by configuration. Repositories use a database dialect for SQL differences. A one-shot migrator can seed SQL Server from an existing SQLite file (idempotent taxonomy upsert + natural key dedupe). Full migration usage & provider notes moved to `docs/data-migration.md`.
+
+See: [Data Migration & Provider Details](docs/data-migration.md)
+<details>
+<summary><strong>Show full data provider & migration details…</strong></summary>
 
 ### Data storage (early alpha)
 The API persists data to a local SQLite file at `App_Data/receptregister.db` (created on first run) by default. (NEW: An experimental SQL Server provider is now selectable – see next section.) Schema is simple:
@@ -317,6 +373,8 @@ After migration:
 - Start the combined Frontend (or API) normally pointing at SQL Server.
 - Visit the site; you will be in setup mode (no password) unless you manually migrated AuthConfig which is intentionally not handled.
 - Set a new password and verify recipes appear.
+
+</details>
 
 ## Deployment (neutral note)
 
@@ -560,3 +618,7 @@ To keep the code understandable and portable:
 This constraint can be revisited in later milestones if/when complexity warrants it.
 
 > Happy baking and organized browsing!
+
+## Glossary
+
+See [docs/glossary.md](docs/glossary.md) for definitions of recurring terms (Dialect, Migration Runner, Taxonomy, Pepper, etc.).

@@ -67,3 +67,11 @@ jobs:
             }
 
             core.info('PR policy checks completed.');
+      - name: Advisory README size check
+        run: |
+          echo "README line count:" $(wc -l < README.md)
+          LINES=$(wc -l < README.md)
+          MAX=350
+          if [ "$LINES" -gt "$MAX" ]; then
+            echo "::warning::README has $LINES lines (limit $MAX). Consider extracting content into docs/.";
+          fi
