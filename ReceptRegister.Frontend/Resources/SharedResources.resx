@@ -10,6 +10,8 @@
   <data name="Nav.Keywords" xml:space="preserve"><value>Keywords</value></data>
   <data name="Nav.Login" xml:space="preserve"><value>Login</value></data>
   <data name="Nav.Logout" xml:space="preserve"><value>Logout</value></data>
+  <data name="Nav.Menu" xml:space="preserve"><value>Menu</value></data>
+  <data name="Nav.CloseMenu" xml:space="preserve"><value>Close menu</value></data>
   <!-- Buttons / Actions -->
   <data name="Button.ToggleTheme" xml:space="preserve"><value>Toggle theme</value></data>
   <data name="Button.Search" xml:space="preserve"><value>Search</value></data>

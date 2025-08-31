@@ -10,6 +10,8 @@
   <data name="Nav.Keywords" xml:space="preserve"><value>Nyckelord</value></data>
   <data name="Nav.Login" xml:space="preserve"><value>Logga in</value></data>
   <data name="Nav.Logout" xml:space="preserve"><value>Logga ut</value></data>
+  <data name="Nav.Menu" xml:space="preserve"><value>Meny</value></data>
+  <data name="Nav.CloseMenu" xml:space="preserve"><value>Stäng meny</value></data>
   <data name="Button.ToggleTheme" xml:space="preserve"><value>Växla tema</value></data>
   <data name="Button.Search" xml:space="preserve"><value>Sök</value></data>
   <data name="Button.Clear" xml:space="preserve"><value>Nollställ</value></data>
