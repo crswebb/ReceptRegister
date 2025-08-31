@@ -1,14 +1,22 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Mark as library (no executable) so no separate runtimeconfig is produced during solution publish.
+         This prevents Azure App Service ambiguity (multiple *.runtimeconfig.json) and ensures Frontend is the sole host. -->
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.8" />
-  <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+  </ItemGroup>
+
+  <!-- Bring in ASP.NET Core shared framework types (Web SDK used to add this implicitly) -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <!-- Prevent duplicate appsettings*.json collisions when this project is referenced by Frontend during publish.
@@ -16,6 +24,12 @@
   <ItemGroup>
     <Content Update="appsettings.json" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />
     <Content Update="appsettings.Development.json" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+  <!-- Exclude the old standalone Program.cs host to avoid producing an extra runnable entry point -->
+  <ItemGroup>
+    <Compile Remove="Program.cs" />
+    <None Include="Program.cs" Condition="Exists('Program.cs')" />
   </ItemGroup>
 
 </Project>
