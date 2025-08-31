@@ -32,22 +32,7 @@ Two apps make up ReceptRegister:
 - API (Minimal API): JSON endpoints & persistence.
 - Frontend (Razor Pages): HTML UI + also (optionally) hosts the API (single-process mode recommended).
 
-### Architecture Diagram
-
-```mermaid
-flowchart LR
-    user((User Browser)) --> FE[Frontend (Razor Pages)]
-    FE --> API[Minimal API Endpoints]
-    API --> DAL[(Repository Layer)]
-    DAL --> DIA[Database Dialect Abstraction]
-    DIA --> SQLITE[(SQLite File\nreceptregister.db)]
-    DIA --> MSSQL[(SQL Server / Azure SQL)]
-    MIG["Migration Runner\n(SQLite -> SQL Server)"] --> MSSQL
-    classDef stor fill:#f9f9f9,stroke:#555,stroke-width:1px;
-    class SQLITE,MSSQL stor;
-```
-
-The diagram shows the default single-process mode where the frontend also exposes the Minimal API. A database dialect abstraction allows the same repositories to target either SQLite or SQL Server. A one‑shot migration helper can populate SQL Server from an existing SQLite library.
+<!-- Architecture diagram removed (was mermaid). Summary: Frontend (Razor Pages) + Minimal API (often same process) -> Repository Layer -> Dialect abstraction (SQLite / SQL Server) with optional one-shot migration helper. -->
 
 ## Features
 
