@@ -62,7 +62,8 @@ jobs:
           echo "dotnet --info (build runner):";
           dotnet --info
 
-      - name: Guard: Single runtimeconfig
+      - name: Runtimeconfig guard
+        id: runtimeconfig_guard
         if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true') }}
         run: |
           set -e
