@@ -19,8 +19,25 @@ public static class LocalizationExtensions
     public static IServiceCollection AddConfiguredLocalization(this IServiceCollection services, IConfiguration config)
     {
         var section = config.GetSection(SectionName);
-        var defaultCultureName = section["DefaultCulture"] ?? "en-US"; // fallback if not configured
-        var supported = section.GetSection("SupportedCultures").Get<string[]>() ?? new[] { defaultCultureName };
+
+        // Environment variable overrides (feature #137):
+        // RECEPT_DEFAULT_CULTURE=sv-SE
+        // RECEPT_SUPPORTED_CULTURES=sv-SE,en-US (comma / semicolon separated)
+        var envDefault = Environment.GetEnvironmentVariable("RECEPT_DEFAULT_CULTURE");
+        var envSupportedRaw = Environment.GetEnvironmentVariable("RECEPT_SUPPORTED_CULTURES");
+
+        var defaultCultureName = (envDefault ?? section["DefaultCulture"]) ?? "en-US"; // fallback if not configured
+
+        string[] supported;
+        if (!string.IsNullOrWhiteSpace(envSupportedRaw))
+        {
+            var split = envSupportedRaw.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            supported = split.Length > 0 ? split : new[] { defaultCultureName };
+        }
+        else
+        {
+            supported = section.GetSection("SupportedCultures").Get<string[]>() ?? new[] { defaultCultureName };
+        }
 
         // Ensure default exists in supported
         if (!supported.Contains(defaultCultureName, StringComparer.OrdinalIgnoreCase))
@@ -28,8 +45,34 @@ public static class LocalizationExtensions
             supported = supported.Concat(new[] { defaultCultureName }).ToArray();
         }
 
-        var defaultCulture = new CultureInfo(defaultCultureName);
-        var supportedCultures = supported.Select(c => new CultureInfo(c)).ToList();
+        CultureInfo defaultCulture;
+        try
+        {
+            defaultCulture = new CultureInfo(defaultCultureName);
+        }
+        catch (CultureNotFoundException)
+        {
+            // Fallback gracefully if an invalid culture code is supplied via env/config.
+            defaultCulture = new CultureInfo("en-US");
+            defaultCultureName = defaultCulture.Name; // normalize
+        }
+
+        var supportedCultures = new List<CultureInfo>();
+        foreach (var c in supported)
+        {
+            try
+            {
+                supportedCultures.Add(new CultureInfo(c));
+            }
+            catch (CultureNotFoundException)
+            {
+                // Skip invalid supported culture entries silently; could add logging later.
+            }
+        }
+        if (supportedCultures.Count == 0)
+        {
+            supportedCultures.Add(defaultCulture);
+        }
 
         services.Configure<RequestLocalizationOptions>(options =>
         {

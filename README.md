@@ -57,6 +57,24 @@ If no pepper is configured a warning is logged at startup (safe for local dev). 
 
 Password strength is evaluated server‑side (source of truth) with a 0–6 score (length >=8, length >=12, lowercase, uppercase, digit, symbol). A score of 3+ is required. The client progressively enhances the Set Password UI with a small meter and top suggestions; validation still occurs on the server.
 
+### Localization overrides (feature #137)
+Localization is configured via the `Localization` section in configuration files. You can now override the default and supported cultures using environment variables (takes precedence over config):
+
+| Variable | Example | Description |
+|----------|---------|-------------|
+| `RECEPT_DEFAULT_CULTURE` | `sv-SE` | Sets the default culture (thread + request). Falls back to `en-US` if invalid. |
+| `RECEPT_SUPPORTED_CULTURES` | `sv-SE,en-US` | Comma or semicolon separated list of supported culture codes. Invalid codes are skipped; if empty after filtering, default is used. |
+
+If `RECEPT_SUPPORTED_CULTURES` is omitted, the list comes from `Localization:SupportedCultures` or defaults to the single default culture.
+
+Example (PowerShell):
+```powershell
+$env:RECEPT_DEFAULT_CULTURE = 'sv-SE'
+$env:RECEPT_SUPPORTED_CULTURES = 'sv-SE,en-US'
+dotnet run --project ReceptRegister.Frontend
+```
+The application will start with `sv-SE` active and both `sv-SE` / `en-US` registered.
+
 ### Sessions & authentication endpoints
 After setting a password via `POST /auth/set-password`, obtain a session with `POST /auth/login`.
 
