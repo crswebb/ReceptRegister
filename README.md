@@ -259,11 +259,6 @@ The initial migration and dual-provider work is complete; enhancements tracked s
 
 These are not required for basic SQL Server usage; they refine reliability & UX.
 
-
-<<<<<<< HEAD
-=======
-
-
 — “Let’s sift the chaos and find the perfect recipe to bake today.” — Bagare Bengtsson
 
 ## Documentation & maintenance scripts
@@ -271,6 +266,7 @@ These are not required for basic SQL Server usage; they refine reliability & UX.
 Additional security notes live in `SECURITY.md` (session/CSRF design, environment variables, threat model). A helper script `tools/prune-merged.ps1` can archive (tag) and delete fully merged feature branches; read its synopsis (`Get-Content tools/prune-merged.ps1 | more`) before use. Always review tags pushed to ensure no unreviewed work is lost.
 
 ## Running locally (Milestone 1 scaffolding)
+
 ## API (Milestone 4)
 
 ### Core Endpoints
@@ -403,6 +399,8 @@ Adding a new component: use existing variables; if a new semantic color is neede
 Accessibility & contrast: color selections meet WCAG AA for text (normal 4.5:1, large 3:1). Focus indicators use `--color-focus-outline` with a 2px outline for visibility across themes.
 
 ### Localization (fixed culture groundwork)
+
+Note: You can override the configured default & supported cultures at runtime using the environment variables described earlier in the "Localization overrides (feature #137)" section (`RECEPT_DEFAULT_CULTURE`, `RECEPT_SUPPORTED_CULTURES`). Config file values are used only when env vars are absent.
 
 Localization groundwork is in place so UI strings can be translated. Currently the application uses a fixed culture configured in `appsettings.json` (no end‑user language switcher yet). See Issues: #97 (overall), #99 (extraction), #100 (Swedish), #98 (this documentation).
 
