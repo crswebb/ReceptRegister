@@ -11,6 +11,21 @@ public static class PersistenceServiceCollectionExtensions
 			var config = sp.GetRequiredService<IConfiguration>();
 			var options = new DatabaseOptions();
 			config.GetSection(DatabaseOptions.SectionName).Bind(options);
+
+			// Environment variable overrides (feature #144):
+			// RECEPT_DB_PROVIDER=SQLite|SqlServer
+			// RECEPT_DB_CONNECTIONSTRING="<connection string>"
+			var envProvider = Environment.GetEnvironmentVariable("RECEPT_DB_PROVIDER");
+			if (!string.IsNullOrWhiteSpace(envProvider))
+			{
+				options.Provider = envProvider.Trim();
+			}
+			var envConn = Environment.GetEnvironmentVariable("RECEPT_DB_CONNECTIONSTRING")
+				?? Environment.GetEnvironmentVariable("RECEPT_DB_CONNECTION"); // allow alternate suffix
+			if (!string.IsNullOrEmpty(envConn))
+			{
+				options.ConnectionString = envConn;
+			}
 			options.Validate();
 			return options;
 		});

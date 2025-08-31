@@ -12,11 +12,14 @@ This document expands on database provider selection and the SQLite → SQL Serv
 - [Limitations & Roadmap](#limitations--roadmap)
 
 ## Providers Overview
-Supported:
-- SQLite (file-based, default, minimal setup)
-- SQL Server / Azure SQL (experimental, expanding coverage)
+Supported providers:
 
-Choose via config key `Database:Provider` (`SQLite` or `SqlServer`).
+| Provider | `Database:Provider` value | Status | Notes |
+|----------|---------------------------|--------|-------|
+| SQLite | `SQLite` (or omitted) | Stable | Default; creates local file `App_Data/receptregister.db`; no connection string used. |
+| SQL Server / Azure SQL | `SqlServer` | Experimental | Requires `Database:ConnectionString`; environment overrides via `RECEPT_DB_PROVIDER` / `RECEPT_DB_CONNECTIONSTRING`. |
+
+Select via config key `Database:Provider` or the environment variable `RECEPT_DB_PROVIDER` (takes precedence). When `SqlServer` is chosen a non-empty connection string (config or `RECEPT_DB_CONNECTIONSTRING`) is mandatory; otherwise startup fails fast.
 
 ## Configuration
 `appsettings.json` (or environment variables overriding):

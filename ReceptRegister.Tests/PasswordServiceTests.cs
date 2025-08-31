@@ -13,6 +13,9 @@ public class PasswordServiceTests
 {
     private async Task<(IPasswordService svc, string dbPath)> CreateAsync(Dictionary<string,string?>? extra = null, string? existingPath = null)
     {
+        // Ensure database env overrides do not leak from other tests (feature #144)
+        Environment.SetEnvironmentVariable("RECEPT_DB_PROVIDER", null);
+        Environment.SetEnvironmentVariable("RECEPT_DB_CONNECTIONSTRING", null);
         var services = new ServiceCollection();
         var dict = new Dictionary<string,string?>
         {
