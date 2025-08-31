@@ -27,7 +27,8 @@
   <data name="Table.Keywords" xml:space="preserve"><value>Nyckelord</value></data>
   <data name="Table.Tried" xml:space="preserve"><value>Testat</value></data>
   <data name="Page.Recipes.Title" xml:space="preserve"><value>Recept</value></data>
-  <data name="Page.Recipes.Empty" xml:space="preserve"><value>Inga recept ännu. &lt;a href=&quot;/Recipes/Create&quot;>Lägg till ett&lt;/a>.</value></data>
+  <data name="Page.Recipes.Empty" xml:space="preserve"><value>Inga recept ännu.</value></data>
+  <data name="Page.Recipes.AddOne" xml:space="preserve"><value>Lägg till ett</value></data>
   <data name="Page.CreateRecipe.Title" xml:space="preserve"><value>Lägg till recept</value></data>
   <data name="Form.Name" xml:space="preserve"><value>Namn</value></data>
   <data name="Form.Name.Help" xml:space="preserve"><value>Primärt visningsnamn för receptet.</value></data>
