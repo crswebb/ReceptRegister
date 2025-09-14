@@ -30,23 +30,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseRouting();
 
-<<<<<<< HEAD
-// Ensure DB schema exists for shared API endpoints (recipes, auth, taxonomy) using provider abstraction
-// Capture failure so health endpoint can surface it instead of perpetual platform 503.
-var startupStatus = app.Services.GetRequiredService<ReceptRegister.Api.StartupStatus>();
-try
-{
-    await app.Services.GetRequiredService<ISchemaInitializer>().InitializeAsync();
-    startupStatus.ReportSuccess();
-}
-catch (Exception ex)
-{
-    app.Logger.LogError(ex, "Schema initialization failed; application will continue so /api/health can report the failure.");
-    startupStatus.ReportFailure(ex);
-}
-=======
-// Schema initialization + migrations now handled by SchemaStartupHostedService (background) so app can report 'starting'.
->>>>>>> origin/test-merge-preview-migrations-refactor
+// Schema initialization + migrations handled by SchemaStartupHostedService (background) so health can show 'starting'.
 // Auth session (cookie + csrf) before endpoints
 app.UseAuthSession();
 
@@ -61,7 +45,3 @@ app.MapRazorPages()
 app.MapApiEndpoints();
 
 app.MapAppHealth();
-
-app.UseRouting();
-
-// Schema initialization + migrations handled by SchemaStartupHostedService (background) so health can show 'starting'.
