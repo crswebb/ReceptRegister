@@ -34,7 +34,11 @@ public sealed class SchemaMigrator : ISchemaMigrator
             int applied = 0, skipped = 0;
             foreach (var m in ordered)
             {
-                if (appliedIds.Contains(m.Id)) { skipped++; continue; }
+                if (appliedIds.Contains(m.Id))
+                {
+                    skipped++;
+                    continue;
+                }
                 _logger.LogInformation("Applying migration {Id} {Name}...", m.Id, m.Name);
                 await using var tx = await conn.BeginTransactionAsync(ct);
                 await using (var cmd = conn.CreateCommand())

@@ -32,9 +32,17 @@ public class SqlServerConnectionFactory : IDbConnectionFactory
         var conn = new SqlConnection(_connectionString);
         if (_useEntra && _credential is not null)
         {
-            // Acquire token lazily on open (SqlClient supports AccessToken assignment prior to Open)
-            var token = _credential.GetToken(new TokenRequestContext(new[] { "https://database.windows.net/.default" }), System.Threading.CancellationToken.None);
-            conn.AccessToken = token.Token;
+            // Acquire token with a bounded timeout to avoid indefinite hangs on metadata endpoint issues.
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            try
+            {
+                var token = _credential.GetToken(new TokenRequestContext(new[] { "https://database.windows.net/.default" }), cts.Token);
+                conn.AccessToken = token.Token;
+            }
+            catch (OperationCanceledException)
+            {
+                throw new TimeoutException("Timed out acquiring Entra ID access token for SQL Server within 15s.");
+            }
         }
         return conn;
     }

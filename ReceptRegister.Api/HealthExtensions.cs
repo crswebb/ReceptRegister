@@ -86,7 +86,7 @@ public static class HealthExtensions
 			{
 				await using var conn = factory.Create();
 				await conn.OpenAsync();
-				await using (var cmd = conn.CreateCommand()) { cmd.CommandText = opts.Provider == "SqlServer" ? "SELECT 1" : "SELECT 1"; await cmd.ExecuteScalarAsync(); }
+				await using (var cmd = conn.CreateCommand()) { cmd.CommandText = "SELECT 1"; await cmd.ExecuteScalarAsync(); }
 				sw.Stop();
 				string? server = null, database = null;
 				try
