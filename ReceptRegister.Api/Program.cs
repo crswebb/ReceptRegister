@@ -2,6 +2,7 @@ using ReceptRegister.Api;
 using ReceptRegister.Api.Data;
 using ReceptRegister.Api.Endpoints;
 using ReceptRegister.Api.Auth;
+using ReceptRegister.Api.Data.Migration;
 
 var migrateArg = args.FirstOrDefault(a => a.StartsWith("--migrate-sqlite=" , StringComparison.OrdinalIgnoreCase));
 var builder = WebApplication.CreateBuilder(args);

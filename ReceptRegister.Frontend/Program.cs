@@ -6,6 +6,16 @@ using ReceptRegister.Api.Localization; // for AddConfiguredLocalization
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Force explicit binding so Azure (expects 8080) and the app align even if PORT was set incorrectly.
+// If a PORT env var is present (e.g. for local overrides), honor it; otherwise default 8080.
+var forcedPort = Environment.GetEnvironmentVariable("PORT");
+string bindUrl = "http://0.0.0.0:8080";
+if (int.TryParse(forcedPort, out var parsed) && parsed > 0 && parsed < 65536)
+{
+    bindUrl = $"http://0.0.0.0:{parsed}";
+}
+builder.WebHost.UseUrls(bindUrl);
+
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddLocalization(); // resource-based UI strings
@@ -17,6 +27,14 @@ builder.Services.AddAuthServices();
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
 
 var app = builder.Build();
+
+// Log chosen URLs early (shows up in stdout / container logs)
+try
+{
+    var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+    logger.LogInformation("[Startup] Binding URLs: {Urls}", string.Join(',', app.Urls));
+}
+catch { /* non-fatal */ }
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
