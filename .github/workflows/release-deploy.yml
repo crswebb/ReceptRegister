@@ -146,33 +146,46 @@ jobs:
 
       - name: Smoke Test
         run: |
-          set -e
+          set -euo pipefail
           BASE="https://${{ secrets.AZURE_WEBAPP_HOST }}"
-          PATH="/api/health"
+          PATH_PART="/api/health"
           MAX_ATTEMPTS=24 # 2 minutes (24 * 5s)
           DELAY=5
-          echo "Probing $PATH at $BASE (up to $MAX_ATTEMPTS attempts)";
+          echo "Probing $PATH_PART at $BASE (up to $MAX_ATTEMPTS attempts)"
           LAST_BODY=""
-          for i in $(seq 1 $MAX_ATTEMPTS); do
-            RESP=$(curl -sk -w 'HTTPSTATUS:%{http_code}' "$BASE$PATH" || true)
-            BODY=${RESP%HTTPSTATUS:*}
-            STATUS=${RESP##*HTTPSTATUS:}
+          print_first_lines () {
+            # Usage: print_first_lines N (default 20)
+            local n=${1:-20} count=0 line
+            while IFS='' read -r line && [ $count -lt "$n" ]; do
+              printf '%s\n' "$line"
+              count=$((count+1))
+            done
+          }
+          i=1
+          while [ $i -le $MAX_ATTEMPTS ]; do
+            RESP="$(curl -k -s -w 'HTTPSTATUS:%{http_code}' "$BASE$PATH_PART" || true)"
+            BODY="${RESP%HTTPSTATUS:*}"
+            STATUS="${RESP##*HTTPSTATUS:}"
             echo "Attempt $i -> $STATUS"
             if [ "$STATUS" = "200" ]; then
+              # Optionally require JSON status==ok (uncomment if desired)
+              # if printf '%s' "$BODY" | grep -q '"status"[[:space:]]*:[[:space:]]*"ok"'; then
               echo "Health OK"
               exit 0
+              # fi
             fi
             LAST_BODY="$BODY"
             if [ $((i % 6)) -eq 0 ]; then
-              echo "--- Body snapshot (truncated) ---"
-              echo "$BODY" | head -n 20
-              echo "---------------------------------"
+              echo "--- Body snapshot (first lines) ---"
+              printf '%s\n' "$BODY" | print_first_lines 20
+              echo "-----------------------------------"
             fi
-            sleep $DELAY
+            sleep "$DELAY"
+            i=$((i+1))
           done
           echo "Health check failed after $MAX_ATTEMPTS attempts." >&2
-          echo "Last body (truncated):" >&2
-          echo "$LAST_BODY" | head -n 40 >&2
+          echo "Last body (first lines):" >&2
+            printf '%s\n' "$LAST_BODY" | print_first_lines 40 >&2
           exit 1
 
       - name: Summary
