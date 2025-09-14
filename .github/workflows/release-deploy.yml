@@ -148,18 +148,32 @@ jobs:
         run: |
           set -e
           BASE="https://${{ secrets.AZURE_WEBAPP_HOST }}"
-          PATHS="/api/health /health"
-          echo "Probing health endpoints ($PATHS) at $BASE";
-          for i in {1..5}; do
-            for P in $PATHS; do
-              URL="$BASE$P"
-              STATUS=$(curl -sk -o /dev/null -w '%{http_code}' "$URL" || true)
-              echo "Attempt $i $P -> $STATUS"
-              if [ "$STATUS" = "200" ]; then echo "Health OK via $P"; exit 0; fi
-            done
-            sleep 5;
+          PATH="/api/health"
+          MAX_ATTEMPTS=24 # 2 minutes (24 * 5s)
+          DELAY=5
+          echo "Probing $PATH at $BASE (up to $MAX_ATTEMPTS attempts)";
+          LAST_BODY=""
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            RESP=$(curl -sk -w 'HTTPSTATUS:%{http_code}' "$BASE$PATH" || true)
+            BODY=${RESP%HTTPSTATUS:*}
+            STATUS=${RESP##*HTTPSTATUS:}
+            echo "Attempt $i -> $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              echo "Health OK"
+              exit 0
+            fi
+            LAST_BODY="$BODY"
+            if [ $((i % 6)) -eq 0 ]; then
+              echo "--- Body snapshot (truncated) ---"
+              echo "$BODY" | head -n 20
+              echo "---------------------------------"
+            fi
+            sleep $DELAY
           done
-          echo "Health check failed (paths tried: $PATHS)"; exit 1
+          echo "Health check failed after $MAX_ATTEMPTS attempts." >&2
+          echo "Last body (truncated):" >&2
+          echo "$LAST_BODY" | head -n 40 >&2
+          exit 1
 
       - name: Summary
         run: |
