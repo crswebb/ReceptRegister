@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using ReceptRegister.Api.Data;
-using System.Data;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using ReceptRegister.Api.Data;
 using System.Data;
