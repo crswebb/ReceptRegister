@@ -69,7 +69,6 @@ public static class HealthExtensions
 			return Results.Json(new { status = "ok", app = "api", initialized = true });
 		});
 
-<<<<<<< HEAD
 		// Plain text convenience endpoint for quick copy/paste of startup error (respects same exposure gating as /api/health?details).
 		endpoints.MapGet("/api/startup-error", (StartupStatus status, IConfiguration config, IWebHostEnvironment env) =>
 		{
