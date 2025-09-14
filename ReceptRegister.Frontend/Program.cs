@@ -63,3 +63,17 @@ app.MapRazorPages()
 app.MapApiEndpoints();
 
 app.MapAppHealth();
+
+// Log when the application has fully started and Kestrel has bound the ports.
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    try
+    {
+        var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+        logger.LogInformation("[Startup] Application started. Listening on: {BindUrl}", bindUrl);
+    }
+    catch { /* non-fatal */ }
+});
+
+// IMPORTANT: Run the app so the process stays alive (was previously missing, causing container exit)
+await app.RunAsync();
