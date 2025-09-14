@@ -40,7 +40,18 @@ if (migrateArg is not null)
 }
 
 // Ensure database schema exists (tables created) before handling requests (provider-specific)
-await app.Services.GetRequiredService<ISchemaInitializer>().InitializeAsync();
+// Capture any initialization failure instead of crashing the process so we can surface details via /api/health.
+var startupStatus = app.Services.GetRequiredService<StartupStatus>();
+try
+{
+	await app.Services.GetRequiredService<ISchemaInitializer>().InitializeAsync();
+	startupStatus.ReportSuccess();
+}
+catch (Exception ex)
+{
+	startupStatus.ReportFailure(ex);
+	// Continue booting: app will report error state via health endpoint.
+}
 
 app.UseAuthSession();
 app.MapApiEndpoints();

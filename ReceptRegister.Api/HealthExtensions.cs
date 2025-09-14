@@ -21,17 +21,35 @@ public static class HealthExtensions
 	public static IEndpointRouteBuilder MapAppHealth(this IEndpointRouteBuilder endpoints)
 	{
 		// To avoid conflicts with frontend /health when unified, expose JSON health at /api/health.
-		endpoints.MapGet("/api/health", (StartupStatus status) =>
+		endpoints.MapGet("/api/health", (HttpContext ctx, StartupStatus status, IConfiguration config, IWebHostEnvironment env) =>
 		{
+			bool detailRequested = ctx.Request.Query.ContainsKey("details") || ctx.Request.Query.ContainsKey("detail");
+			bool allowDetails = env.IsDevelopment() || config.GetValue<bool>("Diagnostics:ExposeHealthErrors") || string.Equals(Environment.GetEnvironmentVariable("EXPOSE_HEALTH_ERRORS"), "true", StringComparison.OrdinalIgnoreCase);
 			if (status.Failed)
 			{
-				return Results.Json(new { status = "error", app = "api", initialized = status.IsInitialized, error = status.Error });
+				return Results.Json(new
+				{
+					status = "error",
+					app = "api",
+					initialized = status.IsInitialized,
+					error = status.Error,
+					errorDetail = detailRequested && allowDetails ? status.FullError : null
+				});
 			}
 			if (!status.IsInitialized)
 			{
 				return Results.Json(new { status = "starting", app = "api", initialized = false });
 			}
 			return Results.Json(new { status = "ok", app = "api", initialized = true });
+		});
+
+		// Optional endpoint to quickly view startup error in text (only when allowed) for scenarios where health JSON isn't convenient.
+		endpoints.MapGet("/api/startup-error", (StartupStatus status, IConfiguration config, IWebHostEnvironment env) =>
+		{
+			if (!status.Failed) return Results.Text("No startup error.");
+			bool allowDetails = env.IsDevelopment() || config.GetValue<bool>("Diagnostics:ExposeHealthErrors") || string.Equals(Environment.GetEnvironmentVariable("EXPOSE_HEALTH_ERRORS"), "true", StringComparison.OrdinalIgnoreCase);
+			if (!allowDetails) return Results.Text(status.Error ?? "Startup failed", "text/plain");
+			return Results.Text(status.FullError ?? status.Error ?? "Startup failed", "text/plain");
 		});
 
 		// Lightweight DB connectivity probe: attempts open + SELECT 1. Returns basic timing and provider kind.
