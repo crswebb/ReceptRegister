@@ -57,7 +57,7 @@ jobs:
                 core.setFailed(`Branch '${branch}' does not match naming pattern: type/(scope-)?<issueNumber>-<short-slug>`);
               }
 
-              const closesRe = /(Closes|Fixes) #\\d+/i;
+              const closesRe = /(Closes|Fixes) #\d+/i;
               if (!closesRe.test(body)) {
                 core.setFailed('PR body must include issue linkage, e.g., "Closes #123"');
               }
