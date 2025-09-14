@@ -69,6 +69,16 @@ public static class PersistenceServiceCollectionExtensions
 				? new SqliteSchemaInitializer(sp.GetRequiredService<IDbConnectionFactory>(), sp.GetRequiredService<ILogger<SqliteSchemaInitializer>>())
 				: new SqlServerSchemaInitializer(sp.GetRequiredService<IDbConnectionFactory>(), sp.GetRequiredService<ILogger<SqlServerSchemaInitializer>>());
 		});
+
+		// Schema migrator (runs after initializer)
+		services.AddSingleton<SchemaMigrations.ISchemaMigrator>(sp =>
+			new SchemaMigrations.SchemaMigrator(
+				sp.GetRequiredService<IDbConnectionFactory>(),
+				sp.GetRequiredService<ILogger<SchemaMigrations.SchemaMigrator>>(),
+				sp.GetRequiredService<DatabaseOptions>()));
+
+		// Hosted service for automatic init + migrations
+		services.AddHostedService<SchemaStartupHostedService>();
 		return services;
 	}
 }
