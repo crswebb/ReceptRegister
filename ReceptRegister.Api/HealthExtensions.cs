@@ -11,13 +11,22 @@ public static class HealthExtensions
 	{
 		services.AddHealthChecks()
 			.AddCheck("self", () => HealthCheckResult.Healthy());
+		// Track startup status for readiness style reporting.
+		services.AddSingleton<StartupStatus>();
 		return services;
 	}
 
 	public static IEndpointRouteBuilder MapAppHealth(this IEndpointRouteBuilder endpoints)
 	{
 		// To avoid conflicts with frontend /health when unified, expose JSON health at /api/health.
-		endpoints.MapGet("/api/health", () => Results.Ok(new { status = "ok", app = "api" }));
+		endpoints.MapGet("/api/health", (StartupStatus status) =>
+		{
+			if (status.Failed)
+			{
+				return Results.Json(new { status = "error", app = "api", initialized = status.IsInitialized, error = status.Error });
+			}
+			return Results.Json(new { status = "ok", app = "api", initialized = status.IsInitialized });
+		});
 		return endpoints;
 	}
 }
