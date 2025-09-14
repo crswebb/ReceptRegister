@@ -7,6 +7,32 @@ using System.Data;
 
 namespace ReceptRegister.Api;
 
+/// <summary>
+/// Registers and maps diagnostic/health endpoints for the API host.
+/// Endpoints provided:
+///   GET /api/health         - Liveness + (quasi) readiness: status = starting|ok|error. Optional detailed stack trace when explicitly enabled.
+///   GET /api/startup-error  - Plain text output of the startup exception (short or full) under same exposure rules.
+///   GET /api/db-ping        - Lightweight connectivity probe + timing + minimal connection metadata.
+///   GET /api/migrations     - Lists applied and pending schema migrations (best‑effort if history table present).
+///
+/// Security / Exposure:
+///   Full exception detail is ONLY returned when one of these is true:
+///     - ASPNETCORE_ENVIRONMENT == Development (env.IsDevelopment()).
+///     - AppSetting: Diagnostics:ExposeHealthErrors = true.
+///     - Environment variable EXPOSE_HEALTH_ERRORS=true.
+///   Otherwise only a short "Type: Message" is emitted. This avoids leaking stack traces in production by default.
+///
+/// Operational Notes:
+///   - /api/health intentionally avoids heavy dependencies (no DB IO when already failed/starting) to stay fast.
+///   - /api/db-ping performs an actual open + simple SELECT to validate credentials/network.
+///   - /api/migrations performs reflection to enumerate migration classes; if this becomes hot, consider caching.
+///   - If startup initialization fails (schema etc.), the process keeps running so the platform can surface JSON error state instead of generic 503 pages.
+///
+/// Future Enhancements (optional):
+///   - Add a reduced /api/ready endpoint that only returns ok when initialized & not failed.
+///   - Redact sensitive substrings in FullError if certain providers embed secrets.
+///   - Include build/version metadata (commit hash) in /api/health for traceability.
+/// </summary>
 public static class HealthExtensions
 {
 	public static IServiceCollection AddAppHealth(this IServiceCollection services)
@@ -20,12 +46,21 @@ public static class HealthExtensions
 
 	public static IEndpointRouteBuilder MapAppHealth(this IEndpointRouteBuilder endpoints)
 	{
-		// To avoid conflicts with frontend /health when unified, expose JSON health at /api/health.
-		endpoints.MapGet("/api/health", (StartupStatus status) =>
+		// Primary health endpoint (JSON). Chosen path /api/health to avoid collision with frontend root /health.
+		endpoints.MapGet("/api/health", (HttpContext ctx, StartupStatus status, IConfiguration config, IWebHostEnvironment env) =>
 		{
+			bool detailRequested = ctx.Request.Query.ContainsKey("details") || ctx.Request.Query.ContainsKey("detail");
+			bool allowDetails = env.IsDevelopment() || config.GetValue<bool>("Diagnostics:ExposeHealthErrors") || string.Equals(Environment.GetEnvironmentVariable("EXPOSE_HEALTH_ERRORS"), "true", StringComparison.OrdinalIgnoreCase);
 			if (status.Failed)
 			{
-				return Results.Json(new { status = "error", app = "api", initialized = status.IsInitialized, error = status.Error });
+				return Results.Json(new
+				{
+					status = "error",
+					app = "api",
+					initialized = status.IsInitialized,
+					error = status.Error,
+					errorDetail = detailRequested && allowDetails ? status.FullError : null
+				});
 			}
 			if (!status.IsInitialized)
 			{
@@ -34,7 +69,17 @@ public static class HealthExtensions
 			return Results.Json(new { status = "ok", app = "api", initialized = true });
 		});
 
-		// Lightweight DB connectivity probe: attempts open + SELECT 1. Returns basic timing and provider kind.
+<<<<<<< HEAD
+		// Plain text convenience endpoint for quick copy/paste of startup error (respects same exposure gating as /api/health?details).
+		endpoints.MapGet("/api/startup-error", (StartupStatus status, IConfiguration config, IWebHostEnvironment env) =>
+		{
+			if (!status.Failed) return Results.Text("No startup error.");
+			bool allowDetails = env.IsDevelopment() || config.GetValue<bool>("Diagnostics:ExposeHealthErrors") || string.Equals(Environment.GetEnvironmentVariable("EXPOSE_HEALTH_ERRORS"), "true", StringComparison.OrdinalIgnoreCase);
+			if (!allowDetails) return Results.Text(status.Error ?? "Startup failed", "text/plain");
+			return Results.Text(status.FullError ?? status.Error ?? "Startup failed", "text/plain");
+		});
+
+		// Lightweight DB connectivity probe: open + simple SELECT. Avoids schema enumerations; returns timing + provider + parsed server/database.
 		endpoints.MapGet("/api/db-ping", async (IDbConnectionFactory factory, DatabaseOptions opts) =>
 		{
 			var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -42,7 +87,7 @@ public static class HealthExtensions
 			{
 				await using var conn = factory.Create();
 				await conn.OpenAsync();
-				await using (var cmd = conn.CreateCommand()) { cmd.CommandText = opts.Provider == "SqlServer" ? "SELECT 1" : "SELECT 1"; await cmd.ExecuteScalarAsync(); }
+				await using (var cmd = conn.CreateCommand()) { cmd.CommandText = "SELECT 1"; await cmd.ExecuteScalarAsync(); }
 				sw.Stop();
 				string? server = null, database = null;
 				try
@@ -68,7 +113,7 @@ public static class HealthExtensions
 			}
 		});
 
-		// Migrations endpoint: lists applied + pending
+		// Migrations endpoint: best-effort list of applied & pending migrations (reflection each call). Safe if history table missing.
 		endpoints.MapGet("/api/migrations", async (IDbConnectionFactory factory, DatabaseOptions opts) =>
 		{
 			await using var conn = factory.Create();

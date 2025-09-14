@@ -10,7 +10,14 @@ public sealed class StartupStatus
     public bool IsInitialized => InitializedAt is not null;
     public DateTimeOffset? InitializedAt { get; private set; }
     public bool Failed => _initException is not null;
+<<<<<<< HEAD
+    /// <summary>Short error (type + message) safe for basic health display.</summary>
+    public string? Error => _initException is null ? null : _initException.GetType().Name + ": " + _initException.Message;
+    /// <summary>Full exception.ToString() (stack trace etc). Only expose conditionally.</summary>
+    public string? FullError => _initException?.ToString();
+=======
     public string? Error => _initException?.GetType().Name + ": " + _initException?.Message;
+>>>>>>> origin/main
     public void ReportSuccess()
     {
         InitializedAt = DateTimeOffset.UtcNow;
