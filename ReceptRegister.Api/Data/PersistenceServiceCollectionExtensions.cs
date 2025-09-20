@@ -9,6 +9,7 @@ public static class PersistenceServiceCollectionExtensions
 		services.AddSingleton(sp =>
 		{
 			var config = sp.GetRequiredService<IConfiguration>();
+			var log = sp.GetRequiredService<ILoggerFactory>().CreateLogger("PersistenceStartup");
 			var options = new DatabaseOptions();
 			config.GetSection(DatabaseOptions.SectionName).Bind(options);
 
@@ -26,7 +27,17 @@ public static class PersistenceServiceCollectionExtensions
 			{
 				options.ConnectionString = envConn;
 			}
-			options.Validate();
+			try
+			{
+				options.Validate();
+			}
+			catch (Exception ex)
+			{
+				log.LogError(ex, "Database options validation failed. Provider={Provider} ConnProvided={HasConn}", options.Provider ?? "<null>", string.IsNullOrWhiteSpace(options.ConnectionString) ? "no" : "yes");
+				throw;
+			}
+
+			log.LogInformation("Database options bound. Provider={Provider} ConnProvided={HasConn}", options.Provider ?? "(default-SQLite)", string.IsNullOrWhiteSpace(options.ConnectionString) ? "no" : "yes");
 			return options;
 		});
 
@@ -46,7 +57,7 @@ public static class PersistenceServiceCollectionExtensions
 			}
 			// provider already validated
 			logger.LogInformation("Using SQL Server database provider.");
-			return new SqlServerConnectionFactory(sp.GetRequiredService<IConfiguration>());
+			return new SqlServerConnectionFactory(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<ILogger<SqlServerConnectionFactory>>());
 		});
 
 		services.AddScoped<IRecipesRepository, RecipesRepository>();
