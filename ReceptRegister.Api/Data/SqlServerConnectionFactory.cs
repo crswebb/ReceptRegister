@@ -10,10 +10,12 @@ public class SqlServerConnectionFactory : IDbConnectionFactory
     private readonly string _connectionString;
     private readonly bool _useEntra;
     private readonly TokenCredential? _credential;
+    private readonly ILogger<SqlServerConnectionFactory> _logger;
     private readonly int _tokenTimeoutSeconds = 30; // default
 
-    public SqlServerConnectionFactory(IConfiguration configuration)
+    public SqlServerConnectionFactory(IConfiguration configuration, ILogger<SqlServerConnectionFactory> logger)
     {
+        _logger = logger;
         _connectionString = configuration["RECEPT_DB_CONNECTIONSTRING"] ?? string.Empty;
         if (string.IsNullOrWhiteSpace(_connectionString))
             throw new InvalidOperationException("Database provider 'SqlServer' selected but RECEPT_DB_CONNECTIONSTRING is missing or empty.");
@@ -67,7 +69,10 @@ public class SqlServerConnectionFactory : IDbConnectionFactory
     public DbConnection Create()
     {
         var conn = new SqlConnection(_connectionString);
-        if (_useEntra && _credential is not null)
+        // Do not set AccessToken if the connection string already specifies any 'Authentication=' option.
+        var hasAuthInConnectionString =
+            _connectionString.IndexOf("authentication=", StringComparison.OrdinalIgnoreCase) >= 0;
+        if (!hasAuthInConnectionString && _useEntra && _credential is not null)
         {
             // Acquire token with a bounded timeout to avoid indefinite hangs on metadata endpoint issues.
             var scope = new[] { "https://database.windows.net/.default" };
@@ -81,6 +86,10 @@ public class SqlServerConnectionFactory : IDbConnectionFactory
                 {
                     var token = _credential.GetToken(new TokenRequestContext(scope), cts.Token);
                     conn.AccessToken = token.Token;
+                    if (_logger.IsEnabled(LogLevel.Debug))
+                    {
+                        _logger.LogDebug("[SQL] Using AccessToken via DefaultAzureCredential (no Authentication in connection string).");
+                    }
                     break; // success
                 }
                 catch (OperationCanceledException) when (attempt < maxAttempts)
@@ -99,6 +108,13 @@ public class SqlServerConnectionFactory : IDbConnectionFactory
                     throw new InvalidOperationException("Failed to acquire Entra ID token for SQL Server using DefaultAzureCredential. " +
                         "Ensure appropriate environment variables or managed identity are configured.", ex);
                 }
+            }
+        }
+        else if (hasAuthInConnectionString)
+        {
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug("[SQL] Using connection-string provided Authentication (no AccessToken set).");
             }
         }
         return conn;
