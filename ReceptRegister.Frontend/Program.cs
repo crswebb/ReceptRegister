@@ -18,16 +18,6 @@ var builder = WebApplication.CreateBuilder(args);
     builder.WebHost.UseUrls(url);
 }
 
-// Force explicit binding so Azure (expects 8080) and the app align even if PORT was set incorrectly.
-// If a PORT env var is present (e.g. for local overrides), honor it; otherwise default 8080.
-var forcedPort = Environment.GetEnvironmentVariable("PORT");
-string bindUrl = "http://0.0.0.0:8080";
-if (int.TryParse(forcedPort, out var parsed) && parsed > 0 && parsed < 65536)
-{
-    bindUrl = $"http://0.0.0.0:{parsed}";
-}
-builder.WebHost.UseUrls(bindUrl);
-
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddLocalization(); // resource-based UI strings
@@ -75,7 +65,6 @@ app.MapRazorPages()
 // Expose API endpoints from the referenced API assembly so frontend & API share origin
 app.MapApiEndpoints();
 
-app.MapAppHealth();
 
 // Log when the application has fully started and Kestrel has bound the ports.
 app.Lifetime.ApplicationStarted.Register(() =>
