@@ -23,6 +23,9 @@ App_Data/
 *.suo
 *.userprefs
 
+# Editor settings (keep out of repo unless intentional)
+.vscode/
+
 # OS noise
 .DS_Store
 Thumbs.db

@@ -1,10 +1,22 @@
-using ReceptRegister.Frontend;
 using ReceptRegister.Api.Data; // for AddPersistenceServices
 using ReceptRegister.Api.Auth; // for AddAuthServices + UseAuthSession
 using ReceptRegister.Api.Endpoints; // for MapApiEndpoints
-using ReceptRegister.Api.Localization; // for AddConfiguredLocalization
+using ReceptRegister.Api.Localization;
+using ReceptRegister.Api; // for AddConfiguredLocalization
 
 var builder = WebApplication.CreateBuilder(args);
+// Force explicit binding so Azure (expects 8080) and the app align even if PORT was set incorrectly.
+// If a PORT env var is present (e.g. for local overrides), honor it; otherwise default 8080.
+// Use a local scope to avoid colliding with any variables defined in the base branch during merge builds.
+{
+    var portEnv = Environment.GetEnvironmentVariable("PORT");
+    var url = "http://0.0.0.0:8080";
+    if (int.TryParse(portEnv, out var port) && port > 0 && port < 65536)
+    {
+        url = $"http://0.0.0.0:{port}";
+    }
+    builder.WebHost.UseUrls(url);
+}
 
 // Force explicit binding so Azure (expects 8080) and the app align even if PORT was set incorrectly.
 // If a PORT env var is present (e.g. for local overrides), honor it; otherwise default 8080.
@@ -25,6 +37,7 @@ builder.Services.AddAppHealth();
 builder.Services.AddPersistenceServices();
 builder.Services.AddAuthServices();
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
+builder.Services.AddSingleton<StartupStatus>();
 
 var app = builder.Build();
 
@@ -70,7 +83,7 @@ app.Lifetime.ApplicationStarted.Register(() =>
     try
     {
         var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
-        logger.LogInformation("[Startup] Application started. Listening on: {BindUrl}", bindUrl);
+        logger.LogInformation("[Startup] Application started. Listening on: {Urls}", string.Join(',', app.Urls));
     }
     catch { /* non-fatal */ }
 });
