@@ -15,7 +15,7 @@ public class SqlServerConnectionFactory : IDbConnectionFactory
     {
         _connectionString = configuration["RECEPT_DB_CONNECTIONSTRING"] ?? string.Empty;
         if (string.IsNullOrWhiteSpace(_connectionString))
-            throw new InvalidOperationException("Database provider 'SqlServer' selected but Database:ConnectionString is missing or empty.");
+            throw new InvalidOperationException("Database provider 'SqlServer' selected but RECEPT_DB_CONNECTIONSTRING is missing or empty.");
 
         // Heuristic: if connection string contains Authentication=Active Directory, or ActiveDirectory, or Aad access token pattern
         // we will use DefaultAzureCredential to fetch a token for https://database.windows.net/ scope.
