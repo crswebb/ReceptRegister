@@ -9,13 +9,13 @@ var builder = WebApplication.CreateBuilder(args);
 // If a PORT env var is present (e.g. for local overrides), honor it; otherwise default 8080.
 // Use a local scope to avoid colliding with any variables defined in the base branch during merge builds.
 {
-    // var portEnv = Environment.GetEnvironmentVariable("PORT");
-    // var url = "http://0.0.0.0:8080";
-    // if (int.TryParse(portEnv, out var port) && port > 0 && port < 65536)
-    // {
-    //     url = $"http://0.0.0.0:{port}";
-    // }
-    // builder.WebHost.UseUrls(url);
+    var portEnv = Environment.GetEnvironmentVariable("PORT");
+    var url = "http://0.0.0.0:8080";
+    if (int.TryParse(portEnv, out var port) && port > 0 && port < 65536)
+    {
+        url = $"http://0.0.0.0:{port}";
+    }
+    builder.WebHost.UseUrls(url);
 }
 
 // Add services to the container.
