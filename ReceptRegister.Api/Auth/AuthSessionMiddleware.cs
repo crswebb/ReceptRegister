@@ -1,4 +1,6 @@
 using System.Security.Cryptography;
+using System.Data.Common;
+using Microsoft.Data.SqlClient;
 
 namespace ReceptRegister.Api.Auth;
 
@@ -44,7 +46,27 @@ internal sealed class AuthSessionMiddleware
 		await using (var scope = _scopeFactory.CreateAsyncScope())
 		{
 			var passwordSvc = scope.ServiceProvider.GetRequiredService<IPasswordService>();
-			if (!await passwordSvc.HasPasswordAsync())
+			bool? hasPassword = null;
+			try
+			{
+				using var cts = CancellationTokenSource.CreateLinkedTokenSource(context.RequestAborted);
+				cts.CancelAfter(TimeSpan.FromSeconds(3)); // fast-fail if DB is unavailable
+				hasPassword = await passwordSvc.HasPasswordAsync(cts.Token);
+			}
+			catch (OperationCanceledException)
+			{
+				// Treat as DB temporarily unavailable
+				context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+				await context.Response.WriteAsync("Database temporarily unavailable.", System.Text.Encoding.UTF8);
+				return;
+			}
+			catch (DbException)
+			{
+				context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+				await context.Response.WriteAsync("Database temporarily unavailable.", System.Text.Encoding.UTF8);
+				return;
+			}
+			if (hasPassword == false)
 			{
 				// Allow static asset requests so SetPassword page renders correctly
 				if (IsStaticAsset(path))
