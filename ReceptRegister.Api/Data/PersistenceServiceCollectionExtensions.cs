@@ -57,7 +57,7 @@ public static class PersistenceServiceCollectionExtensions
 			}
 			// provider already validated
 			logger.LogInformation("Using SQL Server database provider.");
-			return new SqlServerConnectionFactory(sp.GetRequiredService<IConfiguration>());
+			return new SqlServerConnectionFactory(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<ILogger<SqlServerConnectionFactory>>());
 		});
 
 		services.AddScoped<IRecipesRepository, RecipesRepository>();

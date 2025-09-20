@@ -10,9 +10,11 @@ public class SqlServerConnectionFactory : IDbConnectionFactory
     private readonly string _connectionString;
     private readonly bool _useEntra;
     private readonly TokenCredential? _credential;
+    private readonly ILogger<SqlServerConnectionFactory> _logger;
 
-    public SqlServerConnectionFactory(IConfiguration configuration)
+    public SqlServerConnectionFactory(IConfiguration configuration, ILogger<SqlServerConnectionFactory> logger)
     {
+        _logger = logger;
         _connectionString = configuration["RECEPT_DB_CONNECTIONSTRING"] ?? string.Empty;
         if (string.IsNullOrWhiteSpace(_connectionString))
             throw new InvalidOperationException("Database provider 'SqlServer' selected but RECEPT_DB_CONNECTIONSTRING is missing or empty.");
@@ -41,10 +43,21 @@ public class SqlServerConnectionFactory : IDbConnectionFactory
             {
                 var token = _credential.GetToken(new TokenRequestContext(new[] { "https://database.windows.net/.default" }), cts.Token);
                 conn.AccessToken = token.Token;
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.LogDebug("[SQL] Using AccessToken via DefaultAzureCredential (no Authentication in connection string).");
+                }
             }
             catch (OperationCanceledException)
             {
                 throw new TimeoutException("Timed out acquiring Entra ID access token for SQL Server within 15s.");
+            }
+        }
+        else if (hasAuthInConnectionString)
+        {
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug("[SQL] Using connection-string provided Authentication (no AccessToken set).");
             }
         }
         return conn;
