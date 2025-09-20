@@ -5,17 +5,18 @@ using ReceptRegister.Api.Localization;
 using ReceptRegister.Api; // for AddConfiguredLocalization
 
 var builder = WebApplication.CreateBuilder(args);
-string bindUrl = "default";
-
 // Force explicit binding so Azure (expects 8080) and the app align even if PORT was set incorrectly.
 // If a PORT env var is present (e.g. for local overrides), honor it; otherwise default 8080.
-var forcedPort = Environment.GetEnvironmentVariable("PORT");
-bindUrl = "http://0.0.0.0:8080";
-if (int.TryParse(forcedPort, out var parsed) && parsed > 0 && parsed < 65536)
+// Use a local scope to avoid colliding with any variables defined in the base branch during merge builds.
 {
-    bindUrl = $"http://0.0.0.0:{parsed}";
+    var portEnv = Environment.GetEnvironmentVariable("PORT");
+    var url = "http://0.0.0.0:8080";
+    if (int.TryParse(portEnv, out var port) && port > 0 && port < 65536)
+    {
+        url = $"http://0.0.0.0:{port}";
+    }
+    builder.WebHost.UseUrls(url);
 }
-builder.WebHost.UseUrls(bindUrl);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
@@ -72,7 +73,7 @@ app.Lifetime.ApplicationStarted.Register(() =>
     try
     {
         var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
-        logger.LogInformation("[Startup] Application started. Listening on: {BindUrl}", bindUrl);
+        logger.LogInformation("[Startup] Application started. Listening on: {Urls}", string.Join(',', app.Urls));
     }
     catch { /* non-fatal */ }
 });
