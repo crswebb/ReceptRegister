@@ -13,7 +13,7 @@ public class SqlServerConnectionFactory : IDbConnectionFactory
 
     public SqlServerConnectionFactory(IConfiguration configuration)
     {
-        _connectionString = configuration["Database:ConnectionString"] ?? string.Empty;
+        _connectionString = configuration["RECEPT_DB_CONNECTIONSTRING"] ?? string.Empty;
         if (string.IsNullOrWhiteSpace(_connectionString))
             throw new InvalidOperationException("Database provider 'SqlServer' selected but Database:ConnectionString is missing or empty.");
 

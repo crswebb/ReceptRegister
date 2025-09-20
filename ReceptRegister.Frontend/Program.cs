@@ -1,20 +1,22 @@
-using ReceptRegister.Frontend;
 using ReceptRegister.Api.Data; // for AddPersistenceServices
 using ReceptRegister.Api.Auth; // for AddAuthServices + UseAuthSession
 using ReceptRegister.Api.Endpoints; // for MapApiEndpoints
-using ReceptRegister.Api.Localization; // for AddConfiguredLocalization
+using ReceptRegister.Api.Localization;
+using ReceptRegister.Api; // for AddConfiguredLocalization
 
 var builder = WebApplication.CreateBuilder(args);
-
+string bindUrl = "default";
+#if !DEBUG
 // Force explicit binding so Azure (expects 8080) and the app align even if PORT was set incorrectly.
 // If a PORT env var is present (e.g. for local overrides), honor it; otherwise default 8080.
 var forcedPort = Environment.GetEnvironmentVariable("PORT");
-string bindUrl = "http://0.0.0.0:8080";
+bindUrl = "http://0.0.0.0:8080";
 if (int.TryParse(forcedPort, out var parsed) && parsed > 0 && parsed < 65536)
 {
     bindUrl = $"http://0.0.0.0:{parsed}";
 }
 builder.WebHost.UseUrls(bindUrl);
+#endif
 
 // Add services to the container.
 builder.Services.AddRazorPages();
@@ -25,6 +27,7 @@ builder.Services.AddAppHealth();
 builder.Services.AddPersistenceServices();
 builder.Services.AddAuthServices();
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
+builder.Services.AddSingleton<StartupStatus>();
 
 var app = builder.Build();
 
