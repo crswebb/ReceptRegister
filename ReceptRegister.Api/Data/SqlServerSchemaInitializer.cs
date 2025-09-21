@@ -80,6 +80,8 @@ public sealed class SqlServerSchemaInitializer : ISchemaInitializer
         {
             await using var cmd = conn.CreateCommand();
             cmd.CommandText = sql;
+            // Ensure commands execute within the opened local transaction
+            cmd.Transaction = tx;
             await cmd.ExecuteNonQueryAsync(ct);
         }
         await tx.CommitAsync(ct);
