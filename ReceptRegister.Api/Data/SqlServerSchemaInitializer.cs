@@ -16,7 +16,7 @@ public sealed class SqlServerSchemaInitializer : ISchemaInitializer
         _logger.LogDebug("Initializing SQL Server schema (experimental)...");
         await using var conn = _factory.Create();
         await conn.OpenAsync(ct);
-        await using var tx = await conn.BeginTransactionAsync(ct);
+    await using var tx = await conn.BeginTransactionAsync(ct);
 
         var commands = new[]
         {
@@ -80,6 +80,7 @@ public sealed class SqlServerSchemaInitializer : ISchemaInitializer
         {
             await using var cmd = conn.CreateCommand();
             cmd.CommandText = sql;
+            cmd.Transaction = tx; // ensure commands participate in the local transaction
             await cmd.ExecuteNonQueryAsync(ct);
         }
         await tx.CommitAsync(ct);
