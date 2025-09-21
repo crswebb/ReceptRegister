@@ -72,11 +72,13 @@ public class AuthRepository : IAuthRepository
         await using var tx = await conn.BeginTransactionAsync(ct);
         var existsCmd = conn.CreateCommand();
         existsCmd.CommandText = "SELECT 1 FROM AuthConfig WHERE Id=1";
+        existsCmd.Transaction = tx;
         var exists = await existsCmd.ExecuteScalarAsync(ct) is not null;
         if (!exists)
         {
             var insert = conn.CreateCommand();
             insert.CommandText = "INSERT INTO AuthConfig (Id, PasswordHash, Salt, Iterations, CreatedAt, UpdatedAt) VALUES (1,@h,@s,@it,@c,@u)";
+            insert.Transaction = tx;
         insert.AddParam("@h", hash)
             .AddParam("@s", salt)
             .AddParam("@it", iterations)
@@ -88,6 +90,7 @@ public class AuthRepository : IAuthRepository
         {
             var update = conn.CreateCommand();
             update.CommandText = "UPDATE AuthConfig SET PasswordHash=@h, Salt=@s, Iterations=@it, UpdatedAt=@u WHERE Id=1";
+            update.Transaction = tx;
         update.AddParam("@h", hash)
             .AddParam("@s", salt)
             .AddParam("@it", iterations)
@@ -114,6 +117,7 @@ public class RecipesRepository : IRecipesRepository
 
     var insertCmd = conn.CreateCommand();
     insertCmd.CommandText = _dialect.InsertRecipeSql;
+    insertCmd.Transaction = tx;
         insertCmd.AddParam("@n", recipe.Name)
              .AddParam("@b", recipe.Book)
              .AddParam("@p", recipe.Page)
@@ -125,8 +129,8 @@ public class RecipesRepository : IRecipesRepository
         var id = Convert.ToInt64(idObj);
         recipe.Id = checked((int)id);
 
-        await UpsertTaxonomyAndLink(conn, "Categories", "RecipeCategories", "CategoryId", recipe.Id, categories, ct);
-        await UpsertTaxonomyAndLink(conn, "Keywords", "RecipeKeywords", "KeywordId", recipe.Id, keywords, ct);
+        await UpsertTaxonomyAndLink(conn, tx, "Categories", "RecipeCategories", "CategoryId", recipe.Id, categories, ct);
+        await UpsertTaxonomyAndLink(conn, tx, "Keywords", "RecipeKeywords", "KeywordId", recipe.Id, keywords, ct);
 
         await tx.CommitAsync(ct);
         return recipe.Id;
@@ -150,6 +154,7 @@ public class RecipesRepository : IRecipesRepository
 
         var cmd = conn.CreateCommand();
     cmd.CommandText = @"UPDATE Recipes SET Name=@n, Book=@b, Page=@p, Notes=@no, Tried=@t WHERE Id=@id";
+    cmd.Transaction = tx;
     cmd.AddParam("@n", recipe.Name)
        .AddParam("@b", recipe.Book)
        .AddParam("@p", recipe.Page)
@@ -158,8 +163,8 @@ public class RecipesRepository : IRecipesRepository
        .AddParam("@id", recipe.Id);
         await cmd.ExecuteNonQueryAsync(ct);
 
-        await ReplaceLinks(conn, recipe.Id, "RecipeCategories", categories, "Categories", "CategoryId", ct);
-        await ReplaceLinks(conn, recipe.Id, "RecipeKeywords", keywords, "Keywords", "KeywordId", ct);
+        await ReplaceLinks(conn, tx, recipe.Id, "RecipeCategories", categories, "Categories", "CategoryId", ct);
+        await ReplaceLinks(conn, tx, recipe.Id, "RecipeKeywords", keywords, "Keywords", "KeywordId", ct);
 
         await tx.CommitAsync(ct);
     }
@@ -411,7 +416,7 @@ ORDER BY r.Name
         }
     }
 
-    private async Task UpsertTaxonomyAndLink(DbConnection conn, string table, string linkTable, string linkFkName, int recipeId, IEnumerable<string> names, CancellationToken ct)
+    private async Task UpsertTaxonomyAndLink(DbConnection conn, DbTransaction tx, string table, string linkTable, string linkFkName, int recipeId, IEnumerable<string> names, CancellationToken ct)
     {
         foreach (var raw in names.Select(n => n.Trim()).Where(n => n.Length > 0))
         {
@@ -419,31 +424,35 @@ ORDER BY r.Name
             // Upsert pattern: try insert, ignore conflict, then select id
             var insert = conn.CreateCommand();
             insert.CommandText = _dialect.BuildInsertIgnoreTaxonomySql(table);
+            insert.Transaction = tx;
             insert.AddParam("@n", name);
             await insert.ExecuteNonQueryAsync(ct);
             var sel = conn.CreateCommand();
             sel.CommandText = $"SELECT Id FROM {table} WHERE Name=@n";
+            sel.Transaction = tx;
             sel.AddParam("@n", name);
             var idObj = await sel.ExecuteScalarAsync(ct) ?? throw new InvalidOperationException($"Failed to resolve Id for {table} name '{name}'");
             var id = Convert.ToInt32(idObj);
 
             var link = conn.CreateCommand();
             link.CommandText = _dialect.BuildInsertIgnoreLinkSql(linkTable, linkFkName);
+            link.Transaction = tx;
             link.AddParam("@r", recipeId)
                 .AddParam("@t", id);
             await link.ExecuteNonQueryAsync(ct);
         }
     }
 
-    private async Task ReplaceLinks(DbConnection conn, int recipeId, string linkTable, IEnumerable<string> names, string lookupTable, string linkFkName, CancellationToken ct)
+    private async Task ReplaceLinks(DbConnection conn, DbTransaction tx, int recipeId, string linkTable, IEnumerable<string> names, string lookupTable, string linkFkName, CancellationToken ct)
     {
         // Clear existing
         var del = conn.CreateCommand();
         del.CommandText = $"DELETE FROM {linkTable} WHERE RecipeId=@r";
+    del.Transaction = tx;
     del.AddParam("@r", recipeId);
         await del.ExecuteNonQueryAsync(ct);
 
-    await UpsertTaxonomyAndLink(conn, lookupTable, linkTable, linkFkName, recipeId, names, ct);
+    await UpsertTaxonomyAndLink(conn, tx, lookupTable, linkTable, linkFkName, recipeId, names, ct);
     }
 
     private static async Task<bool> Exists(DbConnection conn, string table, int id, CancellationToken ct)
